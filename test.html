@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>역량검사 - 신입사원 역량테스트</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="test.css">
+</head>
+
+<body>
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <div class="header-container">
+            <!-- JavaScript로 동적 생성 -->
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 영역 -->
+    <main class="test-main">
+        <div class="test-simple-container">
+            <!-- 테스트 안내 -->
+            <div class="test-info-card">
+                <div class="test-icon">📋</div>
+                <h1 class="test-title">신입사원 역량검사</h1>
+                <p class="test-description">
+                    역량검사가 끝났습니다.<br>
+                    아래 제출하기 버튼을 클릭하여 테스트 결과를 확인하세요.
+                </p>
+
+                <div class="test-details">
+                    <div class="detail-item">
+                        <span class="detail-label">문항 수:</span>
+                        <span class="detail-value">75문항</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">예상 소요시간:</span>
+                        <span class="detail-value">약 60분</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">평가 영역:</span>
+                        <span class="detail-value">리더십, 커뮤니케이션, 창의성, 문제해결, 협업</span>
+                    </div>
+                </div>
+
+                <!-- 제출 버튼 -->
+                <div class="submit-section">
+                    <button class="btn-primary submit-btn" onclick="submitTest()">제출하기</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script src="test.js"></script>
+</body>
+
+</html>

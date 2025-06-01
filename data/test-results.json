@@ -1,0 +1,27 @@
+[
+  {
+    "id": "1748782241957",
+    "userId": "1748782221450",
+    "answers": [
+      {
+        "id": 1,
+        "answer": "매우 그렇다"
+      },
+      {
+        "id": 2,
+        "answer": "그렇다"
+      }
+    ],
+    "competencyScores": {
+      "problemSolving": 72,
+      "communication": 78,
+      "leadership": 84,
+      "creativity": 83,
+      "teamwork": 74,
+      "responsibility": 99
+    },
+    "overallScore": 82,
+    "testDate": "2025-06-01T12:50:41.957Z",
+    "savedAt": "2025-06-01T12:50:41.957Z"
+  }
+]

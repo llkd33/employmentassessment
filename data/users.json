@@ -1,0 +1,11 @@
+[
+  {
+    "id": "1748782221450",
+    "name": "테스트사용자",
+    "nickname": "테스트사용자",
+    "email": "test@example.com",
+    "password": "$2a$10$.dp30CD93LIxnEAd/TdXtO06OpDOj4hmB1vo3CtwQMkYnmQlnjCpu",
+    "loginType": "email",
+    "joinDate": "2025-06-01T12:50:21.450Z"
+  }
+]

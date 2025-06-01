@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 - 신입사원 역량테스트</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="login.css">
+    <!-- 카카오 JavaScript SDK -->
+    <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
+</head>
+
+<body>
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <div class="header-container">
+            <!-- JavaScript로 동적 생성 -->
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 영역 -->
+    <main class="login-main">
+        <div class="login-container">
+            <!-- 로그인 제목 -->
+            <div class="login-header">
+                <h2>로그인</h2>
+                <p>계정에 로그인하여 역량검사를 시작하세요</p>
+            </div>
+
+            <!-- 로그인 폼 -->
+            <form class="login-form" onsubmit="handleLoginSubmit(event)">
+                <div class="form-group">
+                    <label for="email">이메일</label>
+                    <input type="email" id="email" name="email" required placeholder="이메일을 입력하세요">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">비밀번호</label>
+                    <input type="password" id="password" name="password" required placeholder="비밀번호를 입력하세요">
+                </div>
+
+                <button type="submit" class="login-btn-submit" onclick="console.log('버튼 클릭됨')">로그인</button>
+            </form>
+
+            <!-- 구분선 -->
+            <div class="divider">
+                <span>또는</span>
+            </div>
+
+            <!-- 소셜 로그인 -->
+            <div class="social-login">
+                <button class="kakao-login-btn" onclick="kakaoLogin()">
+                    <img src="https://developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png"
+                        alt="카카오" class="kakao-icon">
+                    카카오톡으로 로그인하기
+                </button>
+            </div>
+
+            <!-- 회원가입 링크 -->
+            <div class="signup-link">
+                <p>계정이 없으신가요? <a href="signup.html">회원가입</a></p>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script src="login.js"></script>
+    <script>
+        // 페이지 로드 즉시 테스트
+        console.log('로그인 페이지 로드됨');
+
+        // 폼이 제대로 작동하는지 테스트
+        window.addEventListener('DOMContentLoaded', function () {
+            const form = document.querySelector('.login-form');
+            if (form) {
+                console.log('로그인 폼 찾음');
+            } else {
+                console.error('로그인 폼을 찾을 수 없습니다!');
+            }
+
+            // handleLoginSubmit이 정의되어 있는지 확인
+            if (typeof handleLoginSubmit === 'function') {
+                console.log('handleLoginSubmit 함수 정의됨');
+            } else {
+                console.error('handleLoginSubmit 함수를 찾을 수 없습니다!');
+            }
+        });
+    </script>
+</body>
+
+</html>

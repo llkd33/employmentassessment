@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>테스트 결과 - 신입사원 역량테스트</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="result.css">
+</head>
+
+<body>
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <div class="header-container">
+            <!-- JavaScript로 동적 생성 -->
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 영역 -->
+    <main class="result-main">
+        <div class="result-container">
+            <!-- 결과 헤더 -->
+            <div class="result-header">
+                <div class="completion-badge">
+                    <div class="badge-icon">✓</div>
+                    <div class="badge-text">검사 완료</div>
+                </div>
+                <h1 class="result-title">역량검사 결과</h1>
+                <p class="result-subtitle">당신의 역량 프로필을 확인해보세요</p>
+            </div>
+
+            <!-- 종합 점수 -->
+            <div class="overall-score-section">
+                <div class="score-card">
+                    <div class="score-label">종합 점수</div>
+                    <div class="score-value" id="overallScore">85</div>
+                    <div class="score-unit">점</div>
+                </div>
+            </div>
+
+            <!-- 역량별 상세 결과 -->
+            <div class="competency-details">
+                <h2 class="section-title">역량별 상세 결과</h2>
+
+                <div class="competency-grid">
+                    <div class="competency-item">
+                        <div class="competency-header">
+                            <span class="competency-name">리더십</span>
+                            <span class="competency-score" data-competency="leadership">0</span>
+                        </div>
+                        <div class="competency-bar">
+                            <div class="competency-fill" data-competency="leadership"></div>
+                        </div>
+                        <div class="competency-description">팀을 이끌고 목표 달성을 위해 노력하는 능력</div>
+                    </div>
+
+                    <div class="competency-item">
+                        <div class="competency-header">
+                            <span class="competency-name">커뮤니케이션</span>
+                            <span class="competency-score" data-competency="communication">0</span>
+                        </div>
+                        <div class="competency-bar">
+                            <div class="competency-fill" data-competency="communication"></div>
+                        </div>
+                        <div class="competency-description">효과적으로 소통하고 의견을 전달하는 능력</div>
+                    </div>
+
+                    <div class="competency-item">
+                        <div class="competency-header">
+                            <span class="competency-name">창의성</span>
+                            <span class="competency-score" data-competency="creativity">0</span>
+                        </div>
+                        <div class="competency-bar">
+                            <div class="competency-fill" data-competency="creativity"></div>
+                        </div>
+                        <div class="competency-description">새로운 아이디어를 창출하고 혁신하는 능력</div>
+                    </div>
+
+                    <div class="competency-item">
+                        <div class="competency-header">
+                            <span class="competency-name">문제해결</span>
+                            <span class="competency-score" data-competency="problemSolving">0</span>
+                        </div>
+                        <div class="competency-bar">
+                            <div class="competency-fill" data-competency="problemSolving"></div>
+                        </div>
+                        <div class="competency-description">복잡한 문제를 체계적으로 해결하는 능력</div>
+                    </div>
+
+                    <div class="competency-item">
+                        <div class="competency-header">
+                            <span class="competency-name">협업</span>
+                            <span class="competency-score" data-competency="teamwork">0</span>
+                        </div>
+                        <div class="competency-bar">
+                            <div class="competency-fill" data-competency="teamwork"></div>
+                        </div>
+                        <div class="competency-description">팀원들과 효과적으로 협력하는 능력</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 액션 버튼 -->
+            <div class="action-buttons">
+                <button class="btn-primary" onclick="goToMyPage()">마이페이지</button>
+                <button class="btn-primary" onclick="goHome()">홈으로</button>
+            </div>
+
+            <!-- 테스트 정보 -->
+            <div class="test-info-section">
+                <div class="test-info-item">
+                    <span class="label">검사 완료 시간:</span>
+                    <span class="value" id="completedTime">2024년 5월 30일 14:25</span>
+                </div>
+                <div class="test-info-item">
+                    <span class="label">응답 문항:</span>
+                    <span class="value" id="answeredQuestions">75 / 75</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script src="result.js"></script>
+</body>
+
+</html>

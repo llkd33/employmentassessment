@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - 신입사원 역량테스트</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="signup.css">
+    <!-- 카카오 JavaScript SDK -->
+    <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
+</head>
+
+<body>
+    <!-- 헤더 영역 -->
+    <header class="header">
+        <div class="header-container">
+            <!-- JavaScript로 동적 생성 -->
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 영역 -->
+    <main class="signup-main">
+        <div class="signup-container">
+            <!-- 그래프 이미지 영역 -->
+            <div class="graph-section">
+                <div class="graph-image">
+                    <canvas id="lineChart" width="600" height="400"></canvas>
+                </div>
+            </div>
+
+            <!-- 설명 텍스트 -->
+            <div class="description-section">
+                <h2 class="description-title">성장의 변화를 직접 확인하세요</h2>
+                <p class="description-text">
+                    회원가입을 통해 당신의 성장 과정을 데이터로 확인할 수 있습니다.
+                </p>
+            </div>
+
+            <!-- 카카오톡 회원가입 버튼 -->
+            <div class="signup-section">
+                <button class="regular-signup-btn" onclick="goToRegularSignup()">
+                    회원가입하기
+                </button>
+
+                <div class="divider">
+                    <span>또는</span>
+                </div>
+
+                <button class="kakao-signup-btn" onclick="kakaoSignup()">
+                    <img src="https://developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png"
+                        alt="카카오" class="kakao-icon">
+                    카카오톡으로 시작하기
+                </button>
+                <p class="signup-info">3초만에 간편하게 시작하세요</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script src="signup.js"></script>
+</body>
+
+</html>
