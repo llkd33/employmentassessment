@@ -1,10 +1,3 @@
-// 설정 정보
-const CONFIG = {
-    KAKAO_API_KEY: window.location.hostname === 'localhost'
-        ? '14b0fdae82d6ff12f726e0a852c17710'  // 개발용
-        : '14b0fdae82d6ff12f726e0a852c17710'  // 프로덕션용 (실제 배포시 변경 필요)
-};
-
 // DOM이 로드된 후 실행
 document.addEventListener('DOMContentLoaded', function () {
     // 공통 헤더 생성
@@ -80,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // 페이지 로드 애니메이션
-    animatePageLoad();
+    animatePageLoadLocal();
 
     // 윈도우 크기 변화 감지
     handleResponsiveHeader();
@@ -106,17 +99,10 @@ function checkLoginStatus() {
     if (userInfo) {
         const user = JSON.parse(userInfo);
 
-        // 사용자 정보 즉시 업데이트 (이메일 대신 이름 표시를 위해)
-        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-        const matchedUser = registeredUsers.find(u => u.email === user.email);
+        // 사용자 정보 즉시 업데이트 (공통 유틸리티 사용)
+        const updatedUser = UserUtils.updateCurrentUserInfo();
 
-        if (matchedUser && matchedUser.name && (!user.name || user.name !== matchedUser.name)) {
-            user.name = matchedUser.name;
-            user.nickname = matchedUser.nickname || matchedUser.name;
-            localStorage.setItem('userInfo', JSON.stringify(user));
-        }
-
-        updateUIForLoggedInUser(user);
+        updateUIForLoggedInUser(updatedUser || user);
     }
 }
 
@@ -135,21 +121,8 @@ function updateUIForLoggedInUser(user) {
     const authNav = document.querySelector('.auth-nav');
 
     if (authNav) {
-        // 표시할 이름 결정 - name을 최우선으로
-        let displayName = '사용자';
-
-        if (user.name && user.name !== user.email) {
-            displayName = user.name;
-        } else if (user.nickname && user.nickname !== user.email && user.nickname !== user.email.split('@')[0]) {
-            displayName = user.nickname;
-        } else if (user.email && user.email.includes('@')) {
-            displayName = user.email.split('@')[0];
-        }
-
-        // 문자 수 제한 (8자)
-        if (displayName.length > 8) {
-            displayName = displayName.substring(0, 8);
-        }
+        // 표시할 이름 결정 - 공통 유틸리티 사용
+        const displayName = UserUtils.getDisplayName(user);
 
         // CSS 클래스를 정확히 맞춰서 HTML 생성
         authNav.innerHTML = `
@@ -162,19 +135,6 @@ function updateUIForLoggedInUser(user) {
         setTimeout(() => {
             handleResponsiveHeader();
         }, 50);
-    }
-}
-
-// 로그아웃 처리 함수
-function handleLogout() {
-    if (confirm('로그아웃 하시겠습니까?')) {
-        localStorage.removeItem('userInfo');
-        showNotification('로그아웃되었습니다.', 'info');
-
-        // 페이지 새로고침하여 UI 업데이트
-        setTimeout(() => {
-            location.reload();
-        }, 1000);
     }
 }
 
@@ -197,14 +157,14 @@ function startTest() {
             startBtn.style.transform = 'scale(1)';
 
             // 확인 메시지
-            if (confirm('신입사원 역량테스트를 시작하시겠습니까?\n\n소요시간: 약 60분\n문항 수: 75문항')) {
+            if (confirm('신입사원 역량테스트를 시작하시겠습니까?')) {
                 // 테스트 페이지로 이동
                 window.location.href = '/test.html';
             }
         }, 100);
     } else {
         // 버튼이 없는 경우 직접 이동
-        if (confirm('신입사원 역량테스트를 시작하시겠습니까?\n\n소요시간: 약 60분\n문항 수: 75문항')) {
+        if (confirm('신입사원 역량테스트를 시작하시겠습니까?')) {
             window.location.href = '/test.html';
         }
     }
@@ -224,48 +184,8 @@ function handleSignup() {
     window.location.href = '/signup.html';
 }
 
-// 알림 표시 함수
-function showNotification(message, type = 'info') {
-    // 알림 요소 생성
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-
-    // 스타일 적용
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 1rem 2rem;
-        background-color: ${type === 'success' ? '#5cb85c' : '#5bc0de'};
-        color: white;
-        border-radius: 8px;
-        font-weight: 500;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        transform: translateX(400px);
-        transition: transform 0.3s ease;
-        z-index: 1000;
-    `;
-
-    // 문서에 추가
-    document.body.appendChild(notification);
-
-    // 애니메이션
-    setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-    }, 100);
-
-    // 3초 후 제거
-    setTimeout(() => {
-        notification.style.transform = 'translateX(400px)';
-        setTimeout(() => {
-            notification.remove();
-        }, 300);
-    }, 3000);
-}
-
-// 페이지 로드 애니메이션
-function animatePageLoad() {
+// 페이지 로드 애니메이션 (원래 로직 유지)
+function animatePageLoadLocal() {
     const testContainer = document.querySelector('.test-container');
     const header = document.querySelector('.header');
 
@@ -307,17 +227,17 @@ window.addEventListener('load', function () {
             this.style.display = 'none';
             const placeholder = document.createElement('div');
             placeholder.style.cssText = `
-                width: 100%;
-                height: 250px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-size: 1.5rem;
-                font-weight: 600;
-            `;
+            width: 100%;
+            height: 250px;
+                background-color: var(--primary-color);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+        `;
             placeholder.textContent = '역량테스트';
             this.parentElement.appendChild(placeholder);
         });
@@ -327,11 +247,6 @@ window.addEventListener('load', function () {
 // 마이페이지로 이동하는 함수
 function goToMyPage() {
     window.location.href = '/mypage.html';
-}
-
-// 홈으로 이동하는 함수
-function goHome() {
-    window.location.href = '/';
 }
 
 // 기존 사용자 정보 업데이트
@@ -423,7 +338,19 @@ function createCommonHeader() {
         authButtons = '<nav class="auth-nav"><button class="auth-btn login-btn" onclick="window.location.href=\'login.html\'">로그인</button></nav>';
     } else {
         // 다른 페이지 (test, result, mypage): 로그인된 사용자 정보 표시
-        authButtons = '<nav class="auth-nav"><span class="user-info user-greeting">안녕하세요, 사용자님!</span><button class="auth-btn mypage-btn" onclick="goToMyPage()">마이페이지</button><button class="auth-btn logout-btn" onclick="handleLogout()">로그아웃</button></nav>';
+        const userInfo = localStorage.getItem('userInfo');
+        let displayName = '사용자';
+
+        if (userInfo) {
+            try {
+                const user = JSON.parse(userInfo);
+                displayName = UserUtils.getDisplayName(user);
+            } catch (error) {
+                console.error('사용자 정보 파싱 오류:', error);
+            }
+        }
+
+        authButtons = `<nav class="auth-nav"><span class="user-info user-greeting">안녕하세요, ${displayName}님!</span><button class="auth-btn mypage-btn" onclick="goToMyPage()">마이페이지</button><button class="auth-btn logout-btn" onclick="handleLogout()">로그아웃</button></nav>`;
     }
 
     // 헤더 내용 설정
@@ -443,23 +370,8 @@ function createCommonHeader() {
 function updateHeaderUserInfo(user) {
     const userGreeting = document.querySelector('.user-greeting');
     if (userGreeting) {
-        let displayName = '사용자';
-
-        // 이름 우선순위: name > nickname > 이메일의 @ 앞부분
-        if (user.name && user.name !== user.email) {
-            displayName = user.name;
-        } else if (user.nickname && user.nickname !== user.email && user.nickname !== user.email.split('@')[0]) {
-            displayName = user.nickname;
-        } else if (user.email && user.email.includes('@')) {
-            // 이메일 계정의 경우 @ 앞부분만 표시
-            displayName = user.email.split('@')[0];
-        }
-
-        // 문자 수 제한 (8자)
-        if (displayName.length > 8) {
-            displayName = displayName.substring(0, 8);
-        }
-
+        // 공통 유틸리티 사용
+        const displayName = UserUtils.getDisplayName(user);
         userGreeting.textContent = `안녕하세요, ${displayName}님!`;
     }
 } 

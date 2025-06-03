@@ -13,21 +13,7 @@
     <!-- 헤더 영역 -->
     <header class="header">
         <div class="header-container">
-            <!-- 홈 버튼 (메인페이지에서는 숨김) -->
-            <div class="home-btn-container">
-                <!-- 빈 공간 유지용 -->
-            </div>
-
-            <!-- 회사 로고 -->
-            <div class="logo">
-                <img src="images/logo.png" alt="회사 로고" />
-            </div>
-
-            <!-- 로그인/회원가입 버튼 -->
-            <nav class="auth-nav">
-                <button class="auth-btn login-btn">로그인</button>
-                <button class="auth-btn signup-btn">회원가입</button>
-            </nav>
+            <!-- JavaScript로 동적 생성 -->
         </div>
     </header>
 
@@ -41,19 +27,132 @@
             <p class="test-description">당신의 잠재력을 발견하고 성장의 첫걸음을 시작하세요.</p>
 
             <!-- 바로가기 버튼 -->
-            <button class="start-btn" onclick="startTest()">
+            <button class="start-btn" id="startTestBtn">
                 검사 시작하기
                 <span class="arrow">→</span>
             </button>
 
             <!-- 소요시간 정보 -->
             <div class="test-info">
-                <span class="info-text">소요시간: 약 60분</span>
+                <span class="info-text">소요시간: 약 60분 | 문항 수: 75문항</span>
             </div>
         </div>
     </main>
 
-    <script src="script.js"></script>
+    <!-- Core modules (순서 중요) -->
+    <script src="utils/core.js"></script>
+    <script src="utils/ui.js"></script>
+    <script src="utils/performance.js"></script>
+    <script src="utils/user.js"></script>
+    <script src="components/header.js"></script>
+
+    <!-- App initialization -->
+    <script>
+        /**
+         * 애플리케이션 초기화
+         */
+        class App {
+            constructor() {
+                this.initialized = false;
+            }
+
+            async init() {
+                if (this.initialized) return;
+
+                try {
+                    console.log('Initializing Employee Test App...');
+
+                    // 성능 모니터링 시작
+                    Performance.init({
+                        enableMonitoring: true,
+                        enableLazyLoading: true,
+                        enableMemoryMonitoring: false
+                    });
+
+                    // 사용자 관리 초기화
+                    User.init();
+
+                    // 헤더 초기화
+                    Header.init();
+
+                    // 메인 페이지 기능 설정
+                    this.setupMainPage();
+
+                    this.initialized = true;
+                    console.log('App initialized successfully');
+
+                } catch (error) {
+                    console.error('App initialization failed:', error);
+                    UI.Notification.show('애플리케이션 초기화에 실패했습니다.', 'error');
+                }
+            }
+
+            setupMainPage() {
+                const startBtn = document.getElementById('startTestBtn');
+                if (!startBtn) return;
+
+                Core.EventManager.on(startBtn, 'click', this.handleStartTest.bind(this));
+            }
+
+            async handleStartTest() {
+                try {
+                    if (!User.isLoggedIn()) {
+                        const confirmed = await UI.Modal.confirm(
+                            '로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?',
+                            '로그인 필요'
+                        );
+
+                        if (confirmed) {
+                            window.location.href = '/login.html';
+                        }
+                        return;
+                    }
+
+                    const confirmed = await UI.Modal.confirm(
+                        '신입사원 역량테스트를 시작하시겠습니까?',
+                        '테스트 시작 확인'
+                    );
+
+                    if (confirmed) {
+                        UI.Loading.show('테스트 페이지로 이동 중...');
+
+                        // 테스트 페이지 리소스 프리로드
+                        await Performance.Loader.loadPageResources('test');
+
+                        setTimeout(() => {
+                            window.location.href = '/test.html';
+                        }, 500);
+                    }
+
+                } catch (error) {
+                    console.error('Test start error:', error);
+                    UI.Notification.show('테스트 시작 중 오류가 발생했습니다.', 'error');
+                    UI.Loading.hide();
+                }
+            }
+        }
+
+        // 애플리케이션 시작
+        const app = new App();
+
+        // DOM 준비 시 초기화
+        Core.DOM.ready(() => {
+            app.init();
+        });
+
+        // Service Worker 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registered:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
 </body>
 
 </html>

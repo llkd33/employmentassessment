@@ -1,6 +1,74 @@
+// 종합 점수 구간별 유형 데이터
+const scoreTypeData = {
+    rookie: {
+        icon: "🐣",
+        name: "새싹 인재 유형",
+        description: "아직 배워갈 점이 무궁무진한, 성장 잠재력이 가득한 신입사원!",
+        message: "지금은 새싹 단계지만, 꾸준히 물 주고 햇볕 쬐어주면 금방 무럭무럭 자랄 거예요! 교육 내용을 다시 살펴보며 하나씩 내 것으로 만들어가 봐요! 화이팅! 🌱"
+    },
+    growing: {
+        icon: "🌱",
+        name: "성장 기대 인재 유형",
+        description: "기본적인 틀은 갖췄고, 조금만 더 노력하면 훨씬 더 멋진 모습으로 성장할 인재!",
+        message: "기본기가 탄탄하네요! 여기에 교육 내용을 더해서 실력을 갈고 닦으면, 회사에 꼭 필요한 인재가 될 수 있을 거예요! 앞으로의 성장이 정말 기대돼요! ✨"
+    },
+    prepared: {
+        icon: "🌳",
+        name: "준비된 인재 유형",
+        description: "교육 내용을 잘 소화했고, 실무에 바로 투입되어도 문제 없을 준비된 신입사원!",
+        message: "와우! 교육 내용을 정말 잘 이해했네요! 탄탄한 준비를 바탕으로 이제 실무에서 마음껏 능력을 펼쳐봐요! 당신의 활약을 응원합니다! 🚀"
+    },
+    core: {
+        icon: "⭐",
+        name: "핵심 인재 유형",
+        description: "뛰어난 이해도와 잠재력을 갖춘, 앞으로 회사를 이끌어갈 핵심 인재 후보!",
+        message: "정말 멋집니다! 탁월한 역량을 바탕으로 회사의 미래를 함께 만들어가요! 동료들에게도 좋은 영향을 주는 리더가 되실 거라 확신합니다! 💫"
+    }
+};
+
+// 점수에 따른 유형 판별
+function getScoreType(score) {
+    if (score >= 0 && score <= 40) {
+        return scoreTypeData.rookie;
+    } else if (score >= 41 && score <= 60) {
+        return scoreTypeData.growing;
+    } else if (score >= 61 && score <= 80) {
+        return scoreTypeData.prepared;
+    } else if (score >= 81 && score <= 100) {
+        return scoreTypeData.core;
+    }
+
+    // 기본값
+    return scoreTypeData.rookie;
+}
+
+// 점수 구간별 유형 정보 표시
+function displayScoreType(score) {
+    const scoreTypeSection = document.getElementById('scoreTypeSection');
+    const scoreTypeIcon = document.getElementById('scoreTypeIcon');
+    const scoreTypeName = document.getElementById('scoreTypeName');
+    const scoreTypeDescription = document.getElementById('scoreTypeDescription');
+    const scoreTypeMessage = document.getElementById('scoreTypeMessage');
+
+    if (!scoreTypeSection) return;
+
+    const scoreType = getScoreType(score);
+
+    scoreTypeIcon.textContent = scoreType.icon;
+    scoreTypeName.textContent = scoreType.name;
+    scoreTypeDescription.textContent = scoreType.description;
+    scoreTypeMessage.textContent = scoreType.message;
+
+    // 애니메이션과 함께 표시
+    scoreTypeSection.style.display = 'block';
+}
+
 // 마이페이지 초기화
 document.addEventListener('DOMContentLoaded', function () {
     console.log('마이페이지 로딩 시작');
+
+    // 기존 사용자들의 가입일 정보 마이그레이션
+    migrateUserJoinDates();
 
     // 로그인 상태 확인
     const userInfo = localStorage.getItem('userInfo');
@@ -12,6 +80,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     try {
         const user = JSON.parse(userInfo);
+        console.log('현재 사용자 정보:', user);
+
+        // 저장된 결과 확인
+        const savedResults = JSON.parse(localStorage.getItem('savedResults')) || [];
+        console.log('저장된 모든 결과:', savedResults);
+        console.log('현재 사용자의 결과:', savedResults.filter(r => r.userInfo && r.userInfo.email === user.email));
+
         loadUserProfile(user);
         updateTestScore();
     } catch (error) {
@@ -27,6 +102,44 @@ document.addEventListener('DOMContentLoaded', function () {
     console.log('마이페이지 로딩 완료 - HTML 그래프 사용');
 });
 
+// 기존 사용자들의 가입일 정보 마이그레이션
+function migrateUserJoinDates() {
+    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+    let hasUpdates = false;
+
+    console.log('=== 가입일 마이그레이션 시작 ===');
+    console.log('전체 등록된 사용자 수:', registeredUsers.length);
+
+    registeredUsers.forEach((user, index) => {
+        if (!user.joinDate) {
+            // 가입일이 없는 경우 최근 며칠 내 날짜로 설정 (새 서비스이므로)
+            // 현재 날짜에서 0~7일 전 중 랜덤으로 설정
+            const daysAgo = Math.floor(Math.random() * 8); // 0~7일 전
+            const joinDate = new Date();
+            joinDate.setDate(joinDate.getDate() - daysAgo);
+            joinDate.setHours(Math.floor(Math.random() * 24)); // 랜덤 시간
+            joinDate.setMinutes(Math.floor(Math.random() * 60)); // 랜덤 분
+
+            user.joinDate = joinDate.toISOString();
+            hasUpdates = true;
+
+            const displayDate = joinDate.toLocaleDateString('ko-KR');
+            console.log(`가입일 추가: ${user.email || user.name || '익명'} -> ${displayDate}`);
+        } else {
+            console.log(`가입일 존재: ${user.email || user.name || '익명'} -> ${new Date(user.joinDate).toLocaleDateString('ko-KR')}`);
+        }
+    });
+
+    if (hasUpdates) {
+        localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+        console.log('✅ 가입일 정보 마이그레이션 완료');
+    } else {
+        console.log('✅ 모든 사용자의 가입일 정보가 이미 존재합니다.');
+    }
+
+    console.log('=== 가입일 마이그레이션 완료 ===');
+}
+
 // 사용자 프로필 정보 로드
 function loadUserProfile(user) {
     const userName = document.getElementById('userName');
@@ -38,15 +151,94 @@ function loadUserProfile(user) {
     }
 
     if (userEmail) {
-        userEmail.textContent = user.email || 'example@email.com';
+        // 이메일 로그인 계정만 이메일 표시, 카카오 로그인은 숨김
+        if (user.loginType === 'email') {
+            userEmail.textContent = user.email || 'example@email.com';
+            userEmail.style.display = 'block';
+        } else {
+            // 카카오 로그인이나 다른 로그인 타입의 경우 이메일 숨김
+            userEmail.style.display = 'none';
+        }
     }
 
-    if (joinDate && user.joinDate) {
-        const joinDateObj = new Date(user.joinDate);
-        const year = joinDateObj.getFullYear();
-        const month = String(joinDateObj.getMonth() + 1).padStart(2, '0');
-        const day = String(joinDateObj.getDate()).padStart(2, '0');
-        joinDate.textContent = `가입일: ${year}.${month}.${day}`;
+    if (joinDate) {
+        console.log('=== 가입일 표시 로직 시작 ===');
+
+        // 실제 등록된 사용자 정보에서 가입일 가져오기
+        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+        let actualUser = null;
+
+        console.log('현재 사용자 정보:', user);
+        console.log('전체 등록된 사용자 수:', registeredUsers.length);
+
+        // 이메일과 ID로 실제 사용자 찾기 (더 정확한 매칭)
+        if (user.email) {
+            actualUser = registeredUsers.find(u => u.email === user.email);
+            console.log('이메일로 사용자 검색:', user.email, '결과:', actualUser ? '찾음' : '없음');
+        }
+        if (!actualUser && user.id) {
+            actualUser = registeredUsers.find(u => u.id === user.id || u.id === user.id.toString());
+            console.log('ID로 사용자 검색:', user.id, '결과:', actualUser ? '찾음' : '없음');
+        }
+        if (!actualUser && user.name) {
+            actualUser = registeredUsers.find(u => u.name === user.name);
+            console.log('이름으로 사용자 검색:', user.name, '결과:', actualUser ? '찾음' : '없음');
+        }
+        if (!actualUser && user.nickname) {
+            actualUser = registeredUsers.find(u => u.nickname === user.nickname);
+            console.log('닉네임으로 사용자 검색:', user.nickname, '결과:', actualUser ? '찾음' : '없음');
+        }
+
+        console.log('최종 찾은 사용자:', actualUser);
+
+        if (actualUser && actualUser.joinDate) {
+            try {
+                const joinDateObj = new Date(actualUser.joinDate);
+
+                // 유효한 날짜인지 확인
+                if (!isNaN(joinDateObj.getTime())) {
+                    const year = joinDateObj.getFullYear();
+                    const month = String(joinDateObj.getMonth() + 1).padStart(2, '0');
+                    const day = String(joinDateObj.getDate()).padStart(2, '0');
+                    joinDate.textContent = `가입일: ${year}.${month}.${day}`;
+                    console.log('✅ 가입일 표시 성공:', year + '.' + month + '.' + day, '(원본:', actualUser.joinDate + ')');
+                } else {
+                    console.log('❌ 유효하지 않은 가입일:', actualUser.joinDate);
+                    joinDate.textContent = `가입일: 정보 없음`;
+                }
+            } catch (error) {
+                console.error('❌ 가입일 파싱 오류:', error, '원본 데이터:', actualUser.joinDate);
+                joinDate.textContent = `가입일: 정보 없음`;
+            }
+        } else {
+            console.log('❌ 가입일 정보를 찾을 수 없습니다.');
+
+            // 사용자 정보가 없다면 현재 사용자 정보를 registeredUsers에 추가
+            if (!actualUser) {
+                console.log('⚠️ 등록된 사용자 목록에 현재 사용자가 없습니다. 추가합니다.');
+
+                // 현재 날짜를 가입일로 설정
+                const currentDate = new Date();
+                const newUser = {
+                    ...user,
+                    joinDate: currentDate.toISOString()
+                };
+
+                registeredUsers.push(newUser);
+                localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+
+                const year = currentDate.getFullYear();
+                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                const day = String(currentDate.getDate()).padStart(2, '0');
+                joinDate.textContent = `가입일: ${year}.${month}.${day}`;
+
+                console.log('✅ 새 사용자 추가 및 가입일 표시:', year + '.' + month + '.' + day);
+            } else {
+                joinDate.textContent = `가입일: 정보 없음`;
+            }
+        }
+
+        console.log('=== 가입일 표시 로직 완료 ===');
     }
 }
 
@@ -61,6 +253,10 @@ function updateTestScore() {
         return;
     }
 
+    console.log('=== 테스트 점수 업데이트 시작 ===');
+    console.log('전체 저장된 결과:', savedResults.length, '개');
+    console.log('현재 사용자 이메일:', userInfo.email);
+
     // 현재 사용자의 결과만 필터링하고 유효한 데이터만 선택
     const userResults = savedResults.filter(result => {
         // 기본 유효성 검사
@@ -68,29 +264,42 @@ function updateTestScore() {
             return false;
         }
 
+        console.log('사용자 결과 발견:', {
+            overallScore: result.overallScore,
+            testDate: result.testDate,
+            savedAt: result.savedAt,
+            competencyScores: result.competencyScores
+        });
+
         // 점수가 유효한지 확인 (0-100 범위)
-        if (!result.overallScore || result.overallScore < 0 || result.overallScore > 100) {
+        if (result.overallScore === undefined || result.overallScore < 0 || result.overallScore > 100) {
+            console.log('무효한 점수로 제외:', result.overallScore);
             return false;
         }
 
         // 날짜가 유효한지 확인
         const dateString = result.testDate || result.savedAt;
         if (!dateString) {
+            console.log('날짜가 없어서 제외');
             return false;
         }
 
         const date = new Date(dateString);
         if (isNaN(date.getTime())) {
+            console.log('무효한 날짜로 제외:', dateString);
             return false;
         }
 
         // 역량별 점수가 존재하는지 확인
         if (!result.competencyScores || Object.keys(result.competencyScores).length === 0) {
+            console.log('역량별 점수가 없어서 제외');
             return false;
         }
 
         return true;
     });
+
+    console.log('필터링된 사용자 결과:', userResults.length, '개');
 
     // 유효한 결과만 다시 저장 (더미 데이터 정리)
     if (userResults.length !== savedResults.filter(r => r.userInfo && r.userInfo.email === userInfo.email).length) {
@@ -102,27 +311,52 @@ function updateTestScore() {
         console.log('더미 데이터 정리 완료. 유효한 결과:', userResults.length, '개');
     }
 
-    console.log('사용자 테스트 결과:', userResults);
-
     // 최신 결과 표시
     const overallScore = document.getElementById('overallScore');
     if (userResults.length > 0) {
-        const latestResult = userResults[userResults.length - 1];
+        // 날짜순으로 정렬해서 가장 최근 결과 가져오기
+        userResults.sort((a, b) => {
+            const dateA = new Date(a.testDate || a.savedAt);
+            const dateB = new Date(b.testDate || b.savedAt);
+            return dateB - dateA; // 최신순
+        });
+
+        const latestResult = userResults[0]; // 가장 최근 결과
+        console.log('가장 최근 결과:', latestResult);
+
         if (overallScore) {
             overallScore.textContent = `${latestResult.overallScore}점`;
         }
 
-        // 차트 업데이트
+        // 점수 구간별 유형 정보 표시
+        displayScoreType(latestResult.overallScore);
+
+        // 차트 업데이트 (시간순으로 다시 정렬)
+        userResults.sort((a, b) => {
+            const dateA = new Date(a.testDate || a.savedAt);
+            const dateB = new Date(b.testDate || b.savedAt);
+            return dateA - dateB; // 오래된 순
+        });
+
         updateTrendChart(userResults);
     } else {
+        console.log('표시할 테스트 결과가 없음');
         // 테스트 결과가 없는 경우
         if (overallScore) {
             overallScore.textContent = '-';
         }
 
+        // 유형 정보 숨기기
+        const scoreTypeSection = document.getElementById('scoreTypeSection');
+        if (scoreTypeSection) {
+            scoreTypeSection.style.display = 'none';
+        }
+
         // 빈 차트 표시
         updateTrendChart([]);
     }
+
+    console.log('=== 테스트 점수 업데이트 완료 ===');
 }
 
 // 결과 추이 차트 업데이트
@@ -167,7 +401,7 @@ function updateTrendChart(userResults) {
     `;
     svg.innerHTML += gridLines;
 
-    // 최대 5개 결과만 표시
+    // 최대 5개 결과만 표시 (차트가 너무 복잡해지지 않도록)
     const displayResults = userResults.slice(-5);
     const pointCount = displayResults.length;
 
@@ -348,23 +582,38 @@ function handleAccountDelete() {
     const userInfo = JSON.parse(localStorage.getItem('userInfo'));
     const userName = userInfo ? (userInfo.name || userInfo.nickname || '사용자') : '사용자';
     const userEmail = userInfo ? userInfo.email : '';
+    const userId = userInfo ? userInfo.id : '';
+    const loginType = userInfo ? userInfo.loginType : '';
 
     if (confirm(`정말로 탈퇴하시겠습니까?\n\n${userName}님의 모든 데이터가 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.`)) {
         if (confirm('마지막 확인입니다.\n정말로 탈퇴하시겠습니까?')) {
-            console.log(`=== ${userName}(${userEmail}) 계정 삭제 시작 ===`);
+            console.log(`=== ${userName}(${userEmail}, ${loginType}) 계정 삭제 시작 ===`);
 
             // 1. 현재 로그인 정보 삭제
             localStorage.removeItem('userInfo');
             localStorage.removeItem('rememberLogin'); // 자동 로그인 정보도 삭제
+            localStorage.removeItem('tempKakaoInfo'); // 임시 카카오 정보도 삭제
             console.log('✓ 로그인 정보 삭제 완료');
 
-            // 2. 등록된 사용자 목록에서 제거
+            // 2. 등록된 사용자 목록에서 제거 (이메일과 ID 둘 다 확인)
             const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
             console.log('삭제 전 등록된 사용자 수:', registeredUsers.length);
 
             const updatedUsers = registeredUsers.filter(user => {
-                if (user.email === userEmail) {
-                    console.log('삭제할 계정 발견:', user.email, user.name || user.nickname);
+                // 이메일 또는 ID가 일치하는 경우 삭제
+                const isTarget = (user.email === userEmail) ||
+                    (user.id === userId) ||
+                    (user.id === userId.toString()) ||
+                    (loginType === 'kakao' && user.loginType === 'kakao' &&
+                        (user.email === userEmail || user.id === userId));
+
+                if (isTarget) {
+                    console.log('삭제할 계정 발견:', {
+                        email: user.email,
+                        id: user.id,
+                        name: user.name || user.nickname,
+                        loginType: user.loginType
+                    });
                     return false; // 삭제
                 }
                 return true; // 유지
@@ -374,14 +623,25 @@ function handleAccountDelete() {
             console.log('✓ 계정 데이터베이스에서 삭제 완료');
             console.log('삭제 후 등록된 사용자 수:', updatedUsers.length);
 
-            // 3. 해당 사용자의 모든 테스트 결과 삭제
+            // 3. 해당 사용자의 모든 테스트 결과 삭제 (이메일과 ID 둘 다 확인)
             const savedResults = JSON.parse(localStorage.getItem('savedResults') || '[]');
             console.log('삭제 전 전체 테스트 결과 수:', savedResults.length);
 
             const filteredResults = savedResults.filter(result => {
-                if (result.userInfo && result.userInfo.email === userEmail) {
-                    console.log('삭제할 테스트 결과:', result.savedAt, '점수:', result.overallScore);
-                    return false; // 삭제
+                if (result.userInfo) {
+                    const isTarget = (result.userInfo.email === userEmail) ||
+                        (result.userInfo.id === userId) ||
+                        (result.userInfo.id === userId.toString());
+
+                    if (isTarget) {
+                        console.log('삭제할 테스트 결과:', {
+                            date: result.savedAt,
+                            score: result.overallScore,
+                            email: result.userInfo.email,
+                            id: result.userInfo.id
+                        });
+                        return false; // 삭제
+                    }
                 }
                 return true; // 다른 사용자 결과는 유지
             });
@@ -394,11 +654,98 @@ function handleAccountDelete() {
             localStorage.removeItem('testResult'); // 임시 테스트 결과 삭제
             console.log('✓ 임시 데이터 정리 완료');
 
+            // 5. 카카오 로그아웃 및 연결 해제 처리 (카카오 계정인 경우)
+            if (loginType === 'kakao' && window.Kakao && window.Kakao.Auth) {
+                console.log('카카오 완전 초기화 처리 중...');
+                try {
+                    // 1) 액세스 토큰 확인 및 연결 해제
+                    if (window.Kakao.Auth.getAccessToken()) {
+                        console.log('카카오 액세스 토큰 발견, 연결 해제 시도...');
+
+                        // 카카오와의 연결을 완전히 끊기
+                        window.Kakao.API.request({
+                            url: '/v1/user/unlink',
+                            success: function (response) {
+                                console.log('✓ 카카오 연결 해제 완료:', response);
+
+                                // 연결 해제 후 추가 정리 작업
+                                performCompleteKakaoCleanup();
+                            },
+                            fail: function (error) {
+                                console.log('카카오 연결 해제 실패, 강제 정리 진행:', error);
+
+                                // 연결 해제가 실패해도 강제로 정리
+                                performCompleteKakaoCleanup();
+                            }
+                        });
+                    } else {
+                        console.log('카카오 액세스 토큰 없음, 직접 정리 진행');
+                        performCompleteKakaoCleanup();
+                    }
+
+                    // 완전한 카카오 정리 함수
+                    function performCompleteKakaoCleanup() {
+                        try {
+                            // 2) 로그아웃 처리
+                            window.Kakao.Auth.logout(() => {
+                                console.log('✓ 카카오 로그아웃 완료');
+                            });
+
+                            // 3) 모든 카카오 관련 토큰 제거
+                            window.Kakao.Auth.setAccessToken(null);
+
+                            // 4) 브라우저 저장소에서 카카오 관련 데이터 제거
+                            const keysToRemove = [];
+
+                            // localStorage에서 카카오 관련 키 찾기
+                            for (let i = 0; i < localStorage.length; i++) {
+                                const key = localStorage.key(i);
+                                if (key && (key.includes('kakao') || key.includes('Kakao') || key.includes('KAKAO'))) {
+                                    keysToRemove.push(key);
+                                }
+                            }
+
+                            // 찾은 카카오 관련 키들 제거
+                            keysToRemove.forEach(key => {
+                                localStorage.removeItem(key);
+                                console.log('✓ 카카오 관련 저장 데이터 제거:', key);
+                            });
+
+                            // 5) sessionStorage에서도 카카오 관련 데이터 제거
+                            const sessionKeysToRemove = [];
+                            for (let i = 0; i < sessionStorage.length; i++) {
+                                const key = sessionStorage.key(i);
+                                if (key && (key.includes('kakao') || key.includes('Kakao') || key.includes('KAKAO'))) {
+                                    sessionKeysToRemove.push(key);
+                                }
+                            }
+
+                            sessionKeysToRemove.forEach(key => {
+                                sessionStorage.removeItem(key);
+                                console.log('✓ 카카오 관련 세션 데이터 제거:', key);
+                            });
+
+                            // 6) 추가 임시 카카오 정보 제거
+                            localStorage.removeItem('tempKakaoInfo');
+                            localStorage.removeItem('kakao_auth_state');
+                            sessionStorage.removeItem('kakao_auth_state');
+
+                            console.log('✓ 카카오 완전 초기화 완료');
+                        } catch (cleanupError) {
+                            console.log('카카오 정리 중 오류 (무시됨):', cleanupError);
+                        }
+                    }
+
+                } catch (error) {
+                    console.log('카카오 처리 중 오류 (무시됨):', error);
+                }
+            }
+
             console.log('=== 계정 삭제 완료 ===');
 
             alert(`${userName}님의 탈퇴가 완료되었습니다.`);
 
-            // 5. 메인 페이지로 이동
+            // 6. 메인 페이지로 이동
             setTimeout(() => {
                 window.location.href = '/';
             }, 1000);
@@ -520,4 +867,146 @@ window.listAllAccounts = function () {
     });
 
     return registeredUsers;
-}; 
+};
+
+// 가입일 정보 확인 함수 (개발자 도구에서 호출 가능)
+window.checkJoinDates = function () {
+    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+
+    console.log('=== 전체 사용자 가입일 정보 ===');
+    console.log(`총 사용자 수: ${registeredUsers.length}`);
+
+    registeredUsers.forEach((user, index) => {
+        const joinDate = user.joinDate ? new Date(user.joinDate).toLocaleDateString('ko-KR') : '정보 없음';
+        console.log(`${index + 1}. ${user.name || user.nickname} (${user.email})`);
+        console.log(`   가입일: ${joinDate}`);
+        console.log(`   로그인 타입: ${user.loginType || 'email'}`);
+        console.log(`   원본 joinDate: ${user.joinDate}`);
+        console.log('');
+    });
+
+    return registeredUsers;
+};
+
+// 특정 사용자의 가입일 수정 함수 (개발자 도구에서 호출 가능)
+window.updateUserJoinDate = function (email, dateString) {
+    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+    const user = registeredUsers.find(u => u.email === email);
+
+    if (!user) {
+        console.log(`사용자를 찾을 수 없습니다: ${email}`);
+        return false;
+    }
+
+    const oldDate = user.joinDate;
+    user.joinDate = new Date(dateString).toISOString();
+
+    localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+
+    console.log(`${email}의 가입일 수정 완료:`);
+    console.log(`이전: ${oldDate ? new Date(oldDate).toLocaleDateString('ko-KR') : '정보 없음'}`);
+    console.log(`변경: ${new Date(user.joinDate).toLocaleDateString('ko-KR')}`);
+
+    return true;
+};
+
+// 현재 로그인 사용자의 가입일 확인 함수 (개발자 도구에서 호출 가능)
+window.checkCurrentUserJoinDate = function () {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+
+    if (!userInfo.email) {
+        console.log('현재 로그인된 사용자가 없습니다.');
+        return;
+    }
+
+    const actualUser = registeredUsers.find(u => u.email === userInfo.email);
+
+    console.log('=== 현재 로그인 사용자 가입일 정보 ===');
+    console.log('로그인 정보:', userInfo);
+    console.log('실제 등록 정보:', actualUser);
+
+    if (actualUser && actualUser.joinDate) {
+        const joinDate = new Date(actualUser.joinDate);
+        console.log(`가입일: ${joinDate.toLocaleDateString('ko-KR')}`);
+        console.log(`원본 데이터: ${actualUser.joinDate}`);
+    } else {
+        console.log('가입일 정보를 찾을 수 없습니다.');
+    }
+
+    return { userInfo, actualUser };
+};
+
+// 모든 사용자의 가입일을 최근 날짜로 재설정하는 함수 (개발자 도구에서 호출 가능)
+window.resetAllJoinDatesToRecent = function () {
+    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+
+    if (registeredUsers.length === 0) {
+        console.log('등록된 사용자가 없습니다.');
+        return;
+    }
+
+    console.log('=== 모든 사용자 가입일 재설정 ===');
+    console.log(`${registeredUsers.length}명의 사용자 가입일을 최근 날짜로 재설정합니다.`);
+
+    registeredUsers.forEach((user, index) => {
+        const oldDate = user.joinDate;
+
+        // 현재 날짜에서 0~3일 전 중 랜덤으로 설정
+        const daysAgo = Math.floor(Math.random() * 4); // 0, 1, 2, 3일 전
+        const joinDate = new Date();
+        joinDate.setDate(joinDate.getDate() - daysAgo);
+        joinDate.setHours(Math.floor(Math.random() * 24)); // 랜덤 시간
+        joinDate.setMinutes(Math.floor(Math.random() * 60)); // 랜덤 분
+
+        user.joinDate = joinDate.toISOString();
+
+        const oldDisplay = oldDate ? new Date(oldDate).toLocaleDateString('ko-KR') : '정보 없음';
+        const newDisplay = joinDate.toLocaleDateString('ko-KR');
+
+        console.log(`${index + 1}. ${user.name || user.nickname} (${user.email})`);
+        console.log(`   이전: ${oldDisplay} → 변경: ${newDisplay}`);
+    });
+
+    localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+
+    console.log('');
+    console.log('✅ 모든 사용자의 가입일이 최근 날짜로 재설정되었습니다.');
+    console.log('마이페이지를 새로고침하면 변경된 가입일을 확인할 수 있습니다.');
+
+    return registeredUsers;
+};
+
+// 결과 상세보기 페이지로 이동
+function goToDetailResult() {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    if (!userInfo) {
+        alert('로그인이 필요합니다.');
+        return;
+    }
+
+    // 테스트 결과가 있는지 확인
+    const savedResults = JSON.parse(localStorage.getItem('savedResults')) || [];
+    const userResults = savedResults.filter(result =>
+        result.userInfo && result.userInfo.email === userInfo.email
+    );
+
+    if (userResults.length === 0) {
+        alert('표시할 테스트 결과가 없습니다. 먼저 테스트를 진행해주세요.');
+        return;
+    }
+
+    // 결과 페이지로 이동 (가장 최근 결과 표시)
+    userResults.sort((a, b) => {
+        const dateA = new Date(a.testDate || a.savedAt);
+        const dateB = new Date(b.testDate || b.savedAt);
+        return dateB - dateA; // 최신순
+    });
+
+    // 최신 결과를 임시 저장소에 저장하고 결과 페이지로 이동
+    const latestResult = userResults[0];
+    localStorage.setItem('tempViewResult', JSON.stringify(latestResult));
+
+    // 결과 페이지로 이동
+    window.location.href = '/result.html';
+} 

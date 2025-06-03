@@ -1,31 +1,45 @@
+// 카카오 SDK 초기화 함수
+function initKakaoSDK() {
+    if (window.Kakao && !window.Kakao.isInitialized()) {
+        // 환경에 따른 API 키 사용
+        const KAKAO_API_KEY = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? '14b0fdae82d6ff12f726e0a852c17710'  // 개발용
+            : '14b0fdae82d6ff12f726e0a852c17710'; // 프로덕션용 (실제 배포시 변경 필요)
+
+        try {
+            window.Kakao.init(KAKAO_API_KEY);
+            console.log('카카오 SDK 초기화 완료:', window.Kakao.isInitialized());
+        } catch (error) {
+            console.error('카카오 SDK 초기화 실패:', error);
+        }
+    } else if (!window.Kakao) {
+        console.log('카카오 SDK 로딩 중...');
+        setTimeout(initKakaoSDK, 1000);
+    } else {
+        console.log('카카오 SDK 이미 초기화됨:', window.Kakao.isInitialized());
+    }
+}
+
 // 로그인 페이지 초기화
 document.addEventListener('DOMContentLoaded', function () {
     console.log('로그인 페이지 JavaScript 로드 완료');
-    initKakaoSDKForLogin();
-    animatePageLoad();
+
+    // 카카오 SDK가 로드될 때까지 기다린 후 초기화
+    if (window.Kakao) {
+        initKakaoSDK();
+    } else {
+        // 카카오 SDK 스크립트가 완전히 로드될 때까지 기다림
+        window.addEventListener('load', function () {
+            setTimeout(initKakaoSDK, 500);
+        });
+    }
+
+    animatePageLoad(['.header', '.login-container']);
 
     // 테스트용: 현재 저장된 사용자 목록 확인
     const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
     console.log('현재 등록된 사용자:', users);
 });
-
-// 카카오 SDK 초기화 (로그인 페이지용)
-function initKakaoSDKForLogin() {
-    if (window.Kakao) {
-        if (!window.Kakao.isInitialized()) {
-            // 환경에 따른 API 키 사용
-            const KAKAO_API_KEY = window.location.hostname === 'localhost'
-                ? '14b0fdae82d6ff12f726e0a852c17710'  // 개발용
-                : '14b0fdae82d6ff12f726e0a852c17710'; // 프로덕션용 (실제 배포시 변경 필요)
-
-            window.Kakao.init(KAKAO_API_KEY);
-            console.log('카카오 SDK 초기화 완료:', window.Kakao.isInitialized());
-        }
-    } else {
-        console.error('카카오 SDK가 로드되지 않았습니다.');
-        setTimeout(initKakaoSDKForLogin, 1000);
-    }
-}
 
 // 일반 로그인 폼 제출 처리
 function handleLoginSubmit(event) {
@@ -163,99 +177,79 @@ function handleKakaoLoginSuccess(userId, nickname, email) {
     // 기존 사용자 목록 가져오기
     const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
 
-    // 카카오 사용자 확인 또는 새로 추가
-    let user = registeredUsers.find(u => u.email === email && u.loginType === 'kakao');
+    console.log('=== 카카오 로그인 처리 시작 ===');
+    console.log('카카오 사용자 정보:', { userId, nickname, email });
 
-    if (!user) {
-        // 새 카카오 사용자 추가
-        user = {
-            id: userId.toString(),
-            name: nickname,
-            email: email,
-            loginType: 'kakao',
-            joinDate: new Date().toISOString()
-        };
-        registeredUsers.push(user);
-        localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+    // 이메일과 카카오 ID 둘 다로 중복 체크
+    let existingUser = null;
+
+    // 1. 이메일로 기존 사용자 찾기 (모든 로그인 타입 포함)
+    const userByEmail = registeredUsers.find(u => u.email === email);
+
+    // 2. 카카오 ID로 기존 사용자 찾기
+    const userByKakaoId = registeredUsers.find(u => u.id === userId.toString() && u.loginType === 'kakao');
+
+    if (userByEmail) {
+        console.log('이메일로 기존 사용자 발견:', userByEmail);
+        if (userByEmail.loginType === 'kakao') {
+            // 기존 카카오 계정
+            existingUser = userByEmail;
+        } else {
+            // 이메일 계정이 이미 존재
+            showNotification(`${email}은 이미 이메일로 가입된 계정입니다.`, 'error');
+            return;
+        }
     }
 
+    if (userByKakaoId && !existingUser) {
+        console.log('카카오 ID로 기존 사용자 발견:', userByKakaoId);
+        existingUser = userByKakaoId;
+    }
+
+    if (!existingUser) {
+        // 완전히 새로운 사용자 - 회원가입 과정 필요
+        console.log('새로운 카카오 사용자 - 회원가입 페이지로 이동');
+
+        // 임시 카카오 정보 저장
+        const tempKakaoInfo = {
+            userId: userId.toString(),
+            nickname: nickname,
+            email: email,
+            loginType: 'kakao'
+        };
+
+        localStorage.setItem('tempKakaoInfo', JSON.stringify(tempKakaoInfo));
+        showNotification('카카오 계정 연동을 위한 회원가입이 필요합니다.', 'info');
+
+        setTimeout(() => {
+            window.location.href = '/signup.html';
+        }, 2000);
+        return;
+    }
+
+    // 기존 사용자 로그인 처리
+    console.log('기존 카카오 사용자 로그인:', existingUser);
+
+    // 기존 사용자의 name이 있으면 사용하고, 없으면 카카오 nickname 사용
+    const displayName = existingUser.name || nickname;
+
     const userInfo = {
-        id: user.id,
-        name: user.name,
-        nickname: user.name,
-        email: user.email,
+        id: existingUser.id,
+        name: displayName,
+        nickname: nickname, // 카카오에서 받은 실제 nickname 사용
+        email: existingUser.email,
         loginType: 'kakao',
         loginTime: new Date().toISOString()
     };
 
     localStorage.setItem('userInfo', JSON.stringify(userInfo));
+    console.log('카카오 로그인 완료:', userInfo);
 
-    showNotification(`${nickname}님, 환영합니다!`, 'success');
+    showNotification(`${displayName}님, 환영합니다!`, 'success');
 
     setTimeout(() => {
         window.location.href = 'index.html';
     }, 1500);
-}
-
-// 홈으로 이동
-function goHome() {
-    window.location.href = 'index.html';
-}
-
-// 알림 표시 함수
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 1rem 2rem;
-        background-color: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
-        color: white;
-        border-radius: 12px;
-        font-weight: 500;
-        transform: translateX(400px);
-        transition: transform 0.2s ease;
-        z-index: 1000;
-        max-width: 300px;
-    `;
-
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-    }, 10);
-
-    setTimeout(() => {
-        notification.style.transform = 'translateX(400px)';
-        setTimeout(() => {
-            notification.remove();
-        }, 200);
-    }, 2000);
-}
-
-// 페이지 로드 애니메이션
-function animatePageLoad() {
-    const container = document.querySelector('.login-container');
-    const header = document.querySelector('.header');
-
-    // 초기 상태 설정
-    header.style.opacity = '0';
-    container.style.opacity = '0';
-    container.style.transform = 'translateY(20px)';
-
-    // 애니메이션 적용
-    setTimeout(() => {
-        header.style.transition = 'opacity 0.3s ease';
-        header.style.opacity = '1';
-
-        container.style.transition = 'all 0.3s ease';
-        container.style.opacity = '1';
-        container.style.transform = 'translateY(0)';
-    }, 50);
 }
 
 // 엔터 키로 로그인 처리
@@ -301,4 +295,62 @@ window.addEventListener('load', function () {
             localStorage.removeItem('rememberLogin');
         }
     }
-}); 
+});
+
+// 알림 표시 함수
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 2rem;
+        background-color: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: white;
+        border-radius: 12px;
+        font-weight: 500;
+        transform: translateX(400px);
+        transition: transform 0.2s ease;
+        z-index: 1000;
+        max-width: 300px;
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 10);
+
+    setTimeout(() => {
+        notification.style.transform = 'translateX(400px)';
+        setTimeout(() => {
+            notification.remove();
+        }, 200);
+    }, 2000);
+}
+
+// 페이지 로드 애니메이션
+function animatePageLoad(elements) {
+    elements.forEach(element => {
+        const container = document.querySelector(element);
+        const header = document.querySelector('.header');
+
+        // 초기 상태 설정
+        header.style.opacity = '0';
+        container.style.opacity = '0';
+        container.style.transform = 'translateY(20px)';
+
+        // 애니메이션 적용
+        setTimeout(() => {
+            header.style.transition = 'opacity 0.3s ease';
+            header.style.opacity = '1';
+
+            container.style.transition = 'all 0.3s ease';
+            container.style.opacity = '1';
+            container.style.transform = 'translateY(0)';
+        }, 50);
+    });
+} 

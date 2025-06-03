@@ -48,21 +48,64 @@
 
 /* 그래프 섹션 */
 .graph-section {
-    margin-bottom: 2.5rem;
+    margin-bottom: 3.5rem;
+    position: relative;
+}
+
+.graph-section::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    border-radius: 2px;
 }
 
 .graph-image {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-radius: 16px;
-    padding: 2.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
+    padding: 3rem;
     display: inline-block;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+    box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.08),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0px rgba(255, 255, 255, 0.8);
     border: 1px solid #e2e8f0;
+    position: relative;
+    overflow: hidden;
+}
+
+.graph-image::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+}
+
+.graph-image::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.03) 0%, transparent 70%);
+    pointer-events: none;
 }
 
 #lineChart {
     max-width: 100%;
     height: auto;
+    position: relative;
+    z-index: 1;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.5);
 }
 
 /* 설명 섹션 */
@@ -265,11 +308,11 @@
     min-width: 0;
     position: absolute;
     left: 50%;
-    transform: translateX(-50%) scale(1.5);
+    transform: translateX(-50%) scale(1.2) !important;
 }
 
 .logo:hover {
-    transform: translateX(-50%) scale(1.6);
+    transform: translateX(-50%) scale(1.3) !important;
 }
 
 .logo img {
@@ -280,7 +323,7 @@
 
 .logo h2 {
     color: var(--primary-color);
-    font-size: 2.5rem;
+    font-size: 2.0rem !important;
     font-weight: 700;
     letter-spacing: -0.5px;
 }

@@ -51,7 +51,7 @@
 }
 
 .result-title {
-    font-size: 2.5rem;
+    font-size: 2.7rem;
     font-weight: 700;
     color: #1e293b;
     margin: 0 0 1rem 0;
@@ -59,7 +59,7 @@
 }
 
 .result-subtitle {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     color: #64748b;
     margin: 0;
     font-weight: 500;
@@ -85,29 +85,93 @@
 }
 
 .score-label {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     color: #64748b;
     font-weight: 600;
 }
 
 .score-value {
-    font-size: 4rem;
+    font-size: 4.2rem;
     font-weight: 700;
     color: #3b82f6;
     line-height: 1;
 }
 
 .score-unit {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     color: #64748b;
     font-weight: 600;
 }
 
 .score-description p {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     color: #475569;
     margin: 0;
     font-weight: 500;
+}
+
+/* 점수 구간별 유형 표시 */
+.score-type-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+.score-type-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.score-type-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.score-type-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: -0.25px;
+}
+
+.score-type-description {
+    font-size: 1.2rem;
+    color: #475569;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+}
+
+.score-type-message {
+    font-size: 1.1rem;
+    color: #64748b;
+    line-height: 1.6;
+    font-weight: 500;
+    max-width: 800px;
+    margin: 0 auto;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* 역량별 상세 결과 */
@@ -121,7 +185,7 @@
 }
 
 .section-title {
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: 700;
     color: #1e293b;
     margin: 0 0 2rem 0;
@@ -155,13 +219,13 @@
 }
 
 .competency-name {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 600;
     color: #1e293b;
 }
 
 .competency-score {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     font-weight: 700;
     color: #3b82f6;
 }
@@ -183,9 +247,73 @@
 }
 
 .competency-description {
-    font-size: 0.9rem;
+    font-size: 1rem;
     color: #64748b;
     line-height: 1.5;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+}
+
+/* 역량별 피드백 영역 */
+.competency-feedback {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.feedback-header {
+    margin-bottom: 0.75rem;
+}
+
+.feedback-level {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: -0.25px;
+}
+
+.feedback-level.basic {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fbbf24;
+}
+
+.feedback-level.intermediate {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #60a5fa;
+}
+
+.feedback-level.advanced {
+    background: #d1fae5;
+    color: #059669;
+    border: 1px solid #34d399;
+}
+
+.feedback-content {
+    font-size: 1rem;
+    color: #374151;
+    line-height: 1.6;
+    font-weight: 500;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* 액션 버튼 */
@@ -194,6 +322,7 @@
     justify-content: center;
     gap: 1rem;
     flex-wrap: wrap;
+    margin-bottom: 10rem;
 }
 
 .btn-primary,
@@ -248,6 +377,7 @@
     justify-content: space-around;
     flex-wrap: wrap;
     gap: 1rem;
+    margin-bottom: 3rem;
 }
 
 .test-info-item {
@@ -258,7 +388,7 @@
 
 .test-info-item .label {
     display: block;
-    font-size: 0.9rem;
+    font-size: 1rem;
     color: #64748b;
     font-weight: 500;
     margin-bottom: 0.5rem;
@@ -266,7 +396,7 @@
 
 .test-info-item .value {
     display: block;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     color: #1e293b;
     font-weight: 600;
 }

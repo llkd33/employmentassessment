@@ -9,10 +9,44 @@ function validatePassword(password) {
     return passwordRegex.test(password);
 }
 
-// 이메일 유효성 검사
+// 이메일 유효성 검사 (엄격한 검증)
 function validateEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    // 기본 이메일 형식 체크
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    if (!emailRegex.test(email)) {
+        return false;
+    }
+
+    // 최상위 도메인 추가 검증
+    const parts = email.split('@');
+    if (parts.length !== 2) {
+        return false;
+    }
+
+    const domain = parts[1];
+    const domainParts = domain.split('.');
+    if (domainParts.length < 2) {
+        return false;
+    }
+
+    // 최상위 도메인 검증
+    const topLevelDomain = domainParts[domainParts.length - 1].toLowerCase();
+
+    // 3글자 이상의 TLD는 허용
+    if (topLevelDomain.length >= 3) {
+        return true;
+    }
+
+    // 2글자 TLD는 일반적으로 사용되는 것만 허용
+    const validTwoLetterTLDs = ['kr', 'jp', 'cn', 'uk', 'de', 'fr', 'it', 'es', 'ru', 'au', 'ca', 'in', 'br', 'mx'];
+
+    if (topLevelDomain.length === 2 && validTwoLetterTLDs.includes(topLevelDomain)) {
+        return true;
+    }
+
+    // "co" 같은 불완전한 도메인 거부
+    return false;
 }
 
 // 비밀번호 일치 확인
@@ -38,7 +72,7 @@ function handleSignupSubmit(event) {
     }
 
     if (!validateEmail(email)) {
-        alert('올바른 이메일 형식을 입력해주세요.');
+        alert('올바른 이메일 형식을 입력해주세요.\n예: example@naver.com, user@gmail.com\n\n※ 최상위 도메인(.com, .net 등)을 정확히 입력해주세요.');
         return;
     }
 

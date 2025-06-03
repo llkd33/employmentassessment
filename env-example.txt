@@ -1,0 +1,24 @@
+# 데이터베이스 설정
+DATABASE_URL=postgresql://username:password@localhost:5432/employee_assessment
+
+# Supabase 사용 시 (추천)
+# DATABASE_URL=postgresql://postgres:password@db.your-project.supabase.co:5432/postgres
+
+# Railway 사용 시
+# DATABASE_URL=postgresql://postgres:password@containers-us-west-x.railway.app:port/railway
+
+# Heroku 사용 시 (자동으로 설정됨)
+# DATABASE_URL=postgres://user:password@host:port/database
+
+# 서버 설정
+NODE_ENV=development
+PORT=3000
+
+# 세션 보안 (배포 시 변경 필요)
+SESSION_SECRET=your-super-secret-session-key-change-this-in-production
+
+# 카카오 API (필요한 경우)
+KAKAO_APP_KEY=your-kakao-app-key
+
+# CORS 설정 (배포 시 실제 도메인으로 변경)
+ALLOWED_ORIGINS=http://localhost:3000,https://your-domain.com 

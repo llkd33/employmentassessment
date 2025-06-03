@@ -236,8 +236,18 @@
     padding: 4rem;
 }
 
+/* 종합 점수 카드 */
+.overall-score-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem;
+    position: relative;
+}
+
 .score-display {
     text-align: center;
+    margin-bottom: 2rem;
 }
 
 .score-circle {
@@ -249,7 +259,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 2rem;
+    margin: 0 auto;
     box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
     border: 5px solid #ffffff;
 }
@@ -272,6 +282,72 @@
     color: #64748b;
     margin: 0;
     font-weight: 500;
+}
+
+/* 점수 구간별 유형 표시 */
+.score-type-section {
+    margin-top: 1rem;
+    padding: 2rem 2.5rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    animation: fadeInUp 0.6s ease-out 0.3s both;
+    max-width: 650px;
+    width: 100%;
+    position: relative;
+    min-height: 180px;
+}
+
+.score-type-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.score-type-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.score-type-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: -0.25px;
+}
+
+.score-type-description {
+    font-size: 1.2rem;
+    color: #475569;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+}
+
+.score-type-message {
+    font-size: 1.1rem;
+    color: #64748b;
+    line-height: 1.6;
+    font-weight: 500;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* HTML 점 그래프 스타일 */
@@ -398,4 +474,31 @@
 .btn-danger:active,
 .account-delete-btn:active {
     transform: translateY(0);
+}
+
+/* 결과 상세보기 버튼 */
+.detail-view-link {
+    position: absolute;
+    bottom: 5px;
+    right: 8px;
+}
+
+.view-detail-btn {
+    color: #3b82f6;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: color 0.2s ease;
+    background: transparent;
+    border: none;
+}
+
+.view-detail-btn:hover {
+    color: #2563eb;
 }

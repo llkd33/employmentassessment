@@ -38,10 +38,31 @@
             <!-- 테스트 결과 섹션 -->
             <section class="test-results-section">
                 <h3 class="section-title">나의 테스트 결과</h3>
-                <div class="simple-result">
+
+                <!-- 종합 점수 카드 -->
+                <div class="overall-score-card">
                     <div class="score-display">
                         <div class="score-circle">
                             <span class="score-number" id="overallScore">--</span>
+                        </div>
+                    </div>
+
+                    <!-- 점수 구간별 유형 표시 -->
+                    <div class="score-type-section" id="scoreTypeSection" style="display: none;">
+                        <div class="score-type-header">
+                            <span class="score-type-icon" id="scoreTypeIcon">⭐</span>
+                            <span class="score-type-name" id="scoreTypeName">핵심 인재 유형</span>
+                        </div>
+                        <div class="score-type-description" id="scoreTypeDescription">
+                            뛰어난 이해도와 잠재력을 갖춘, 앞으로 회사를 이끌어갈 핵심 인재 후보!
+                        </div>
+                        <div class="score-type-message" id="scoreTypeMessage">
+                            정말 멋집니다! 탁월한 역량을 바탕으로 회사의 미래를 함께 만들어가요!
+                        </div>
+
+                        <!-- 결과 상세보기 버튼 -->
+                        <div class="detail-view-link" id="detailViewLink">
+                            <span class="view-detail-btn" onclick="goToDetailResult()">결과 상세보기 →</span>
                         </div>
                     </div>
                 </div>
@@ -79,8 +100,13 @@
         </div>
     </main>
 
+    <script src="utils/common.js"></script>
     <script src="script.js"></script>
     <script src="mypage.js"></script>
+    <script>
+        // 마이페이지 디버깅 정보
+        console.log('마이페이지 스크립트 로드됨');
+    </script>
 </body>
 
 </html>

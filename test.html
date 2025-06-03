@@ -7,51 +7,674 @@
     <title>역량검사 - 신입사원 역량테스트</title>
     <link rel="stylesheet" href="common.css">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="test.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* 헤더 스타일 */
+        .header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 55px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #666;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+
+        .back-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .logo-image {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #4A90E2, #357ABD);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .logo-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .welcome-text {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .header-btn {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .header-btn.primary {
+            background: #4A90E2;
+            color: white;
+            border-color: #4A90E2;
+        }
+
+        .header-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .header-btn.primary:hover {
+            background: #357ABD;
+        }
+
+        /* 메인 컨테이너 */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        /* 진행률 섹션 */
+        .progress-section {
+            background: white;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .progress-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .progress-title {
+            display: inline-block;
+            background: #4A90E2;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4A90E2, #357ABD);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .steps-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            flex: 1;
+        }
+
+        .step-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 15px;
+            transition: all 0.3s;
+            margin-bottom: 6px;
+        }
+
+        .step-circle.active {
+            background: #4A90E2;
+            color: white;
+        }
+
+        .step-circle.completed {
+            background: #4A90E2;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .step-item.active .step-label {
+            color: #4A90E2;
+            font-weight: 600;
+        }
+
+        /* 테스트 영역 */
+        .test-section {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 15px;
+        }
+
+        .category-header {
+            background: #4A90E2;
+            color: white;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .survey-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .survey-table thead th {
+            background: #f8f9fa;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 12px;
+            color: #333;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .survey-table thead th:first-child {
+            text-align: left;
+            width: 50%;
+            padding-left: 20px;
+        }
+
+        .survey-table thead th:not(:first-child) {
+            width: 10%;
+        }
+
+        .survey-table tbody tr {
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .survey-table tbody tr:hover {
+            background: #fafbfc;
+        }
+
+        .question-text-cell {
+            padding: 20px 25px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            border-right: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .scale-cell {
+            text-align: center;
+            padding: 20px 10px;
+            border-right: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .scale-cell:last-child {
+            border-right: none;
+        }
+
+        .scale-label {
+            display: block;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .scale-label input[type="radio"] {
+            opacity: 0;
+            position: absolute;
+        }
+
+        .radio-custom {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            background: white;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .scale-label input[type="radio"]:checked+.radio-custom {
+            border-color: #4A90E2;
+            background: #4A90E2;
+        }
+
+        .scale-label input[type="radio"]:checked+.radio-custom::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .scale-label:hover .radio-custom {
+            border-color: #4A90E2;
+        }
+
+        /* 네비게이션 섹션 */
+        .navigation-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 80px;
+        }
+
+        .nav-btn.secondary {
+            background: #e9ecef;
+            color: #666;
+        }
+
+        .nav-btn.primary {
+            background: #4A90E2;
+            color: white;
+        }
+
+        .nav-btn:disabled {
+            background: #f8f9fa;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .nav-btn:not(:disabled):hover.secondary {
+            background: #dee2e6;
+        }
+
+        .nav-btn:not(:disabled):hover.primary {
+            background: #357ABD;
+        }
+
+        .page-info {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* 로딩 오버레이 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 250px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4A90E2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* 에러 섹션 */
+        .error-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: none;
+        }
+
+        .error-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+
+        .error-message {
+            font-size: 16px;
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+
+        .retry-btn {
+            background: #4A90E2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .retry-btn:hover {
+            background: #357ABD;
+        }
+
+        /* 토스트 메시지 */
+        .toast-container {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1100;
+        }
+
+        .toast {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            min-width: 250px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast.toast-success {
+            border-left: 3px solid #28a745;
+        }
+
+        .toast.toast-error {
+            border-left: 3px solid #dc3545;
+        }
+
+        .toast.toast-warning {
+            border-left: 3px solid #ffc107;
+        }
+
+        .toast.toast-info {
+            border-left: 3px solid #17a2b8;
+        }
+
+        .toast-icon {
+            font-size: 16px;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .header-container {
+                padding: 0 12px;
+                height: 50px;
+            }
+
+            .logo-text {
+                display: none;
+            }
+
+            .main-container {
+                padding: 12px;
+            }
+
+            .progress-section {
+                padding: 15px;
+            }
+
+            .steps-container {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .step-item {
+                flex-direction: row;
+                width: 100%;
+                justify-content: flex-start;
+                gap: 12px;
+            }
+
+            .step-circle {
+                margin-bottom: 0;
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+
+            .survey-table thead th:first-child {
+                padding-left: 12px;
+            }
+
+            .question-text-cell {
+                padding: 12px;
+                font-size: 13px;
+            }
+
+            .scale-cell {
+                padding: 12px 4px;
+            }
+
+            .navigation-section {
+                padding: 12px 15px;
+            }
+
+            .nav-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+                min-width: 70px;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <!-- 헤더 영역 -->
+    <!-- 헤더 -->
     <header class="header">
         <div class="header-container">
-            <!-- JavaScript로 동적 생성 -->
+            <div class="header-left">
+                <button class="back-btn" onclick="goBack()">←</button>
+                <div class="header-logo">
+                    <div class="logo-image">㈜</div>
+                    <div class="logo-text">대구·경북철단·벤처기업연합회</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="welcome-text">안녕하세요, 테스트님!</span>
+                <button class="header-btn" onclick="goToMyPage()">마이페이지</button>
+                <button class="header-btn" onclick="logout()">로그아웃</button>
+            </div>
         </div>
     </header>
 
-    <!-- 메인 콘텐츠 영역 -->
-    <main class="test-main">
-        <div class="test-simple-container">
-            <!-- 테스트 안내 -->
-            <div class="test-info-card">
-                <div class="test-icon">📋</div>
-                <h1 class="test-title">신입사원 역량검사</h1>
-                <p class="test-description">
-                    역량검사가 끝났습니다.<br>
-                    아래 제출하기 버튼을 클릭하여 테스트 결과를 확인하세요.
-                </p>
-
-                <div class="test-details">
-                    <div class="detail-item">
-                        <span class="detail-label">문항 수:</span>
-                        <span class="detail-value">75문항</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">예상 소요시간:</span>
-                        <span class="detail-value">약 60분</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">평가 영역:</span>
-                        <span class="detail-value">리더십, 커뮤니케이션, 창의성, 문제해결, 협업</span>
-                    </div>
+    <!-- 메인 컨테이너 -->
+    <div class="main-container">
+        <!-- 진행률 섹션 -->
+        <div class="progress-section">
+            <div class="progress-header">
+                <div class="progress-title" id="progressText">1/5 단계 (15문항)</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progressFill" style="width: 20%;"></div>
                 </div>
-
-                <!-- 제출 버튼 -->
-                <div class="submit-section">
-                    <button class="btn-primary submit-btn" onclick="submitTest()">제출하기</button>
+            </div>
+            <div class="steps-container">
+                <div class="step-item active">
+                    <div class="step-circle active">1</div>
+                    <div class="step-label">조직적응</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">직무전문성</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">의사소통</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-circle">4</div>
+                    <div class="step-label">문제해결</div>
+                </div>
+                <div class="step-item">
+                    <div class="step-circle">5</div>
+                    <div class="step-label">리더십</div>
                 </div>
             </div>
         </div>
-    </main>
+
+        <!-- 테스트 섹션 -->
+        <div class="test-section" id="questionsSection">
+            <div class="category-header" id="categoryHeader">조직 적응력 (1-6차시)</div>
+            <div id="questionsContainer">
+                <!-- JavaScript로 동적 생성 -->
+            </div>
+        </div>
+
+        <!-- 에러 섹션 -->
+        <div class="error-section" id="errorSection">
+            <div class="error-icon">⚠️</div>
+            <div class="error-message" id="errorMessage">문항을 불러오는 중 오류가 발생했습니다.</div>
+            <button class="retry-btn" onclick="retryLoadQuestions()">다시 시도</button>
+        </div>
+
+        <!-- 네비게이션 섹션 -->
+        <div class="navigation-section">
+            <button class="nav-btn secondary" id="prevBtn" onclick="previousPage()" disabled>이전</button>
+            <div class="page-info" id="pageInfo">1 / 5</div>
+            <button class="nav-btn primary" id="nextBtn" onclick="nextPage()">다음 ></button>
+            <button class="nav-btn primary" id="submitBtn" onclick="submitTest()" style="display: none;">제출하기</button>
+        </div>
+    </div>
+
+    <!-- 로딩 오버레이 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">문항을 불러오는 중입니다...</div>
+        </div>
+    </div>
+
+    <!-- 토스트 컨테이너 -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <script src="script.js"></script>
     <script src="test.js"></script>
