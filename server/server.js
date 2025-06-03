@@ -13,7 +13,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 데이터 파일 경로
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = path.join(__dirname, '../data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const RESULTS_FILE = path.join(DATA_DIR, 'test-results.json');
 
@@ -79,7 +79,7 @@ initDataFiles();
 // 미들웨어
 app.use(cors());
 app.use(express.json());
-app.use(express.static('./')); // 정적 파일 서빙
+app.use(express.static('../client')); // 정적 파일 서빙
 
 // JWT 토큰 생성
 const generateToken = (userId) => {

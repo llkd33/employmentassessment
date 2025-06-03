@@ -459,29 +459,42 @@ const Performance = (() => {
         async loadPageResources(pageName) {
             const pageResources = {
                 'test': [
-                    { href: '/test.css', type: 'css' },
-                    { href: '/test.js', type: 'script' }
+                    { href: '/css/test.css', type: 'css' },
+                    { href: '/js/test.js', type: 'script' }
                 ],
                 'result': [
-                    { href: '/result.css', type: 'css' },
-                    { href: '/result.js', type: 'script' }
+                    { href: '/css/result.css', type: 'css' },
+                    { href: '/js/result.js', type: 'script' }
                 ],
                 'mypage': [
-                    { href: '/mypage.css', type: 'css' },
-                    { href: '/mypage.js', type: 'script' }
+                    { href: '/css/mypage.css', type: 'css' },
+                    { href: '/js/mypage.js', type: 'script' }
                 ]
             };
 
             const resources = pageResources[pageName] || [];
             const promises = resources.map(resource => {
                 if (resource.type === 'css') {
-                    return this.loadCSS(resource.href);
+                    return this.loadCSS(resource.href).catch(error => {
+                        console.warn(`Failed to load CSS: ${resource.href}`, error);
+                        return Promise.resolve(); // CSS 로딩 실패해도 계속 진행
+                    });
                 } else if (resource.type === 'script') {
-                    return LazyLoader.loadScript(resource.href);
+                    return LazyLoader.loadScript(resource.href).catch(error => {
+                        console.warn(`Failed to load script: ${resource.href}`, error);
+                        return Promise.resolve(); // 스크립트 로딩 실패해도 계속 진행
+                    });
                 }
+                return Promise.resolve();
             });
 
-            return Promise.all(promises);
+            try {
+                await Promise.all(promises);
+                console.log(`Successfully loaded resources for page: ${pageName}`);
+            } catch (error) {
+                console.warn(`Some resources failed to load for page: ${pageName}`, error);
+                // 일부 리소스 로딩 실패해도 진행
+            }
         }
     };
 
