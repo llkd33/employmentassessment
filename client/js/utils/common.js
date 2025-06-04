@@ -1,8 +1,8 @@
 // 공통 설정 정보
 const APP_CONFIG = {
     KAKAO_API_KEY: window.location.hostname === 'localhost'
-        ? '14b0fdae82d6ff12f726e0a852c17710'  // 개발용
-        : '14b0fdae82d6ff12f726e0a852c17710'  // 프로덕션용 (실제 배포시 변경 필요)
+        ? 'your_kakao_javascript_key_here'  // 개발용 (카카오 개발자 콘솔에서 발급)
+        : 'your_kakao_javascript_key_here'  // 프로덕션용 (카카오 개발자 콘솔에서 발급)
 };
 
 // 알림 표시 함수 (통합)

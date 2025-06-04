@@ -1,10 +1,8 @@
 // 카카오 SDK 로드 및 초기화를 안전하게 처리
 function initKakaoSDK() {
     if (window.Kakao && !window.Kakao.isInitialized()) {
-        // 환경에 따른 API 키 사용
-        const KAKAO_API_KEY = window.location.hostname === 'localhost'
-            ? '14b0fdae82d6ff12f726e0a852c17710'  // 개발용
-            : '14b0fdae82d6ff12f726e0a852c17710'; // 프로덕션용 (실제 배포시 변경 필요)
+        // common.js의 APP_CONFIG에서 카카오 API 키 가져오기
+        const KAKAO_API_KEY = APP_CONFIG.KAKAO_API_KEY;
 
         window.Kakao.init(KAKAO_API_KEY);
         console.log('카카오 SDK 초기화 완료');
