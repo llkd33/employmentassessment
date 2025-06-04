@@ -103,18 +103,6 @@ const competencyRanges = {
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('결과 페이지 로드됨');
-
-    // 뒤로가기 확인 기능 활성화
-    if (window.BackNavigation) {
-        window.BackNavigation.enable({
-            message: '결과 페이지를 나가시겠습니까?',
-            title: '페이지 이동',
-            redirectUrl: '/'
-        });
-        console.log('뒤로가기 확인 기능 활성화됨 (결과 페이지)');
-    }
-
     initializeResultPage();
 });
 

@@ -106,17 +106,7 @@ const questionTexts = [
 
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('테스트 페이지 로드됨');
-
-    // 뒤로가기 확인 기능 활성화
-    if (window.BackNavigation) {
-        window.BackNavigation.enable({
-            message: '테스트를 중단하고 나가시겠습니까?\n현재 진행 상황이 저장되지 않습니다.',
-            title: '테스트 중단',
-            redirectUrl: '/'
-        });
-        console.log('뒤로가기 확인 기능 활성화됨');
-    }
+    console.log('테스트 페이지 로딩 시작');
 
     // 로그인 상태 확인
     const userInfo = localStorage.getItem('userInfo');
@@ -406,39 +396,11 @@ function logout() {
 
 // 테스트 제출 함수
 async function submitTest() {
-    console.log('테스트 제출 시작');
-
     try {
-        // 모든 문항이 답변되었는지 확인
+        // 모든 답변 완료 여부 확인
         if (Object.keys(userAnswers).length !== 75) {
-            if (window.UI && window.UI.Modal) {
-                await window.UI.Modal.alert(
-                    `${75 - Object.keys(userAnswers).length}개의 문항이 답변되지 않았습니다.\n모든 문항에 답변해주세요.`,
-                    '미완료 문항'
-                );
-            } else {
-                alert(`${75 - Object.keys(userAnswers).length}개의 문항이 답변되지 않았습니다.\n모든 문항에 답변해주세요.`);
-            }
+            showToast(`${75 - Object.keys(userAnswers).length}개 문항이 미완료되었습니다.`, 'warning', 3000);
             return;
-        }
-
-        // 최종 제출 확인
-        let confirmed = false;
-        if (window.UI && window.UI.Modal) {
-            confirmed = await window.UI.Modal.confirm(
-                '정말로 테스트를 제출하시겠습니까?\n제출 후에는 수정할 수 없습니다.',
-                '최종 제출'
-            );
-        } else {
-            confirmed = confirm('정말로 테스트를 제출하시겠습니까?\n제출 후에는 수정할 수 없습니다.');
-        }
-
-        if (!confirmed) return;
-
-        // 뒤로가기 확인 기능 비활성화 (테스트 완료)
-        if (window.BackNavigation) {
-            window.BackNavigation.disable();
-            console.log('뒤로가기 확인 기능 비활성화됨 (테스트 완료)');
         }
 
         isSubmitting = true;
