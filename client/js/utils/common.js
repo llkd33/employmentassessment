@@ -192,3 +192,67 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+// 뒤로가기 확인 기능
+const BackNavigation = {
+    enabled: false,
+
+    // 뒤로가기 확인 활성화
+    enable(options = {}) {
+        if (this.enabled) return;
+
+        const config = {
+            message: '페이지를 나가시겠습니까?',
+            title: '확인',
+            redirectUrl: '/',
+            ...options
+        };
+
+        this.enabled = true;
+
+        // 히스토리에 현재 상태 추가 (뒤로가기 감지용)
+        if (window.history && window.history.pushState) {
+            window.history.pushState({ backNavigationEnabled: true }, '', window.location.href);
+        }
+
+        // popstate 이벤트 리스너 등록
+        this.handlePopState = async (event) => {
+            if (this.enabled) {
+                // 히스토리를 다시 앞으로 이동 (뒤로가기 취소)
+                window.history.pushState({ backNavigationEnabled: true }, '', window.location.href);
+
+                // UI.Modal.confirm 사용 (마이페이지와 동일한 스타일)
+                if (window.UI && window.UI.Modal) {
+                    const confirmed = await window.UI.Modal.confirm(config.message, config.title);
+                    if (confirmed) {
+                        this.disable();
+                        window.location.href = config.redirectUrl;
+                    }
+                } else {
+                    // UI 모달이 없는 경우 기본 confirm 사용
+                    const confirmed = confirm(config.message);
+                    if (confirmed) {
+                        this.disable();
+                        window.location.href = config.redirectUrl;
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('popstate', this.handlePopState);
+    },
+
+    // 뒤로가기 확인 비활성화
+    disable() {
+        if (!this.enabled) return;
+
+        this.enabled = false;
+        if (this.handlePopState) {
+            window.removeEventListener('popstate', this.handlePopState);
+            this.handlePopState = null;
+        }
+    }
+};
+
+// 전역에서 사용할 수 있도록 노출
+window.BackNavigation = BackNavigation;
