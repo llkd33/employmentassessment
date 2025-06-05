@@ -289,6 +289,42 @@ function displayOverallScore(score) {
     document.getElementById('scoreTypeName').textContent = scoreType.name;
     document.getElementById('scoreTypeDescription').textContent = scoreType.description;
     document.getElementById('scoreTypeMessage').textContent = scoreType.message;
+
+    // 4단계 프로그레스 바 업데이트
+    updateProgressSteps(score);
+}
+
+// 4단계 프로그레스 바 업데이트 함수
+function updateProgressSteps(score) {
+    // 현재 단계 결정
+    let currentStep = 1;
+    if (score > 40 && score <= 60) currentStep = 2;
+    else if (score > 60 && score <= 80) currentStep = 3;
+    else if (score > 80 && score <= 100) currentStep = 4;
+
+    // 모든 단계 초기화
+    const allSteps = document.querySelectorAll('.progress-step');
+    allSteps.forEach(step => {
+        const circle = step.querySelector('.step-circle');
+        step.classList.remove('active', 'completed');
+        circle.classList.remove('active', 'completed');
+    });
+
+    // 현재 단계의 동그라미만 활성화
+    if (currentStep <= 4) {
+        const currentStepElement = document.querySelector(`[data-step="${currentStep}"]`);
+        const currentCircle = currentStepElement.querySelector('.step-circle');
+        currentStepElement.classList.add('active');
+        currentCircle.classList.add('active');
+    }
+
+    // 프로그레스 라인은 비활성화 (0%로 유지)
+    const progressLineFill = document.getElementById('progressLineFill');
+    if (progressLineFill) {
+        progressLineFill.style.width = '0%';
+    }
+
+    console.log(`점수: ${score}, 현재 단계: ${currentStep} - 해당 단계 동그라미만 활성화`);
 }
 
 // 역량별 점수 표시

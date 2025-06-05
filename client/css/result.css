@@ -174,6 +174,127 @@
     }
 }
 
+/* 4단계 프로그레스 바 스타일 */
+.progress-steps-container {
+    margin: 1.5rem 0;
+    position: relative;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+    z-index: 2;
+}
+
+.step-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    border: 3px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.step-circle.active {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-color: #3b82f6;
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+.step-circle.completed {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #10b981;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.step-icon {
+    font-size: 1.5rem;
+    filter: grayscale(100%);
+    transition: filter 0.3s ease;
+}
+
+.step-circle.active .step-icon,
+.step-circle.completed .step-icon {
+    filter: grayscale(0%);
+}
+
+.step-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+    text-align: center;
+    line-height: 1.2;
+    transition: color 0.3s ease;
+}
+
+.step-range {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    text-align: center;
+    transition: color 0.3s ease;
+}
+
+.progress-step.active .step-label {
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.progress-step.active .step-range {
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+.progress-step.completed .step-label {
+    color: #10b981;
+    font-weight: 700;
+}
+
+.progress-step.completed .step-range {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.progress-line {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    right: 30px;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    z-index: 1;
+}
+
+.progress-line-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 1.5s ease-out;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
 /* 역량별 상세 결과 */
 .competency-details {
     background: rgba(255, 255, 255, 0.98);
@@ -443,6 +564,34 @@
         flex-direction: column;
         text-align: center;
     }
+
+    .progress-steps-container {
+        max-width: 100%;
+        margin: 1rem 0;
+    }
+
+    .step-circle {
+        width: 50px;
+        height: 50px;
+    }
+
+    .step-icon {
+        font-size: 1.2rem;
+    }
+
+    .step-label {
+        font-size: 0.8rem;
+    }
+
+    .step-range {
+        font-size: 0.7rem;
+    }
+
+    .progress-line {
+        top: 25px;
+        left: 25px;
+        right: 25px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -470,5 +619,28 @@
 
     .section-title {
         font-size: 1.5rem;
+    }
+
+    .step-circle {
+        width: 45px;
+        height: 45px;
+    }
+
+    .step-icon {
+        font-size: 1rem;
+    }
+
+    .step-label {
+        font-size: 0.75rem;
+    }
+
+    .step-range {
+        font-size: 0.65rem;
+    }
+
+    .progress-line {
+        top: 22px;
+        left: 22px;
+        right: 22px;
     }
 }
