@@ -10,7 +10,8 @@ const path = require('path');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+// Railway는 동적 포트를 할당하므로 환경 변수를 우선 사용
+const PORT = process.env.PORT || process.env.RAILWAY_PORT || 3000;
 
 // 데이터 파일 경로
 const DATA_DIR = path.join(__dirname, '../data');
@@ -933,9 +934,20 @@ app.get('/api/health', (req, res) => {
 
 // 서버 시작
 app.listen(PORT, () => {
+    const isRailway = process.env.RAILWAY_ENVIRONMENT;
+    const domain = process.env.RAILWAY_PUBLIC_DOMAIN || `localhost:${PORT}`;
+    const protocol = isRailway ? 'https' : 'http';
+
     console.log(`===========================================`);
     console.log(`🚀 서버가 포트 ${PORT}에서 실행중입니다.`);
-    console.log(`📋 API 테스트: http://localhost:${PORT}/api/health`);
-    console.log(`🌐 웹사이트: http://localhost:${PORT}`);
+    if (isRailway) {
+        console.log(`📋 API 테스트: ${protocol}://${domain}/api/health`);
+        console.log(`🌐 웹사이트: ${protocol}://${domain}`);
+        console.log(`🚂 Railway 환경에서 실행 중`);
+    } else {
+        console.log(`📋 API 테스트: http://localhost:${PORT}/api/health`);
+        console.log(`🌐 웹사이트: http://localhost:${PORT}`);
+        console.log(`💻 로컬 개발 환경에서 실행 중`);
+    }
     console.log(`===========================================`);
 });
