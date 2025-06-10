@@ -726,20 +726,27 @@ app.post('/api/test/submit', async (req, res) => {
         let userName = '익명 사용자';
         let isAuthenticated = false;
 
+        console.log('🔍 사용자 인증 시작...');
+        console.log('📋 요청 헤더 Authorization:', req.headers['authorization'] ? '존재함' : '없음');
+        console.log('📋 클라이언트 userInfo:', userInfo ? JSON.stringify(userInfo) : '없음');
+
         // 1. JWT 토큰이 있다면 사용자 ID 추출
         const authHeader = req.headers['authorization'];
         if (authHeader && authHeader.startsWith('Bearer ')) {
             try {
                 const token = authHeader.split(' ')[1];
+                console.log('🔍 JWT 토큰 발견, 검증 중...');
                 const jwt = require('jsonwebtoken');
                 const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_2024');
                 userId = decoded.userId;
                 userName = '인증된 사용자';
                 isAuthenticated = true;
-                console.log(`✅ JWT 인증 사용자 테스트 제출: ${userId}`);
+                console.log(`✅ JWT 인증 성공: ${userId}`);
             } catch (tokenError) {
-                console.log('JWT 토큰 검증 실패:', tokenError.message);
+                console.log('❌ JWT 토큰 검증 실패:', tokenError.message);
             }
+        } else {
+            console.log('❌ JWT 토큰 없음');
         }
 
         // 2. 클라이언트에서 보낸 사용자 정보 사용 (JWT 실패 시 fallback)
@@ -747,13 +754,15 @@ app.post('/api/test/submit', async (req, res) => {
             userId = userInfo.id;
             userName = userInfo.name || '사용자';
             console.log(`✅ 클라이언트 정보로 로그인 사용자 인식: ${userName} (${userId})`);
+        } else if (!isAuthenticated) {
+            console.log('❌ 클라이언트 userInfo도 유효하지 않음:', !userInfo ? 'userInfo 없음' : !userInfo.id ? 'userInfo.id 없음' : '기타');
         }
 
         // 3. 완전히 익명인 경우에만 anonymous ID 생성
         if (!userId) {
             userId = 'anonymous-' + Date.now();
             userName = '익명 사용자';
-            console.log(`✅ 익명 사용자 ID 생성: ${userId}`);
+            console.log(`⚠️ 익명 사용자 ID 생성: ${userId}`);
         }
 
         console.log(`📝 테스트 제출자: ${userName} (ID: ${userId})`);;
