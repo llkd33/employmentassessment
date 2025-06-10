@@ -934,16 +934,26 @@ app.get('/api/health', (req, res) => {
 
 // 서버 시작
 app.listen(PORT, () => {
-    const isRailway = process.env.RAILWAY_ENVIRONMENT;
-    const domain = process.env.RAILWAY_PUBLIC_DOMAIN || `localhost:${PORT}`;
-    const protocol = isRailway ? 'https' : 'http';
+    // Railway 환경 감지 (여러 방법으로 확인)
+    const isRailway = process.env.RAILWAY_ENVIRONMENT ||
+        process.env.RAILWAY_PROJECT_ID ||
+        process.env.RAILWAY_SERVICE_ID ||
+        process.env.NODE_ENV === 'production';
 
     console.log(`===========================================`);
     console.log(`🚀 서버가 포트 ${PORT}에서 실행중입니다.`);
+
+    // 환경 변수 디버깅 정보 출력
+    console.log(`🔍 환경 변수 확인:`);
+    console.log(`   - PORT: ${process.env.PORT || 'undefined'}`);
+    console.log(`   - RAILWAY_ENVIRONMENT: ${process.env.RAILWAY_ENVIRONMENT || 'undefined'}`);
+    console.log(`   - RAILWAY_PUBLIC_DOMAIN: ${process.env.RAILWAY_PUBLIC_DOMAIN || 'undefined'}`);
+    console.log(`   - NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`);
+
     if (isRailway) {
-        console.log(`📋 API 테스트: ${protocol}://${domain}/api/health`);
-        console.log(`🌐 웹사이트: ${protocol}://${domain}`);
         console.log(`🚂 Railway 환경에서 실행 중`);
+        console.log(`⚠️  도메인 URL은 Railway 대시보드에서 확인하세요!`);
+        console.log(`📋 Health Check: [Railway_Domain]/api/health`);
     } else {
         console.log(`📋 API 테스트: http://localhost:${PORT}/api/health`);
         console.log(`🌐 웹사이트: http://localhost:${PORT}`);
