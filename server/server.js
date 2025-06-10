@@ -656,9 +656,35 @@ app.get('/api/test/questions', (req, res) => {
 // 검사 결과 제출
 app.post('/api/test/submit', async (req, res) => {
     try {
-        const { answers, sessionId, submittedAt } = req.body;
-        // 임시로 테스트용 사용자 ID 사용
-        const userId = 'test-user-' + Date.now();
+        const { answers, sessionId, submittedAt, userInfo } = req.body;
+
+        // 사용자 정보 가져오기 (여러 방법으로 시도)
+        let userId = 'anonymous-' + Date.now(); // 기본값
+        let userName = '익명 사용자';
+
+        // 1. JWT 토큰이 있다면 사용자 ID 추출
+        const authHeader = req.headers['authorization'];
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            try {
+                const token = authHeader.split(' ')[1];
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_2024');
+                userId = decoded.userId;
+                userName = '인증된 사용자';
+                console.log(`✅ JWT 인증 사용자 테스트 제출: ${userId}`);
+            } catch (tokenError) {
+                console.log('JWT 토큰 검증 실패:', tokenError.message);
+            }
+        }
+
+        // 2. 클라이언트에서 보낸 사용자 정보 사용 (JWT 실패 시 fallback)
+        if (userId.startsWith('anonymous') && userInfo) {
+            userId = userInfo.id || userInfo.email || ('user-' + Date.now());
+            userName = userInfo.name || '사용자';
+            console.log(`✅ 클라이언트 정보로 사용자 인식: ${userName} (${userId})`);
+        }
+
+        console.log(`📝 테스트 제출자: ${userName} (ID: ${userId})`);;
 
         // 간단한 요약 로그만 출력 (대용량 JSON 출력 제거)
         console.log(`테스트 제출 - 세션: ${sessionId}, 답변 수: ${answers?.length || 0}`);
@@ -802,7 +828,20 @@ app.post('/api/test/submit', async (req, res) => {
         });
     } catch (error) {
         console.error('검사 제출 오류:', error);
-        res.status(500).json({ message: '서버 오류' });
+
+        // 데이터베이스 연결 오류인 경우
+        if (error.message && error.message.includes('ECONNREFUSED')) {
+            return res.status(503).json({
+                message: '데이터베이스 연결 오류입니다. 잠시 후 다시 시도해주세요.',
+                error: 'DATABASE_CONNECTION_ERROR'
+            });
+        }
+
+        // 일반적인 서버 오류
+        res.status(500).json({
+            message: '제출 중 오류가 발생했습니다. 다시 시도해주세요.',
+            error: 'SUBMISSION_ERROR'
+        });
     }
 });
 
