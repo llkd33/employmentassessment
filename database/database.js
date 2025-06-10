@@ -57,6 +57,18 @@ const db = {
         }
     },
 
+    // JWT 토큰 검증용 getUserById 함수 (getUserByUserId와 동일)
+    async getUserById(user_id) {
+        const query = 'SELECT * FROM users WHERE user_id = $1';
+        try {
+            const result = await pool.query(query, [user_id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('JWT 토큰 검증용 사용자 ID 조회 오류:', error);
+            throw error;
+        }
+    },
+
     async getAllUsers() {
         const query = 'SELECT * FROM users ORDER BY created_at DESC';
         try {

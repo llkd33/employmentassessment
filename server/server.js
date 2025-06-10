@@ -184,6 +184,69 @@ app.post('/api/auth/kakao', async (req, res) => {
     }
 });
 
+// JWT 토큰 검증 (배포 환경에서 완벽하게 작동)
+app.get('/api/auth/verify', async (req, res) => {
+    try {
+        const authHeader = req.headers['authorization'];
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                valid: false,
+                message: '토큰이 제공되지 않았습니다.'
+            });
+        }
+
+        const token = authHeader.split(' ')[1];
+
+        // JWT 토큰 검증
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_2024');
+
+        // 사용자 정보 조회 (데이터베이스에서 확인)
+        const user = await db.getUserById(decoded.userId);
+
+        if (!user) {
+            return res.status(401).json({
+                valid: false,
+                message: '유효하지 않은 사용자입니다.'
+            });
+        }
+
+        // 성공 응답
+        res.json({
+            valid: true,
+            user: {
+                id: user.user_id,
+                name: user.name,
+                email: user.email,
+                joinDate: user.created_at
+            }
+        });
+
+    } catch (error) {
+        console.error('토큰 검증 오류:', error);
+
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({
+                valid: false,
+                message: '유효하지 않은 토큰입니다.'
+            });
+        }
+
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({
+                valid: false,
+                message: '토큰이 만료되었습니다.'
+            });
+        }
+
+        res.status(500).json({
+            valid: false,
+            message: '서버 오류'
+        });
+    }
+});
+
 // ===== 역량검사 API =====
 
 // 검사 문제 조회
