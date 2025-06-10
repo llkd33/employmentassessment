@@ -749,6 +749,29 @@ app.post('/api/test/submit', async (req, res) => {
 
         console.log(`📝 테스트 제출자: ${userName} (ID: ${userId})`);;
 
+        // 익명 사용자인 경우 users 테이블에 먼저 생성
+        if (userId.startsWith('anonymous-') || userId.startsWith('user-')) {
+            try {
+                // 기존 익명 사용자가 있는지 확인
+                const existingUser = await db.getUserByUserId(userId);
+                if (!existingUser) {
+                    // 익명 사용자 생성
+                    const anonymousUserData = {
+                        user_id: userId,
+                        name: userName,
+                        email: `${userId}@anonymous.temp`,
+                        password: null,
+                        login_type: 'anonymous'
+                    };
+                    await db.createUser(anonymousUserData);
+                    console.log(`✅ 익명 사용자 생성: ${userId}`);
+                }
+            } catch (userError) {
+                console.error('익명 사용자 생성 오류:', userError);
+                // 사용자 생성 실패해도 계속 진행 (이미 존재할 수 있음)
+            }
+        }
+
         // 간단한 요약 로그만 출력 (대용량 JSON 출력 제거)
         console.log(`테스트 제출 - 세션: ${sessionId}, 답변 수: ${answers?.length || 0}`);
 
@@ -783,6 +806,11 @@ app.post('/api/test/submit', async (req, res) => {
         function calculateScore(answer) {
             switch (answer) {
                 case '매우 그렇다': return 100;
+                case '그렇다': return 75;
+                case '보통': return 50;
+                case '아니다': return 25;
+                case '매우 아니다': return 0;
+                // 이전 버전 호환성
                 case '대체로 그렇다': return 75;
                 case '보통이다': return 50;
                 case '대체로 그렇지 않다': return 25;

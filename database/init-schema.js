@@ -34,7 +34,7 @@ async function initializeSchema() {
                 name VARCHAR(100) NOT NULL,
                 email VARCHAR(255) UNIQUE NOT NULL,
                 password VARCHAR(255),
-                login_type VARCHAR(20) NOT NULL CHECK (login_type IN ('email', 'kakao')),
+                login_type VARCHAR(20) NOT NULL CHECK (login_type IN ('email', 'kakao', 'anonymous')),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -65,7 +65,7 @@ async function initializeSchema() {
                 id SERIAL PRIMARY KEY,
                 result_id VARCHAR(50) REFERENCES test_results(result_id),
                 question_id INTEGER NOT NULL CHECK (question_id >= 1 AND question_id <= 75),
-                answer VARCHAR(50) NOT NULL CHECK (answer IN ('전혀 그렇지 않다', '대체로 그렇지 않다', '보통이다', '대체로 그렇다', '매우 그렇다')),
+                answer VARCHAR(50) NOT NULL CHECK (answer IN ('매우 아니다', '아니다', '보통', '그렇다', '매우 그렇다')),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(result_id, question_id)
             )
