@@ -2,6 +2,12 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 // PostgreSQL 연결 풀 설정
+console.log('🔍 NODE_ENV:', process.env.NODE_ENV);
+console.log('🔍 DATABASE_URL 설정 여부:', process.env.DATABASE_URL ? '✅ 설정됨' : '❌ 설정되지 않음');
+if (process.env.DATABASE_URL) {
+    console.log('🔍 DATABASE_URL 프로토콜:', process.env.DATABASE_URL.split('://')[0]);
+}
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
