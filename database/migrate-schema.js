@@ -20,11 +20,11 @@ async function migrateSchema() {
             DROP CONSTRAINT IF EXISTS users_login_type_check
         `);
 
-        // 새로운 CHECK 제약 조건 추가 (anonymous 포함)
+        // 새로운 CHECK 제약 조건 추가 (anonymous, temp 포함)
         await pool.query(`
             ALTER TABLE users 
             ADD CONSTRAINT users_login_type_check 
-            CHECK (login_type IN ('email', 'kakao', 'anonymous'))
+            CHECK (login_type IN ('email', 'kakao', 'anonymous', 'temp'))
         `);
 
         console.log('✅ login_type 제약 조건 업데이트 완료');

@@ -722,8 +722,9 @@ app.post('/api/test/submit', async (req, res) => {
         const { answers, sessionId, submittedAt, userInfo } = req.body;
 
         // 사용자 정보 가져오기 (여러 방법으로 시도)
-        let userId = 'anonymous-' + Date.now(); // 기본값
+        let userId = null;
         let userName = '익명 사용자';
+        let isAuthenticated = false;
 
         // 1. JWT 토큰이 있다면 사용자 ID 추출
         const authHeader = req.headers['authorization'];
@@ -734,6 +735,7 @@ app.post('/api/test/submit', async (req, res) => {
                 const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_2024');
                 userId = decoded.userId;
                 userName = '인증된 사용자';
+                isAuthenticated = true;
                 console.log(`✅ JWT 인증 사용자 테스트 제출: ${userId}`);
             } catch (tokenError) {
                 console.log('JWT 토큰 검증 실패:', tokenError.message);
@@ -741,34 +743,61 @@ app.post('/api/test/submit', async (req, res) => {
         }
 
         // 2. 클라이언트에서 보낸 사용자 정보 사용 (JWT 실패 시 fallback)
-        if (userId.startsWith('anonymous') && userInfo) {
-            userId = userInfo.id || userInfo.email || ('user-' + Date.now());
+        if (!isAuthenticated && userInfo && userInfo.id) {
+            userId = userInfo.id;
             userName = userInfo.name || '사용자';
-            console.log(`✅ 클라이언트 정보로 사용자 인식: ${userName} (${userId})`);
+            console.log(`✅ 클라이언트 정보로 로그인 사용자 인식: ${userName} (${userId})`);
+        }
+
+        // 3. 완전히 익명인 경우에만 anonymous ID 생성
+        if (!userId) {
+            userId = 'anonymous-' + Date.now();
+            userName = '익명 사용자';
+            console.log(`✅ 익명 사용자 ID 생성: ${userId}`);
         }
 
         console.log(`📝 테스트 제출자: ${userName} (ID: ${userId})`);;
 
-        // 익명 사용자인 경우 users 테이블에 먼저 생성
-        if (userId.startsWith('anonymous-') || userId.startsWith('user-')) {
+        // 사용자가 DB에 존재하는지 확인
+        let existingUser = null;
+        try {
+            existingUser = await db.getUserByUserId(userId);
+        } catch (userError) {
+            console.error('사용자 조회 오류:', userError);
+        }
+
+        // 사용자가 DB에 없는 경우 생성
+        if (!existingUser) {
             try {
-                // 기존 익명 사용자가 있는지 확인
-                const existingUser = await db.getUserByUserId(userId);
-                if (!existingUser) {
+                let userData;
+
+                if (userId.startsWith('anonymous-')) {
                     // 익명 사용자 생성
-                    const anonymousUserData = {
+                    userData = {
                         user_id: userId,
                         name: userName,
                         email: `${userId}@anonymous.temp`,
                         password: null,
                         login_type: 'anonymous'
                     };
-                    await db.createUser(anonymousUserData);
                     console.log(`✅ 익명 사용자 생성: ${userId}`);
+                } else {
+                    // 로그인 사용자가 DB에 없는 경우 (JWT 토큰은 있지만 DB에서 삭제된 경우 등)
+                    userData = {
+                        user_id: userId,
+                        name: userName,
+                        email: userInfo?.email || `${userId}@temp.com`,
+                        password: null,
+                        login_type: 'temp'
+                    };
+                    console.log(`✅ 임시 사용자 생성: ${userId}`);
                 }
-            } catch (userError) {
-                console.error('익명 사용자 생성 오류:', userError);
-                // 사용자 생성 실패해도 계속 진행 (이미 존재할 수 있음)
+
+                await db.createUser(userData);
+
+            } catch (userCreateError) {
+                console.error('사용자 생성 오류:', userCreateError);
+                // 사용자 생성 실패해도 계속 진행 (동시 요청으로 이미 생성될 수 있음)
             }
         }
 

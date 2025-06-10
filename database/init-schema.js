@@ -34,7 +34,7 @@ async function initializeSchema() {
                 name VARCHAR(100) NOT NULL,
                 email VARCHAR(255) UNIQUE NOT NULL,
                 password VARCHAR(255),
-                login_type VARCHAR(20) NOT NULL CHECK (login_type IN ('email', 'kakao', 'anonymous')),
+                login_type VARCHAR(20) NOT NULL CHECK (login_type IN ('email', 'kakao', 'anonymous', 'temp')),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
