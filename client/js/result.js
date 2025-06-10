@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // 결과 페이지 초기화
-function initializeResultPage() {
+async function initializeResultPage() {
     // 로그인 상태 확인
     const userInfo = localStorage.getItem('userInfo');
     if (!userInfo) {
@@ -116,16 +116,23 @@ function initializeResultPage() {
         return;
     }
 
-    // 테스트 결과 확인
+    // 1차: localStorage에서 테스트 결과 확인
     const testResult = localStorage.getItem('testResult');
-    if (!testResult) {
-        alert('테스트 결과를 찾을 수 없습니다. 테스트를 먼저 진행해주세요.');
-        window.location.href = '/';
+    if (testResult) {
+        console.log('✅ localStorage에서 테스트 결과 발견');
+        calculateAndDisplayResults(JSON.parse(testResult));
         return;
     }
 
-    // 결과 계산 및 표시
-    calculateAndDisplayResults(JSON.parse(testResult));
+    // 2차: 서버에서 최근 테스트 결과 불러오기
+    console.log('⚠️ localStorage에 결과 없음, 서버에서 최근 결과 조회 시도...');
+    try {
+        await loadLatestResultFromServer();
+    } catch (error) {
+        console.error('서버에서 결과 조회 실패:', error);
+        alert('테스트 결과를 찾을 수 없습니다. 테스트를 먼저 진행해주세요.');
+        window.location.href = '/';
+    }
 }
 
 // 결과 계산 및 표시
@@ -325,6 +332,57 @@ function updateProgressSteps(score) {
     }
 
     console.log(`점수: ${score}, 현재 단계: ${currentStep} - 해당 단계 동그라미만 활성화`);
+}
+
+// 서버에서 최근 테스트 결과 불러오기
+async function loadLatestResultFromServer() {
+    const token = localStorage.getItem('authToken');
+
+    if (!token) {
+        throw new Error('인증 토큰이 없습니다.');
+    }
+
+    console.log('🔍 서버에서 사용자 프로필 및 테스트 결과 조회 중...');
+
+    const response = await fetch('/api/user/profile', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`API 오류: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('서버 응답:', data);
+
+    if (!data.testResults || data.testResults.length === 0) {
+        throw new Error('저장된 테스트 결과가 없습니다.');
+    }
+
+    // 가장 최근 결과 (첫 번째 결과)
+    const latestResult = data.testResults[0];
+    console.log('✅ 최근 테스트 결과 발견:', latestResult);
+
+    // result.js에서 기대하는 형식으로 변환
+    const transformedResult = {
+        competencyScores: latestResult.competencyScores,
+        overallScore: latestResult.overallScore,
+        testDate: latestResult.testDate,
+        submittedAt: latestResult.submittedAt,
+        sessionId: latestResult.sessionId,
+        id: latestResult.id,
+        isExisting: true,
+        message: '서버에서 불러온 기존 결과입니다.'
+    };
+
+    console.log('✅ 서버에서 최근 결과를 성공적으로 불러왔습니다.');
+
+    // 결과 표시
+    calculateAndDisplayResults(transformedResult);
 }
 
 // 역량별 점수 표시
