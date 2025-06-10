@@ -874,28 +874,18 @@ app.get('*', (req, res) => {
 // 서버 시작
 async function startServer() {
     try {
-        // 데이터베이스 연결 테스트
+        // 데이터베이스 스키마 자동 초기화
+        const initializeSchema = require('../database/init-schema');
+        await initializeSchema();
+
+        // 데이터베이스 연결 및 통계 확인
         console.log('🔍 데이터베이스 연결 확인 중...');
         const stats = await db.getTestStats();
         console.log('✅ 데이터베이스 연결 성공!');
         console.log(`📊 현재 통계: 사용자 ${stats.totalUsers}명, 테스트 ${stats.totalTests}개`);
     } catch (error) {
-        console.log('⚠️  데이터베이스 연결 실패 - 스키마를 생성합니다...');
-
-        // 데이터베이스 스키마 생성 시도
-        try {
-            const fs = require('fs');
-            const path = require('path');
-            const schemaPath = path.join(__dirname, '../database/database-schema.sql');
-            const schema = fs.readFileSync(schemaPath, 'utf8');
-
-            // 간단한 스키마 실행 (실제 환경에서는 migration 스크립트 사용 권장)
-            console.log('📋 데이터베이스 스키마 초기화 중...');
-            // 여기서는 로그만 출력하고, Railway에서 수동으로 스키마를 설정해야 함
-            console.log('⚠️  Railway PostgreSQL에 스키마를 수동으로 실행해야 합니다!');
-        } catch (schemaError) {
-            console.error('❌ 스키마 읽기 실패:', schemaError.message);
-        }
+        console.error('❌ 데이터베이스 초기화 실패:', error.message);
+        console.log('⚠️  DATABASE_URL 환경 변수를 확인해주세요.');
     }
 
     app.listen(PORT, () => {
