@@ -193,7 +193,7 @@ function cancelKakaoSignup() {
     window.location.href = '/login.html';
 }
 
-// 카카오 회원가입 완료
+// 카카오 회원가입 완료 - 서버 API 기반
 function completeKakaoSignup() {
     const tempKakaoInfo = localStorage.getItem('tempKakaoInfo');
 
@@ -205,48 +205,86 @@ function completeKakaoSignup() {
     try {
         const kakaoData = JSON.parse(tempKakaoInfo);
 
-        // 기존 사용자 목록 가져오기
-        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+        console.log('서버 API로 카카오 회원가입 처리:', kakaoData);
 
-        // 새 카카오 사용자 추가
-        const newUser = {
-            id: kakaoData.userId,
-            name: kakaoData.nickname,
-            email: kakaoData.email,
-            loginType: 'kakao',
-            joinDate: new Date().toISOString()
-        };
+        // 서버 API로 카카오 회원가입 처리
+        fetch('/api/auth/kakao', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                kakaoId: kakaoData.userId,
+                nickname: kakaoData.nickname,
+                email: kakaoData.email
+            })
+        })
+            .then(response => {
+                console.log('카카오 회원가입 API 응답 상태:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // 카카오 회원가입 성공
+                    console.log('✅ PostgreSQL 카카오 회원가입 성공!', data);
 
-        registeredUsers.push(newUser);
-        localStorage.setItem('registeredUsers', JSON.stringify(registeredUsers));
+                    // JWT 토큰 저장
+                    localStorage.setItem('authToken', data.token);
 
-        // 로그인 정보 설정
-        const userInfo = {
-            id: newUser.id,
-            name: newUser.name,
-            nickname: newUser.name,
-            email: newUser.email,
-            loginType: 'kakao',
-            loginTime: new Date().toISOString()
-        };
+                    // 사용자 정보 저장
+                    const userInfo = {
+                        id: data.user.id,
+                        name: data.user.name,
+                        nickname: data.user.nickname || kakaoData.nickname,
+                        email: data.user.email,
+                        loginType: 'kakao',
+                        loginTime: new Date().toISOString()
+                    };
 
-        localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                    localStorage.setItem('userInfo', JSON.stringify(userInfo));
 
-        // 임시 정보 삭제
-        localStorage.removeItem('tempKakaoInfo');
+                    // 자동 로그인 설정
+                    localStorage.setItem('rememberLogin', 'true');
 
-        // 모달 제거
-        const modal = document.querySelector('.kakao-signup-modal');
-        if (modal) {
-            modal.remove();
-        }
+                    // 임시 정보 삭제
+                    localStorage.removeItem('tempKakaoInfo');
 
-        console.log('카카오 회원가입 완료:', newUser);
-        alert(`${kakaoData.nickname}님, 카카오 회원가입이 완료되었습니다!`);
+                    // 모달 제거
+                    const modal = document.querySelector('.kakao-signup-modal');
+                    if (modal) {
+                        modal.remove();
+                    }
 
-        setTimeout(() => {
-            window.location.href = '/index.html';
-        }, 1000);
+                    console.log('카카오 회원가입 완료:', userInfo);
+                    alert(`${data.user.name}님, 카카오 회원가입이 완료되었습니다!`);
+
+                    setTimeout(() => {
+                        window.location.href = '/index.html';
+                    }, 1000);
+                } else {
+                    // 카카오 회원가입 실패
+                    console.log('❌ 카카오 회원가입 실패:', data.message);
+                    alert(data.message || '카카오 회원가입에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('카카오 회원가입 API 오류:', error);
+
+                let errorMessage = '회원가입 처리 중 오류가 발생했습니다.';
+                if (error.message.includes('404')) {
+                    errorMessage = '카카오 회원가입 API를 찾을 수 없습니다.';
+                } else if (error.message.includes('500')) {
+                    errorMessage = '서버 오류로 회원가입에 실패했습니다.';
+                }
+
+                alert(errorMessage);
+            });
 
     } catch (error) {
         console.error('카카오 회원가입 처리 오류:', error);
@@ -358,49 +396,8 @@ function handleKakaoLogin(userId, nickname, email) {
     console.log('=== 카카오 회원가입 처리 시작 ===');
     console.log('카카오 사용자 정보:', { userId, nickname, email });
 
-    // 기존 사용자 목록 가져오기
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-
-    // 이메일과 카카오 ID 둘 다로 중복 체크
-    let existingUser = null;
-
-    // 1. 이메일로 기존 사용자 찾기 (모든 로그인 타입 포함)
-    const userByEmail = registeredUsers.find(u => u.email === email);
-
-    // 2. 카카오 ID로 기존 사용자 찾기
-    const userByKakaoId = registeredUsers.find(u => u.id === userId.toString() && u.loginType === 'kakao');
-
-    if (userByEmail) {
-        console.log('이메일로 기존 사용자 발견:', userByEmail);
-        if (userByEmail.loginType === 'kakao') {
-            // 기존 카카오 계정 - 이미 가입되어 있으므로 로그인 페이지로 유도
-            existingUser = userByEmail;
-        } else {
-            // 이메일 계정이 이미 존재
-            alert(`${email}은 이미 이메일로 가입된 계정입니다. 이메일 로그인을 이용해주세요.`);
-            window.location.href = '/login.html';
-            return;
-        }
-    }
-
-    if (userByKakaoId && !existingUser) {
-        console.log('카카오 ID로 기존 사용자 발견:', userByKakaoId);
-        existingUser = userByKakaoId;
-    }
-
-    if (existingUser) {
-        // 기존 사용자가 있으면 로그인 페이지로 유도
-        console.log('기존 카카오 사용자 발견 - 로그인 페이지로 유도');
-        alert(`${existingUser.name || nickname}님은 이미 가입된 회원입니다.\n로그인 페이지로 이동합니다.`);
-
-        setTimeout(() => {
-            window.location.href = '/login.html';
-        }, 1000);
-        return;
-    }
-
-    // 완전히 새로운 사용자 - 회원가입 진행
-    console.log('새로운 카카오 사용자 - 회원가입 진행');
+    // 서버 API로 카카오 사용자 중복 체크 및 회원가입/로그인 처리
+    console.log('서버에서 카카오 사용자 확인 중...');
 
     // 임시 카카오 정보 저장
     const tempKakaoInfo = {

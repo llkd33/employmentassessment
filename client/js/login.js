@@ -34,9 +34,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     animatePageLoad(['.header', '.login-container']);
 
-    // 테스트용: 현재 저장된 사용자 목록 확인
-    const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    console.log('현재 등록된 사용자:', users);
+    // PostgreSQL 데이터베이스 사용 - localStorage 기반 시스템에서 서버 API 기반으로 전환 완료
+    console.log('🗄️ PostgreSQL 데이터베이스 기반 로그인 시스템 사용 중');
 });
 
 // 일반 로그인 폼 제출 처리
@@ -70,64 +69,85 @@ function handleLoginSubmit(event) {
     submitBtn.textContent = '로그인 중...';
     submitBtn.disabled = true;
 
-    // 실제 서버 연동이 없으므로 localStorage에서 사용자 확인
-    setTimeout(() => {
-        // 등록된 사용자 목록 가져오기
-        const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+    // 서버 API 호출로 로그인 처리 - PostgreSQL 데이터베이스 사용
+    fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            email: email,
+            password: password
+        })
+    })
+        .then(response => {
+            console.log('API 응답 상태:', response.status, response.statusText);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // 로그인 성공
+                console.log('✅ PostgreSQL 로그인 성공!', data);
 
-        // 디버깅용 콘솔 로그
-        console.log('등록된 사용자 목록:', registeredUsers);
-        console.log('입력한 이메일:', email);
-        console.log('입력한 비밀번호:', password);
+                // JWT 토큰 저장
+                localStorage.setItem('authToken', data.token);
 
-        // 이메일로 사용자 찾기
-        const userByEmail = registeredUsers.find(u => u.email === email);
-        console.log('찾은 사용자:', userByEmail);
+                const userInfo = {
+                    id: data.user.id,
+                    name: data.user.name,
+                    nickname: data.user.nickname || data.user.name,
+                    email: data.user.email,
+                    loginType: data.user.loginType || 'email',
+                    loginTime: new Date().toISOString()
+                };
 
-        if (!userByEmail) {
-            // 이메일이 없는 경우
-            console.log('❌ 등록되지 않은 이메일');
-            showNotification('등록되지 않은 이메일입니다. 회원가입을 진행해주세요.', 'error');
+                localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                console.log('저장된 userInfo:', userInfo);
+
+                if (remember) {
+                    localStorage.setItem('rememberLogin', 'true');
+                }
+
+                showNotification(`${data.user.name}님, 환영합니다!`, 'success');
+
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+            } else {
+                // 로그인 실패
+                console.log('❌ 로그인 실패:', data.message);
+                showNotification(data.message || '로그인에 실패했습니다.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('로그인 API 오류:', error);
+
+            // 네트워크 오류 유형에 따른 상세 메시지
+            let errorMessage = '서버 연결에 문제가 발생했습니다.';
+
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                errorMessage = '네트워크 연결을 확인해주세요. (인터넷 연결 또는 서버 상태)';
+            } else if (error.message.includes('CORS')) {
+                errorMessage = '보안 정책으로 인한 접근 제한입니다. 페이지를 새로고침해보세요.';
+            } else if (error.message.includes('404')) {
+                errorMessage = 'API 경로를 찾을 수 없습니다. 서버 상태를 확인해주세요.';
+            } else if (error.message.includes('500')) {
+                errorMessage = '서버 내부 오류입니다. 잠시 후 다시 시도해주세요.';
+            }
+
+            showNotification(errorMessage, 'error');
+        })
+        .finally(() => {
+            // 로딩 상태 해제
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
-            return;
-        }
-
-        // 비밀번호 확인
-        console.log('저장된 비밀번호:', userByEmail.password);
-        if (userByEmail.password !== password) {
-            // 비밀번호가 틀린 경우
-            console.log('❌ 비밀번호 불일치');
-            showNotification('비밀번호가 올바르지 않습니다.', 'error');
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-            return;
-        }
-
-        // 로그인 성공
-        console.log('✅ 로그인 성공!');
-        const userInfo = {
-            id: userByEmail.id,
-            name: userByEmail.name,
-            nickname: userByEmail.nickname,
-            email: userByEmail.email,
-            loginType: userByEmail.loginType || 'email',
-            loginTime: new Date().toISOString()
-        };
-
-        localStorage.setItem('userInfo', JSON.stringify(userInfo));
-        console.log('저장된 userInfo:', userInfo);
-
-        if (remember) {
-            localStorage.setItem('rememberLogin', 'true');
-        }
-
-        showNotification(`${userByEmail.name}님, 환영합니다!`, 'success');
-
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 1000);
-    }, 300);
+        });
 }
 
 // 카카오 로그인 함수
@@ -170,84 +190,81 @@ function getUserInfoFromKakao() {
     });
 }
 
-// 카카오 로그인 성공 후 처리
+// 카카오 로그인 성공 후 처리 - 서버 API 기반
 function handleKakaoLoginSuccess(userId, nickname, email) {
-    // 기존 사용자 목록 가져오기
-    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-
-    console.log('=== 카카오 로그인 처리 시작 ===');
+    console.log('=== 카카오 로그인 서버 API 처리 시작 ===');
     console.log('카카오 사용자 정보:', { userId, nickname, email });
 
-    // 이메일과 카카오 ID 둘 다로 중복 체크
-    let existingUser = null;
-
-    // 1. 이메일로 기존 사용자 찾기 (모든 로그인 타입 포함)
-    const userByEmail = registeredUsers.find(u => u.email === email);
-
-    // 2. 카카오 ID로 기존 사용자 찾기
-    const userByKakaoId = registeredUsers.find(u => u.id === userId.toString() && u.loginType === 'kakao');
-
-    if (userByEmail) {
-        console.log('이메일로 기존 사용자 발견:', userByEmail);
-        if (userByEmail.loginType === 'kakao') {
-            // 기존 카카오 계정
-            existingUser = userByEmail;
-        } else {
-            // 이메일 계정이 이미 존재
-            showNotification(`${email}은 이미 이메일로 가입된 계정입니다.`, 'error');
-            return;
-        }
-    }
-
-    if (userByKakaoId && !existingUser) {
-        console.log('카카오 ID로 기존 사용자 발견:', userByKakaoId);
-        existingUser = userByKakaoId;
-    }
-
-    if (!existingUser) {
-        // 완전히 새로운 사용자 - 회원가입 과정 필요
-        console.log('새로운 카카오 사용자 - 회원가입 페이지로 이동');
-
-        // 임시 카카오 정보 저장
-        const tempKakaoInfo = {
-            userId: userId.toString(),
+    // 서버 API로 카카오 로그인 처리
+    fetch('/api/auth/kakao', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            kakaoId: userId.toString(),
             nickname: nickname,
-            email: email,
-            loginType: 'kakao'
-        };
+            email: email
+        })
+    })
+        .then(response => {
+            console.log('카카오 API 응답 상태:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // 카카오 로그인 성공
+                console.log('✅ PostgreSQL 카카오 로그인 성공!', data);
 
-        localStorage.setItem('tempKakaoInfo', JSON.stringify(tempKakaoInfo));
-        showNotification('카카오 계정 연동을 위한 회원가입이 필요합니다.', 'info');
+                // JWT 토큰 저장
+                localStorage.setItem('authToken', data.token);
 
-        setTimeout(() => {
-            window.location.href = '/signup.html';
-        }, 2000);
-        return;
-    }
+                const userInfo = {
+                    id: data.user.id,
+                    name: data.user.name,
+                    nickname: data.user.nickname || nickname,
+                    email: data.user.email,
+                    loginType: 'kakao',
+                    loginTime: new Date().toISOString()
+                };
 
-    // 기존 사용자 로그인 처리
-    console.log('기존 카카오 사용자 로그인:', existingUser);
+                localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                console.log('카카오 로그인 완료:', userInfo);
 
-    // 기존 사용자의 name이 있으면 사용하고, 없으면 카카오 nickname 사용
-    const displayName = existingUser.name || nickname;
+                // 자동 로그인 설정
+                localStorage.setItem('rememberLogin', 'true');
 
-    const userInfo = {
-        id: existingUser.id,
-        name: displayName,
-        nickname: nickname, // 카카오에서 받은 실제 nickname 사용
-        email: existingUser.email,
-        loginType: 'kakao',
-        loginTime: new Date().toISOString()
-    };
+                showNotification(`${data.user.name}님, 환영합니다!`, 'success');
 
-    localStorage.setItem('userInfo', JSON.stringify(userInfo));
-    console.log('카카오 로그인 완료:', userInfo);
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            } else {
+                // 카카오 로그인 실패
+                console.log('❌ 카카오 로그인 실패:', data.message);
+                showNotification(data.message || '카카오 로그인에 실패했습니다.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('카카오 로그인 API 오류:', error);
 
-    showNotification(`${displayName}님, 환영합니다!`, 'success');
+            // 에러 유형에 따른 메시지
+            let errorMessage = '카카오 로그인 처리 중 오류가 발생했습니다.';
 
-    setTimeout(() => {
-        window.location.href = 'index.html';
-    }, 1500);
+            if (error.message.includes('404')) {
+                errorMessage = '카카오 로그인 API를 찾을 수 없습니다.';
+            } else if (error.message.includes('500')) {
+                errorMessage = '서버 오류로 카카오 로그인에 실패했습니다.';
+            }
+
+            showNotification(errorMessage, 'error');
+        });
 }
 
 // 엔터 키로 로그인 처리
@@ -260,38 +277,52 @@ document.addEventListener('keypress', function (event) {
     }
 });
 
-// 로그인 상태 유지 확인
+// 로그인 상태 유지 확인 - 서버 API 기반
 window.addEventListener('load', function () {
+    const authToken = localStorage.getItem('authToken');
     const rememberLogin = localStorage.getItem('rememberLogin');
     const userInfo = localStorage.getItem('userInfo');
 
-    if (rememberLogin && userInfo) {
-        try {
-            const user = JSON.parse(userInfo);
-            const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-
-            // 해당 사용자가 실제로 등록된 사용자인지 확인
-            const existingUser = registeredUsers.find(u => u.email === user.email);
-
-            if (existingUser) {
-                // 사용자가 존재하면 자동 로그인
-                showNotification('이미 로그인된 상태입니다.', 'info');
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1000);
-            } else {
-                // 사용자가 존재하지 않으면 로그인 정보 삭제 (탈퇴된 계정)
-                console.log('탈퇴된 계정의 로그인 정보 삭제:', user.email);
-                localStorage.removeItem('userInfo');
-                localStorage.removeItem('rememberLogin');
-                showNotification('계정이 삭제되어 로그아웃되었습니다.', 'info');
-            }
-        } catch (error) {
-            // 잘못된 userInfo 형식인 경우 삭제
-            console.error('userInfo 파싱 오류:', error);
-            localStorage.removeItem('userInfo');
-            localStorage.removeItem('rememberLogin');
-        }
+    if (rememberLogin && authToken && userInfo) {
+        // 서버에서 JWT 토큰 유효성 검증
+        fetch('/api/auth/verify', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+            .then(response => {
+                console.log('토큰 검증 응답 상태:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success && data.valid) {
+                    // 토큰이 유효하면 자동 로그인
+                    console.log('✅ JWT 토큰 유효, 자동 로그인');
+                    showNotification('이미 로그인된 상태입니다.', 'info');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    // 토큰이 무효하면 로그인 정보 삭제
+                    console.log('❌ JWT 토큰 무효, 로그인 정보 삭제');
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('userInfo');
+                    localStorage.removeItem('rememberLogin');
+                    showNotification('로그인이 만료되었습니다. 다시 로그인해주세요.', 'info');
+                }
+            })
+            .catch(error => {
+                console.error('토큰 검증 오류:', error);
+                // 네트워크 오류 등의 경우 자동 로그인 시도하지 않고 현재 페이지 유지
+            });
     }
 });
 

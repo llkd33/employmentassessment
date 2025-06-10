@@ -91,39 +91,93 @@ function handleSignupSubmit(event) {
         return;
     }
 
-    // 회원가입 처리 (실제로는 서버에 요청)
-    console.log('회원가입 정보:', { name, email, password });
+    // 서버 API로 회원가입 처리 - PostgreSQL 데이터베이스 사용
+    console.log('서버 API로 회원가입 정보 전송:', { name, email });
 
-    // 기존 사용자 데이터 가져오기
-    const existingUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+    // 버튼 비활성화 및 로딩 표시
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = '회원가입 중...';
+    submitBtn.disabled = true;
 
-    // 이메일 중복 검사
-    if (existingUsers.find(user => user.email === email)) {
-        alert('이미 가입된 이메일입니다.');
-        return;
-    }
+    fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+            name: name,
+            nickname: name, // 닉네임은 이름과 동일하게 설정
+            email: email,
+            password: password
+        })
+    })
+        .then(response => {
+            console.log('회원가입 API 응답 상태:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // 회원가입 성공
+                console.log('✅ PostgreSQL 회원가입 성공!', data);
 
-    // 새 사용자 추가
-    const newUser = {
-        id: Date.now().toString(),
-        name: name,
-        email: email,
-        password: password, // 실제로는 해시화해서 서버에 저장해야 함
-        joinDate: new Date().toISOString(),
-        loginType: 'email'
-    };
+                // JWT 토큰 저장
+                localStorage.setItem('authToken', data.token);
 
-    existingUsers.push(newUser);
-    localStorage.setItem('registeredUsers', JSON.stringify(existingUsers));
+                // 사용자 정보 저장
+                const userInfo = {
+                    id: data.user.id,
+                    name: data.user.name,
+                    nickname: data.user.nickname,
+                    email: data.user.email,
+                    loginType: 'email',
+                    loginTime: new Date().toISOString()
+                };
 
-    // 디버깅: 저장된 사용자 확인
-    console.log('새로 등록된 사용자:', newUser);
-    console.log('전체 사용자 목록:', existingUsers);
+                localStorage.setItem('userInfo', JSON.stringify(userInfo));
 
-    alert('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.');
+                // 자동 로그인 설정
+                localStorage.setItem('rememberLogin', 'true');
 
-    // 로그인 페이지로 이동
-    window.location.href = 'login.html';
+                console.log('회원가입 완료:', userInfo);
+                alert(`${data.user.name}님, 회원가입이 완료되었습니다! 자동으로 로그인됩니다.`);
+
+                // 메인 페이지로 이동 (자동 로그인)
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+            } else {
+                // 회원가입 실패
+                console.log('❌ 회원가입 실패:', data.message);
+                alert(data.message || '회원가입에 실패했습니다.');
+            }
+        })
+        .catch(error => {
+            console.error('회원가입 API 오류:', error);
+
+            let errorMessage = '회원가입 처리 중 오류가 발생했습니다.';
+
+            if (error.message.includes('404')) {
+                errorMessage = '회원가입 API를 찾을 수 없습니다. 서버 상태를 확인해주세요.';
+            } else if (error.message.includes('500')) {
+                errorMessage = '서버 내부 오류입니다. 잠시 후 다시 시도해주세요.';
+            } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                errorMessage = '네트워크 연결을 확인해주세요.';
+            }
+
+            alert(errorMessage);
+        })
+        .finally(() => {
+            // 버튼 상태 복원
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        });
 }
 
 // 실시간 비밀번호 확인
