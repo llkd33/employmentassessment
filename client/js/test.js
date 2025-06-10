@@ -433,13 +433,16 @@ async function submitTest() {
         console.log('파싱된 사용자 정보:', userInfo);
         console.log('JWT 토큰 존재:', !!token);
 
-        // 사용자 정보를 제출 데이터에 포함
+        // 사용자 정보를 제출 데이터에 포함 (토큰이 없어도 userInfo로 인식 가능)
         if (userInfo) {
             submitData.userInfo = {
                 id: userInfo.id,
                 name: userInfo.name,
                 email: userInfo.email
             };
+            console.log('✅ userInfo를 서버에 전송:', submitData.userInfo);
+        } else {
+            console.log('❌ userInfo 없음');
         }
 
         // API 호출
