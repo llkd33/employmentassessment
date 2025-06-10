@@ -80,7 +80,11 @@ initDataFiles();
 // 미들웨어
 app.use(cors());
 app.use(express.json());
-app.use(express.static('../client')); // 정적 파일 서빙
+
+// 정적 파일 서빙 - Railway 환경 고려
+const clientPath = path.join(__dirname, '../client');
+console.log(`정적 파일 경로: ${clientPath}`);
+app.use(express.static(clientPath));
 
 // JWT 토큰 생성
 const generateToken = (userId) => {
@@ -930,6 +934,16 @@ app.get('/api/health', (req, res) => {
         timestamp: new Date().toISOString(),
         message: '서버가 정상적으로 작동중입니다.'
     });
+});
+
+// 기본 라우팅 - 모든 비-API 요청을 index.html로 라우팅
+app.get('*', (req, res) => {
+    // API 요청이 아닌 경우에만 index.html 제공
+    if (!req.path.startsWith('/api')) {
+        res.sendFile(path.join(__dirname, '../client/index.html'));
+    } else {
+        res.status(404).json({ message: 'API endpoint not found' });
+    }
 });
 
 // 서버 시작
