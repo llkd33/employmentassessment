@@ -9,73 +9,12 @@ const path = require('path');
 // 환경변수 설정
 dotenv.config();
 
+// 데이터베이스 연결
+const db = require('../database/database');
+
 const app = express();
 // Railway는 동적 포트를 할당하므로 환경 변수를 우선 사용
 const PORT = process.env.PORT || process.env.RAILWAY_PORT || 3000;
-
-// 데이터 파일 경로
-const DATA_DIR = path.join(__dirname, '../data');
-const USERS_FILE = path.join(DATA_DIR, 'users.json');
-const RESULTS_FILE = path.join(DATA_DIR, 'test-results.json');
-
-// 데이터 디렉토리 생성
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR);
-}
-
-// 데이터 파일 초기화
-function initDataFiles() {
-    if (!fs.existsSync(USERS_FILE)) {
-        fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2));
-    }
-    if (!fs.existsSync(RESULTS_FILE)) {
-        fs.writeFileSync(RESULTS_FILE, JSON.stringify([], null, 2));
-    }
-}
-
-// 데이터 읽기/쓰기 함수
-function readUsers() {
-    try {
-        const data = fs.readFileSync(USERS_FILE, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        console.error('사용자 데이터 읽기 오류:', error);
-        return [];
-    }
-}
-
-function writeUsers(users) {
-    try {
-        fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-        return true;
-    } catch (error) {
-        console.error('사용자 데이터 쓰기 오류:', error);
-        return false;
-    }
-}
-
-function readResults() {
-    try {
-        const data = fs.readFileSync(RESULTS_FILE, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        console.error('테스트 결과 읽기 오류:', error);
-        return [];
-    }
-}
-
-function writeResults(results) {
-    try {
-        fs.writeFileSync(RESULTS_FILE, JSON.stringify(results, null, 2));
-        return true;
-    } catch (error) {
-        console.error('테스트 결과 쓰기 오류:', error);
-        return false;
-    }
-}
-
-// 초기화
-initDataFiles();
 
 // 미들웨어
 app.use(cors());
@@ -122,10 +61,9 @@ app.post('/api/auth/signup', async (req, res) => {
             return res.status(400).json({ message: '필수 필드가 누락되었습니다.' });
         }
 
-        const users = readUsers();
-
         // 이메일 중복 검사
-        if (users.find(u => u.email === email)) {
+        const existingUser = await db.getUserByEmail(email);
+        if (existingUser) {
             return res.status(400).json({ message: '이미 존재하는 이메일입니다.' });
         }
 
@@ -133,31 +71,29 @@ app.post('/api/auth/signup', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // 사용자 생성
-        const user = {
-            id: Date.now().toString(),
+        const userId = Date.now().toString();
+        const userData = {
+            user_id: userId,
             name,
-            nickname: nickname || name,
             email,
             password: hashedPassword,
-            loginType: 'email',
-            joinDate: new Date().toISOString()
+            login_type: 'email'
         };
 
-        users.push(user);
-        writeUsers(users);
+        const user = await db.createUser(userData);
 
         // 토큰 생성
-        const token = generateToken(user.id);
+        const token = generateToken(userId);
 
         res.json({
             message: '회원가입 성공',
             token,
             user: {
-                id: user.id,
+                id: userId,
                 name: user.name,
-                nickname: user.nickname,
+                nickname: nickname || name,
                 email: user.email,
-                joinDate: user.joinDate
+                joinDate: user.created_at
             }
         });
     } catch (error) {
@@ -175,10 +111,8 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(400).json({ message: '이메일과 비밀번호가 필요합니다.' });
         }
 
-        const users = readUsers();
-
         // 사용자 찾기
-        const user = users.find(u => u.email === email);
+        const user = await db.getUserByEmail(email);
         if (!user) {
             return res.status(401).json({ message: '이메일 또는 비밀번호가 올바르지 않습니다.' });
         }
@@ -190,17 +124,17 @@ app.post('/api/auth/login', async (req, res) => {
         }
 
         // 토큰 생성
-        const token = generateToken(user.id);
+        const token = generateToken(user.user_id);
 
         res.json({
             message: '로그인 성공',
             token,
             user: {
-                id: user.id,
+                id: user.user_id,
                 name: user.name,
-                nickname: user.nickname,
+                nickname: user.name,
                 email: user.email,
-                joinDate: user.joinDate
+                joinDate: user.created_at
             }
         });
     } catch (error) {
@@ -214,37 +148,34 @@ app.post('/api/auth/kakao', async (req, res) => {
     try {
         const { kakaoId, nickname, email } = req.body;
 
-        const users = readUsers();
-
-        // 기존 사용자 찾기 또는 생성
-        let user = users.find(u => u.kakaoId === kakaoId || u.email === email);
+        // 기존 사용자 찾기 (이메일로 검색)
+        let user = await db.getUserByEmail(email);
 
         if (!user) {
-            user = {
-                id: Date.now().toString(),
-                kakaoId,
+            // 새 사용자 생성
+            const userId = Date.now().toString();
+            const userData = {
+                user_id: userId,
                 name: nickname,
-                nickname,
                 email,
-                loginType: 'kakao',
-                joinDate: new Date().toISOString()
+                password: null, // 카카오 로그인은 비밀번호 없음
+                login_type: 'kakao'
             };
-            users.push(user);
-            writeUsers(users);
+            user = await db.createUser(userData);
         }
 
-        const token = generateToken(user.id);
+        const token = generateToken(user.user_id);
 
         res.json({
             message: '카카오 로그인 성공',
             token,
             user: {
-                id: user.id,
+                id: user.user_id,
                 name: user.name,
-                nickname: user.nickname,
+                nickname: user.name,
                 email: user.email,
                 loginType: 'kakao',
-                joinDate: user.joinDate
+                joinDate: user.created_at
             }
         });
     } catch (error) {
@@ -741,8 +672,7 @@ app.post('/api/test/submit', async (req, res) => {
         }
 
         // 기존 결과에서 같은 세션 ID가 있는지 확인
-        const existingResults = readResults();
-        const existingResult = existingResults.find(result => result.sessionId === sessionId);
+        const existingResult = await db.getTestResultBySessionId(sessionId);
 
         if (existingResult) {
             console.log(`세션 ID ${sessionId}에 대한 기존 결과 발견, 기존 결과 반환`);
@@ -787,8 +717,6 @@ app.post('/api/test/submit', async (req, res) => {
         answers.forEach((answer, index) => {
             const questionId = answer.id || (index + 1);
             const score = calculateScore(answer.answer);
-            // 75개 문항 개별 로그 제거 - 시스템 리소스 절약
-            // console.log(`문항 ${questionId}: "${answer.answer}" -> ${score}점`);
 
             if (questionId >= 1 && questionId <= 15) {
                 competencyGroups.problemSolving.push(score);
@@ -835,32 +763,40 @@ app.post('/api/test/submit', async (req, res) => {
         // 요약 로그만 출력
         console.log(`점수 계산 완료 - 전체: ${overallScore}점, 문제해결: ${competencyScores.problemSolving}, 커뮤니케이션: ${competencyScores.communication}, 리더십: ${competencyScores.leadership}, 창의성: ${competencyScores.creativity}, 팀워크: ${competencyScores.teamwork}`);
 
-        const result = {
-            id: Date.now().toString(),
-            sessionId: sessionId, // 세션 ID 추가
-            userId,
-            answers,
-            competencyScores,
-            overallScore,
-            testDate: submittedAt || new Date().toISOString(), // 클라이언트 제출 시간 사용
-            submittedAt: submittedAt || new Date().toISOString() // 클라이언트 제출 시간 사용
+        const testData = {
+            result_id: Date.now().toString(),
+            session_id: sessionId,
+            user_id: userId,
+            overall_score: overallScore,
+            problem_solving_score: competencyScores.problemSolving,
+            communication_score: competencyScores.communication,
+            leadership_score: competencyScores.leadership,
+            creativity_score: competencyScores.creativity,
+            teamwork_score: competencyScores.teamwork,
+            test_date: submittedAt || new Date().toISOString(),
+            submitted_at: submittedAt || new Date().toISOString(),
+            answers: answers
         };
 
-        const results = readResults();
-        results.push(result);
-        writeResults(results);
+        const result = await db.createTestResult(testData);
 
         console.log(`테스트 결과 저장 완료 - 세션: ${sessionId}, 전체점수: ${overallScore}점`);
 
         res.json({
             message: '검사 완료',
             result: {
-                id: result.id,
-                sessionId: result.sessionId,
-                competencyScores: result.competencyScores,
-                overallScore: result.overallScore,
-                testDate: result.testDate,
-                submittedAt: result.submittedAt,
+                id: result.result_id,
+                sessionId: result.session_id,
+                competencyScores: {
+                    problemSolving: result.problem_solving_score,
+                    communication: result.communication_score,
+                    leadership: result.leadership_score,
+                    creativity: result.creativity_score,
+                    teamwork: result.teamwork_score
+                },
+                overallScore: result.overall_score,
+                testDate: result.test_date,
+                submittedAt: result.submitted_at,
                 isExisting: false
             }
         });
@@ -873,29 +809,25 @@ app.post('/api/test/submit', async (req, res) => {
 // ===== 마이페이지 API =====
 
 // 사용자 프로필 및 테스트 결과 조회
-app.get('/api/user/profile', authenticateToken, (req, res) => {
+app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.userId;
-        const users = readUsers();
-        const results = readResults();
 
-        const user = users.find(u => u.id === userId);
+        const user = await db.getUserByUserId(userId);
         if (!user) {
             return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
         }
 
         // 사용자의 모든 테스트 결과
-        const userResults = results
-            .filter(r => r.userId === userId)
-            .sort((a, b) => new Date(b.testDate) - new Date(a.testDate));
+        const userResults = await db.getUserTestResults(userId);
 
         res.json({
             user: {
-                id: user.id,
+                id: user.user_id,
                 name: user.name,
-                nickname: user.nickname,
+                nickname: user.name,
                 email: user.email,
-                joinDate: user.joinDate
+                joinDate: user.created_at
             },
             testResults: userResults
         });
@@ -906,19 +838,12 @@ app.get('/api/user/profile', authenticateToken, (req, res) => {
 });
 
 // 계정 삭제
-app.delete('/api/user/account', authenticateToken, (req, res) => {
+app.delete('/api/user/account', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.userId;
-        const users = readUsers();
-        const results = readResults();
 
-        // 사용자 삭제
-        const updatedUsers = users.filter(u => u.id !== userId);
-        writeUsers(updatedUsers);
-
-        // 사용자의 테스트 결과 삭제
-        const updatedResults = results.filter(r => r.userId !== userId);
-        writeResults(updatedResults);
+        // 사용자 및 관련 데이터 삭제 (데이터베이스에서 자동 처리)
+        await db.deleteUser(userId);
 
         res.json({ message: '계정이 성공적으로 삭제되었습니다.' });
     } catch (error) {
@@ -947,31 +872,61 @@ app.get('*', (req, res) => {
 });
 
 // 서버 시작
-app.listen(PORT, () => {
-    // Railway 환경 감지 (여러 방법으로 확인)
-    const isRailway = process.env.RAILWAY_ENVIRONMENT ||
-        process.env.RAILWAY_PROJECT_ID ||
-        process.env.RAILWAY_SERVICE_ID ||
-        process.env.NODE_ENV === 'production';
+async function startServer() {
+    try {
+        // 데이터베이스 연결 테스트
+        console.log('🔍 데이터베이스 연결 확인 중...');
+        const stats = await db.getTestStats();
+        console.log('✅ 데이터베이스 연결 성공!');
+        console.log(`📊 현재 통계: 사용자 ${stats.totalUsers}명, 테스트 ${stats.totalTests}개`);
+    } catch (error) {
+        console.log('⚠️  데이터베이스 연결 실패 - 스키마를 생성합니다...');
 
-    console.log(`===========================================`);
-    console.log(`🚀 서버가 포트 ${PORT}에서 실행중입니다.`);
+        // 데이터베이스 스키마 생성 시도
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const schemaPath = path.join(__dirname, '../database/database-schema.sql');
+            const schema = fs.readFileSync(schemaPath, 'utf8');
 
-    // 환경 변수 디버깅 정보 출력
-    console.log(`🔍 환경 변수 확인:`);
-    console.log(`   - PORT: ${process.env.PORT || 'undefined'}`);
-    console.log(`   - RAILWAY_ENVIRONMENT: ${process.env.RAILWAY_ENVIRONMENT || 'undefined'}`);
-    console.log(`   - RAILWAY_PUBLIC_DOMAIN: ${process.env.RAILWAY_PUBLIC_DOMAIN || 'undefined'}`);
-    console.log(`   - NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`);
-
-    if (isRailway) {
-        console.log(`🚂 Railway 환경에서 실행 중`);
-        console.log(`⚠️  도메인 URL은 Railway 대시보드에서 확인하세요!`);
-        console.log(`📋 Health Check: [Railway_Domain]/api/health`);
-    } else {
-        console.log(`📋 API 테스트: http://localhost:${PORT}/api/health`);
-        console.log(`🌐 웹사이트: http://localhost:${PORT}`);
-        console.log(`💻 로컬 개발 환경에서 실행 중`);
+            // 간단한 스키마 실행 (실제 환경에서는 migration 스크립트 사용 권장)
+            console.log('📋 데이터베이스 스키마 초기화 중...');
+            // 여기서는 로그만 출력하고, Railway에서 수동으로 스키마를 설정해야 함
+            console.log('⚠️  Railway PostgreSQL에 스키마를 수동으로 실행해야 합니다!');
+        } catch (schemaError) {
+            console.error('❌ 스키마 읽기 실패:', schemaError.message);
+        }
     }
-    console.log(`===========================================`);
-});
+
+    app.listen(PORT, () => {
+        // Railway 환경 감지 (여러 방법으로 확인)
+        const isRailway = process.env.RAILWAY_ENVIRONMENT ||
+            process.env.RAILWAY_PROJECT_ID ||
+            process.env.RAILWAY_SERVICE_ID ||
+            process.env.NODE_ENV === 'production';
+
+        console.log(`===========================================`);
+        console.log(`🚀 서버가 포트 ${PORT}에서 실행중입니다.`);
+        console.log(`🗄️  PostgreSQL 데이터베이스 사용 중`);
+
+        // 환경 변수 디버깅 정보 출력
+        console.log(`🔍 환경 변수 확인:`);
+        console.log(`   - PORT: ${process.env.PORT || 'undefined'}`);
+        console.log(`   - DATABASE_URL: ${process.env.DATABASE_URL ? '설정됨' : 'undefined'}`);
+        console.log(`   - RAILWAY_ENVIRONMENT: ${process.env.RAILWAY_ENVIRONMENT || 'undefined'}`);
+        console.log(`   - NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`);
+
+        if (isRailway) {
+            console.log(`🚂 Railway 환경에서 실행 중`);
+            console.log(`⚠️  도메인 URL은 Railway 대시보드에서 확인하세요!`);
+            console.log(`📋 Health Check: [Railway_Domain]/api/health`);
+        } else {
+            console.log(`📋 API 테스트: http://localhost:${PORT}/api/health`);
+            console.log(`🌐 웹사이트: http://localhost:${PORT}`);
+            console.log(`💻 로컬 개발 환경에서 실행 중`);
+        }
+        console.log(`===========================================`);
+    });
+}
+
+startServer();

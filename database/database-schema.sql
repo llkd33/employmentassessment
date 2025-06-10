@@ -6,6 +6,7 @@ CREATE TABLE users (
     user_id VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255), -- 이메일 로그인용 (해시된 비밀번호)
     login_type VARCHAR(20) NOT NULL CHECK (login_type IN ('email', 'kakao')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
