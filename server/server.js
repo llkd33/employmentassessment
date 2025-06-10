@@ -86,6 +86,7 @@ app.post('/api/auth/signup', async (req, res) => {
         const token = generateToken(userId);
 
         res.json({
+            success: true,
             message: '회원가입 성공',
             token,
             user: {
@@ -127,6 +128,7 @@ app.post('/api/auth/login', async (req, res) => {
         const token = generateToken(user.user_id);
 
         res.json({
+            success: true,
             message: '로그인 성공',
             token,
             user: {
@@ -167,6 +169,7 @@ app.post('/api/auth/kakao', async (req, res) => {
         const token = generateToken(user.user_id);
 
         res.json({
+            success: true,
             message: '카카오 로그인 성공',
             token,
             user: {
@@ -214,6 +217,7 @@ app.get('/api/auth/verify', async (req, res) => {
 
         // 성공 응답
         res.json({
+            success: true,
             valid: true,
             user: {
                 id: user.user_id,

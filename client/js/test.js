@@ -420,10 +420,17 @@ async function submitTest() {
         console.log('제출 데이터:', submitData);
 
         // 인증 토큰 및 사용자 정보 가져오기
-        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-        const token = localStorage.getItem('authToken'); // JWT 토큰이 있다면
+        const userInfoRaw = localStorage.getItem('userInfo');
+        const token = localStorage.getItem('authToken');
 
-        console.log('사용자 정보:', userInfo);
+        console.log('🔍 localStorage 디버깅:');
+        console.log('- userInfoRaw:', userInfoRaw);
+        console.log('- token:', token);
+        console.log('- localStorage 전체 키들:', Object.keys(localStorage));
+
+        const userInfo = userInfoRaw ? JSON.parse(userInfoRaw) : null;
+
+        console.log('파싱된 사용자 정보:', userInfo);
         console.log('JWT 토큰 존재:', !!token);
 
         // 사용자 정보를 제출 데이터에 포함
