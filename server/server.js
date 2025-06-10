@@ -1008,6 +1008,10 @@ async function startServer() {
         const initializeSchema = require('../database/init-schema');
         await initializeSchema();
 
+        // 스키마 마이그레이션 실행
+        const migrateSchema = require('../database/migrate-schema');
+        await migrateSchema();
+
         // 데이터베이스 연결 및 통계 확인
         console.log('🔍 데이터베이스 연결 확인 중...');
         const stats = await db.getTestStats();
