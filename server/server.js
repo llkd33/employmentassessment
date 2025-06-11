@@ -731,8 +731,12 @@ app.post('/api/test/submit', async (req, res) => {
         let isAuthenticated = false;
 
         console.log('🔍 사용자 인증 시작...');
+        console.log('📋 전체 요청 Body:', JSON.stringify(req.body, null, 2));
         console.log('📋 요청 헤더 Authorization:', req.headers['authorization'] ? '존재함' : '없음');
         console.log('📋 클라이언트 userInfo:', userInfo ? JSON.stringify(userInfo) : '없음');
+        console.log('📋 userInfo 타입:', typeof userInfo);
+        console.log('📋 answers 개수:', answers ? answers.length : '없음');
+        console.log('📋 sessionId:', sessionId);
 
         // 1. JWT 토큰이 있다면 사용자 ID 추출
         const authHeader = req.headers['authorization'];

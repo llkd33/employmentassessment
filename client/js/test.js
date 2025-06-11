@@ -456,22 +456,28 @@ async function submitTest() {
                 name: userInfo.name,
                 email: userInfo.email
             };
-            console.log('✅ userInfo를 서버에 전송:', submitData.userInfo);
+            console.log('✅ userInfo를 서버에 전송:', JSON.stringify(submitData.userInfo, null, 2));
+            console.log('✅ submitData에 userInfo 추가 후:', 'userInfo' in submitData);
         } else {
             console.log('❌ userInfo 전송 불가능');
-            console.log('- userInfo:', userInfo);
+            console.log('- localStorage userInfoRaw:', userInfoRaw);
+            console.log('- 파싱된 userInfo:', userInfo);
             console.log('- userInfo가 존재:', !!userInfo);
             if (userInfo) {
                 console.log('- userInfo.id 존재:', !!userInfo.id);
+                console.log('- userInfo.id 값:', userInfo.id);
                 console.log('- userInfo 구조:', Object.keys(userInfo));
+                console.log('- userInfo 전체:', JSON.stringify(userInfo, null, 2));
             }
         }
 
-        console.log('🚀 최종 제출 데이터:', submitData);
+        console.log('🚀 최종 제출 데이터:', JSON.stringify(submitData, null, 2));
         console.log('🚀 제출 데이터 크기:', JSON.stringify(submitData).length, '바이트');
         console.log('🚀 userInfo 포함 여부:', !!submitData.userInfo);
         if (submitData.userInfo) {
-            console.log('🚀 전송할 userInfo:', submitData.userInfo);
+            console.log('🚀 전송할 userInfo:', JSON.stringify(submitData.userInfo, null, 2));
+        } else {
+            console.log('🚀 ❌ userInfo가 submitData에 포함되지 않았습니다!');
         }
 
         const headers = {
