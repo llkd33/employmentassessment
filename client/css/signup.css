@@ -237,6 +237,30 @@
 }
 
 /* 반응형 디자인 */
+@media (max-width: 1200px) {
+    .user-greeting {
+        display: none;
+    }
+}
+
+@media (max-width: 1000px) {
+    .mypage-btn {
+        display: none;
+    }
+}
+
+@media (max-width: 850px) {
+    .logout-btn {
+        display: none;
+    }
+
+    .auth-btn {
+        padding: 0.7rem 1.5rem;
+        font-size: 1.1rem;
+        height: 42px;
+    }
+}
+
 @media (max-width: 768px) {
     .signup-container {
         padding: 2rem;
@@ -274,6 +298,42 @@
     .graph-image {
         padding: 1.5rem;
     }
+
+    .header-container {
+        padding: 0 0 0 12px;
+        grid-template-columns: auto 1fr auto;
+    }
+
+    .home-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+
+    .logo h2 {
+        font-size: 1.6rem;
+    }
+
+    .auth-nav {
+        gap: 6px;
+    }
+
+    .auth-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 1rem;
+        height: 38px;
+        min-width: 70px;
+    }
+
+    .user-info {
+        font-size: 0.85rem;
+        margin-right: 10px;
+    }
+
+    .user-greeting {
+        font-size: 1rem;
+        margin-right: 12px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -297,45 +357,67 @@
         height: 45px;
         font-size: 1rem;
     }
+
+    .header-container {
+        padding: 0 0 0 8px;
+    }
+
+    .home-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
+    }
+
+    .logo h2 {
+        font-size: 1.4rem;
+    }
+
+    .auth-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        height: 34px;
+        min-width: 60px;
+    }
 }
 
-.logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    transition: transform 0.3s ease;
-    min-width: 0;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%) scale(1.2) !important;
+@media (max-width: 600px) {
+
+    .logout-btn,
+    .auth-btn {
+        display: none !important;
+    }
+
+    .header-container {
+        padding: 0 10px !important;
+    }
+
+    .auth-nav {
+        display: none !important;
+    }
 }
 
-.logo:hover {
-    transform: translateX(-50%) scale(1.3) !important;
+@media (max-width: 450px) {
+    .logo h2 {
+        font-size: 1rem !important;
+    }
 }
 
-.logo img {
-    height: auto;
-    width: auto;
-    display: block;
+@media (max-width: 350px) {
+    .logo h2 {
+        font-size: 0.9rem !important;
+    }
+
+    .header-container {
+        padding: 0 0.5rem !important;
+    }
 }
 
-.logo h2 {
-    color: var(--primary-color);
-    font-size: 2.0rem !important;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-}
+@media (max-width: 300px) {
+    .logo h2 {
+        font-size: 0.8rem !important;
+    }
 
-.auth-nav {
-    display: flex !important;
-    align-items: center;
-    gap: 1rem;
-    justify-content: flex-end;
-    max-width: 500px;
-    overflow: hidden;
-    margin-left: auto !important;
-    position: absolute;
-    right: 2rem;
+    .header-container {
+        padding: 0 0.25rem !important;
+    }
 }
