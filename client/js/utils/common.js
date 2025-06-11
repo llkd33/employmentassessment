@@ -67,6 +67,35 @@ function goHome() {
     window.location.href = '/';
 }
 
+// 카카오 자동 로그인 강제 해제 함수
+function forceKakaoLogout() {
+    if (window.Kakao && window.Kakao.Auth) {
+        try {
+            // 탈퇴한 계정인지 확인
+            const deletedTime = localStorage.getItem('kakao_account_deleted');
+            if (deletedTime) {
+                console.log('🚫 탈퇴한 카카오 계정 감지, 강제 로그아웃 실행');
+
+                // 카카오 자동 로그인 상태 확인 및 강제 해제
+                if (window.Kakao.Auth.getAccessToken()) {
+                    console.log('🔄 카카오 자동 로그인 상태 감지, 강제 로그아웃');
+                    window.Kakao.Auth.logout(() => {
+                        console.log('✅ 카카오 강제 로그아웃 완료');
+                    });
+                    window.Kakao.Auth.setAccessToken(null);
+                }
+
+                // 추가 정리
+                forceKakaoCleanup();
+                return true; // 강제 로그아웃 실행됨
+            }
+        } catch (error) {
+            console.log('카카오 강제 로그아웃 중 오류 (무시됨):', error);
+        }
+    }
+    return false; // 강제 로그아웃 없음
+}
+
 // 카카오 SDK 초기화 함수 (설정 동적 로드 포함)
 async function initKakaoSDK(callback = null) {
     try {
@@ -106,6 +135,11 @@ async function initKakaoSDK(callback = null) {
             }
         }
 
+        // 카카오 SDK 초기화 후 강제 로그아웃 확인
+        setTimeout(() => {
+            forceKakaoLogout();
+        }, 1000);
+
         if (callback) callback();
     } catch (error) {
         console.error('❌ 카카오 SDK 초기화 오류:', error);
@@ -115,48 +149,137 @@ async function initKakaoSDK(callback = null) {
 
 // 글로벌 카카오 완전 정리 함수
 function forceKakaoCleanup() {
-    if (window.Kakao && window.Kakao.Auth) {
-        try {
-            console.log('🧹 강제 카카오 정리 시작...');
+    try {
+        console.log('🧹 강제 카카오 정리 시작...');
 
-            // 1. 카카오 로그아웃
-            window.Kakao.Auth.logout(() => {
-                console.log('✓ 강제 카카오 로그아웃 완료');
-            });
+        // 1. 카카오 SDK 정리
+        if (window.Kakao && window.Kakao.Auth) {
+            try {
+                // 카카오 로그아웃
+                window.Kakao.Auth.logout(() => {
+                    console.log('✓ 강제 카카오 로그아웃 완료');
+                });
 
-            // 2. 액세스 토큰 제거
-            window.Kakao.Auth.setAccessToken(null);
+                // 액세스 토큰 제거
+                window.Kakao.Auth.setAccessToken(null);
 
-            // 3. 모든 저장소에서 카카오 관련 데이터 제거
-            const allKakaoKeys = [
-                'tempKakaoInfo', 'kakao_auth_state', 'kakao_sdk', 'kakao_app_key',
-                'kakao_login_state', 'KAKAO_SDK_INITIALIZED', 'kakao_account_deleted'
-            ];
-
-            allKakaoKeys.forEach(key => {
-                localStorage.removeItem(key);
-                sessionStorage.removeItem(key);
-            });
-
-            // 4. 동적으로 찾은 카카오 관련 키들도 제거
-            for (let i = localStorage.length - 1; i >= 0; i--) {
-                const key = localStorage.key(i);
-                if (key && (key.includes('kakao') || key.includes('Kakao') || key.includes('KAKAO'))) {
-                    localStorage.removeItem(key);
+                // 카카오 SDK 재초기화 (완전 리셋)
+                if (window.Kakao.isInitialized()) {
+                    console.log('🔄 카카오 SDK 재초기화 시도...');
+                    // SDK를 완전히 리셋하기 위해 내부 상태 초기화
+                    try {
+                        delete window.Kakao._isInitialized;
+                    } catch (e) { }
                 }
+            } catch (error) {
+                console.log('카카오 SDK 정리 중 오류 (무시됨):', error);
             }
-
-            for (let i = sessionStorage.length - 1; i >= 0; i--) {
-                const key = sessionStorage.key(i);
-                if (key && (key.includes('kakao') || key.includes('Kakao') || key.includes('KAKAO'))) {
-                    sessionStorage.removeItem(key);
-                }
-            }
-
-            console.log('✅ 강제 카카오 정리 완료');
-        } catch (error) {
-            console.log('강제 카카오 정리 중 오류 (무시됨):', error);
         }
+
+        // 2. 모든 저장소에서 카카오 관련 데이터 제거
+        const allKakaoKeys = [
+            'tempKakaoInfo', 'kakao_auth_state', 'kakao_sdk', 'kakao_app_key',
+            'kakao_login_state', 'KAKAO_SDK_INITIALIZED'
+        ];
+
+        allKakaoKeys.forEach(key => {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+        });
+
+        // 3. 동적으로 찾은 카카오 관련 키들도 제거
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key && (key.includes('kakao') || key.includes('Kakao') || key.includes('KAKAO'))) {
+                localStorage.removeItem(key);
+                console.log('✓ localStorage에서 카카오 데이터 제거:', key);
+            }
+        }
+
+        for (let i = sessionStorage.length - 1; i >= 0; i--) {
+            const key = sessionStorage.key(i);
+            if (key && (key.includes('kakao') || key.includes('Kakao') || key.includes('KAKAO'))) {
+                sessionStorage.removeItem(key);
+                console.log('✓ sessionStorage에서 카카오 데이터 제거:', key);
+            }
+        }
+
+        // 4. 브라우저 쿠키에서 카카오 관련 데이터 제거 시도
+        try {
+            const cookies = document.cookie.split(";");
+            cookies.forEach(function (cookie) {
+                const eqPos = cookie.indexOf("=");
+                const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+
+                if (name.toLowerCase().includes('kakao') || name.toLowerCase().includes('k_')) {
+                    // 다양한 도메인과 경로로 쿠키 삭제 시도
+                    const domains = [window.location.hostname, '.kakao.com', '.kakao.net'];
+                    const paths = ['/', '/auth/', '/login/'];
+
+                    domains.forEach(domain => {
+                        paths.forEach(path => {
+                            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}; domain=${domain}`;
+                        });
+                    });
+                    console.log('✓ 카카오 쿠키 삭제 시도:', name);
+                }
+            });
+        } catch (cookieError) {
+            console.log('쿠키 정리 중 오류 (무시됨):', cookieError);
+        }
+
+        // 5. IndexedDB에서 카카오 관련 데이터 제거 시도
+        try {
+            if ('indexedDB' in window) {
+                const deleteDB = indexedDB.deleteDatabase('kakao');
+                deleteDB.onsuccess = () => console.log('✓ 카카오 IndexedDB 삭제 완료');
+                deleteDB.onerror = () => console.log('카카오 IndexedDB 삭제 실패 (무시됨)');
+            }
+        } catch (idbError) {
+            console.log('IndexedDB 정리 중 오류 (무시됨):', idbError);
+        }
+
+        console.log('✅ 강제 카카오 정리 완료');
+    } catch (error) {
+        console.log('강제 카카오 정리 중 오류 (무시됨):', error);
+    }
+}
+
+// 핵폭탄급 브라우저 저장소 완전 정리 (탈퇴 시에만 사용)
+function nuclearCleanup() {
+    console.log('💥 핵폭탄급 브라우저 정리 시작...');
+
+    try {
+        // 1. 카카오 완전 정리
+        forceKakaoCleanup();
+
+        // 2. 현재 도메인의 모든 저장소 정리
+        if (confirm('브라우저의 모든 저장된 데이터를 완전히 정리하시겠습니까? (로그인 상태 등이 모두 초기화됩니다)')) {
+            // localStorage 완전 정리
+            localStorage.clear();
+
+            // sessionStorage 완전 정리
+            sessionStorage.clear();
+
+            // 서비스 워커 정리
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => registration.unregister());
+                });
+            }
+
+            // 캐시 정리
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => caches.delete(name));
+                });
+            }
+
+            console.log('💥 핵폭탄급 정리 완료 - 페이지 새로고침');
+            window.location.reload(true);
+        }
+    } catch (error) {
+        console.log('핵폭탄급 정리 중 오류 (무시됨):', error);
     }
 }
 
@@ -271,10 +394,43 @@ const ApiUtils = {
     }
 };
 
+// 페이지별 카카오 상태 확인 및 정리
+function checkAndCleanKakaoOnPageLoad() {
+    // 현재 페이지가 로그인/회원가입 페이지인 경우에만 실행
+    const currentPage = window.location.pathname;
+    const isAuthPage = currentPage.includes('login') || currentPage.includes('signup') || currentPage === '/';
+
+    if (isAuthPage) {
+        console.log('🔍 인증 페이지에서 카카오 상태 확인 중...');
+
+        // 2초 후에 카카오 상태 확인 (SDK 로드 완료 대기)
+        setTimeout(() => {
+            const deletedTime = localStorage.getItem('kakao_account_deleted');
+            if (deletedTime && window.Kakao && window.Kakao.Auth) {
+                try {
+                    if (window.Kakao.Auth.getAccessToken()) {
+                        console.log('🚫 탈퇴한 계정의 카카오 자동 로그인 감지, 강제 정리');
+                        window.Kakao.Auth.logout(() => {
+                            console.log('✅ 페이지 로드 시 카카오 강제 로그아웃 완료');
+                        });
+                        window.Kakao.Auth.setAccessToken(null);
+                        forceKakaoCleanup();
+                    }
+                } catch (error) {
+                    console.log('페이지 로드 시 카카오 정리 중 오류 (무시됨):', error);
+                }
+            }
+        }, 2000);
+    }
+}
+
 // 공통 이벤트 리스너 등록
 document.addEventListener('DOMContentLoaded', function () {
     // 앱 설정 정보 미리 로드
     loadAppConfig();
+
+    // 페이지 로드 시 카카오 상태 확인
+    checkAndCleanKakaoOnPageLoad();
 
     // 전역 키보드 이벤트 (ESC 키로 모달 닫기 등)
     document.addEventListener('keydown', function (e) {

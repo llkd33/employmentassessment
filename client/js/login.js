@@ -174,16 +174,39 @@ function kakaoLogin() {
         return;
     }
 
-    window.Kakao.Auth.login({
-        success: function (authObj) {
-            console.log('카카오 로그인 성공:', authObj);
-            getUserInfoFromKakao();
-        },
-        fail: function (err) {
-            console.error('카카오 로그인 실패:', err);
-            showNotification('카카오 로그인에 실패했습니다.', 'error');
+    // 기존 카카오 세션 강제 정리 후 새로운 로그인 시작
+    console.log('🔄 카카오 로그인 시작 - 기존 세션 정리');
+
+    try {
+        // 기존 토큰이 있다면 먼저 제거
+        if (window.Kakao.Auth.getAccessToken()) {
+            console.log('🧹 기존 카카오 토큰 발견, 정리 중...');
+            window.Kakao.Auth.logout(() => {
+                console.log('✓ 기존 카카오 세션 정리 완료');
+                startFreshKakaoLogin();
+            });
+            window.Kakao.Auth.setAccessToken(null);
+        } else {
+            startFreshKakaoLogin();
         }
-    });
+    } catch (error) {
+        console.log('카카오 세션 정리 중 오류 (무시됨):', error);
+        startFreshKakaoLogin();
+    }
+
+    function startFreshKakaoLogin() {
+        console.log('🚀 새로운 카카오 로그인 시작');
+        window.Kakao.Auth.login({
+            success: function (authObj) {
+                console.log('카카오 로그인 성공:', authObj);
+                getUserInfoFromKakao();
+            },
+            fail: function (err) {
+                console.error('카카오 로그인 실패:', err);
+                showNotification('카카오 로그인에 실패했습니다.', 'error');
+            }
+        });
+    }
 }
 
 // 카카오에서 사용자 정보 가져오기

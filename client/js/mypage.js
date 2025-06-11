@@ -842,11 +842,28 @@ function deleteLocalAccountData(userInfo) {
 
     console.log('=== 계정 삭제 완료 ===');
 
+    // 💥 핵폭탄급 브라우저 정리 (카카오 자동 로그인 완전 차단)
+    if (typeof forceKakaoCleanup === 'function') {
+        console.log('💥 최종 핵폭탄급 카카오 정리 실행...');
+        forceKakaoCleanup();
+    }
+
     showNotification(`${userName}님의 탈퇴가 완료되었습니다.`, 'success');
 
-    // 6. 메인 페이지로 이동
+    // 6. 추가 강제 정리 및 메인 페이지로 이동
     setTimeout(() => {
-        window.location.href = '/';
+        // 최종 카카오 정리
+        if (window.Kakao && window.Kakao.Auth) {
+            try {
+                window.Kakao.Auth.setAccessToken(null);
+                console.log('✓ 최종 카카오 토큰 정리 완료');
+            } catch (error) {
+                console.log('최종 카카오 정리 중 오류 (무시됨):', error);
+            }
+        }
+
+        // 강제 페이지 새로고침으로 모든 JavaScript 상태 초기화
+        window.location.replace('/');
     }, 1500);
 }
 

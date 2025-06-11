@@ -356,21 +356,40 @@ function kakaoSignup() {
         console.log('기존 카카오 데이터 정리 중 오류 (무시됨):', error);
     }
 
-    // 짧은 지연 후 새로운 카카오 로그인 시작
+    // 기존 카카오 세션 강제 정리 후 새로운 로그인 시작
     setTimeout(() => {
         console.log('=== 새로운 카카오 회원가입 진행 ===');
 
-        // 표준 카카오 로그인 방식
-        window.Kakao.Auth.login({
-            success: function (authObj) {
-                console.log('새로운 카카오 로그인 성공:', authObj);
-                getUserInfo();
-            },
-            fail: function (err) {
-                console.error('카카오 로그인 실패:', err);
-                alert('카카오 로그인에 실패했습니다. 다시 시도해주세요.');
+        try {
+            // 기존 토큰이 있다면 먼저 제거
+            if (window.Kakao.Auth.getAccessToken()) {
+                console.log('🧹 기존 카카오 토큰 발견, 정리 중...');
+                window.Kakao.Auth.logout(() => {
+                    console.log('✓ 기존 카카오 세션 정리 완료');
+                    startFreshKakaoSignup();
+                });
+                window.Kakao.Auth.setAccessToken(null);
+            } else {
+                startFreshKakaoSignup();
             }
-        });
+        } catch (error) {
+            console.log('카카오 세션 정리 중 오류 (무시됨):', error);
+            startFreshKakaoSignup();
+        }
+
+        function startFreshKakaoSignup() {
+            console.log('🚀 새로운 카카오 회원가입 시작');
+            window.Kakao.Auth.login({
+                success: function (authObj) {
+                    console.log('새로운 카카오 로그인 성공:', authObj);
+                    getUserInfo();
+                },
+                fail: function (err) {
+                    console.error('카카오 로그인 실패:', err);
+                    alert('카카오 로그인에 실패했습니다. 다시 시도해주세요.');
+                }
+            });
+        }
     }, 500); // 500ms 지연으로 정리 작업 완료 대기
 }
 
