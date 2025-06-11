@@ -1037,6 +1037,52 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// 데이터베이스 사용자 목록 확인 API (디버깅용)
+app.get('/api/debug/users', async (req, res) => {
+    try {
+        console.log('🔍 데이터베이스 사용자 목록 조회 요청');
+
+        // 모든 사용자 조회
+        const users = await db.getAllUsers();
+
+        // 통계 정보
+        const stats = await db.getTestStats();
+
+        // 로그인 타입별 통계 계산
+        const emailUsers = users.filter(u => u.login_type === 'email').length;
+        const kakaoUsers = users.filter(u => u.login_type === 'kakao').length;
+        const anonymousUsers = users.filter(u => u.login_type === 'anonymous').length;
+
+        res.json({
+            success: true,
+            timestamp: new Date().toISOString(),
+            stats: {
+                totalUsers: users.length,
+                emailUsers: emailUsers,
+                kakaoUsers: kakaoUsers,
+                anonymousUsers: anonymousUsers,
+                totalTests: stats.totalTests,
+                averageScore: stats.averageScore
+            },
+            users: users.slice(0, 20).map(user => ({
+                id: user.user_id,
+                name: user.name,
+                email: user.email,
+                loginType: user.login_type,
+                createdAt: user.created_at
+            }))
+        });
+
+    } catch (error) {
+        console.error('데이터베이스 사용자 조회 오류:', error);
+        res.status(500).json({
+            success: false,
+            message: '데이터베이스 조회 중 오류가 발생했습니다.',
+            error: error.message
+        });
+    }
+});
+
 // 기본 라우팅 - 모든 비-API 요청을 index.html로 라우팅
 app.get('*', (req, res) => {
     // API 요청이 아닌 경우에만 index.html 제공
