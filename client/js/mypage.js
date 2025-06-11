@@ -589,168 +589,209 @@ function handleAccountDelete() {
         if (confirm('마지막 확인입니다.\n정말로 탈퇴하시겠습니까?')) {
             console.log(`=== ${userName}(${userEmail}, ${loginType}) 계정 삭제 시작 ===`);
 
-            // 1. 현재 로그인 정보 삭제
-            localStorage.removeItem('userInfo');
-            localStorage.removeItem('rememberLogin'); // 자동 로그인 정보도 삭제
-            localStorage.removeItem('tempKakaoInfo'); // 임시 카카오 정보도 삭제
-            console.log('✓ 로그인 정보 삭제 완료');
+            // 탈퇴 진행 중임을 사용자에게 알림
+            showNotification('계정 탈퇴를 진행중입니다...', 'info', 5000);
 
-            // 2. 등록된 사용자 목록에서 제거 (이메일과 ID 둘 다 확인)
-            const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-            console.log('삭제 전 등록된 사용자 수:', registeredUsers.length);
+            // 1. 먼저 서버 데이터베이스에서 계정 삭제
+            deleteAccountFromDatabase(userInfo)
+                .then(() => {
+                    console.log('✅ 데이터베이스에서 계정 삭제 완료');
+                    // 데이터베이스 삭제 성공 시 로컬 데이터도 삭제
+                    deleteLocalAccountData(userInfo);
+                })
+                .catch((error) => {
+                    console.error('❌ 데이터베이스 삭제 실패:', error);
+                    showNotification('서버에서 계정 삭제에 실패했습니다. 다시 시도해주세요.', 'error');
+                });
+        }
+    }
+}
 
-            const updatedUsers = registeredUsers.filter(user => {
-                // 이메일 또는 ID가 일치하는 경우 삭제
-                const isTarget = (user.email === userEmail) ||
-                    (user.id === userId) ||
-                    (user.id === userId.toString()) ||
-                    (loginType === 'kakao' && user.loginType === 'kakao' &&
-                        (user.email === userEmail || user.id === userId));
+// 서버 데이터베이스에서 계정 삭제
+async function deleteAccountFromDatabase(userInfo) {
+    const authToken = localStorage.getItem('authToken');
 
-                if (isTarget) {
-                    console.log('삭제할 계정 발견:', {
-                        email: user.email,
-                        id: user.id,
-                        name: user.name || user.nickname,
-                        loginType: user.loginType
-                    });
-                    return false; // 삭제
-                }
-                return true; // 유지
+    if (!authToken) {
+        throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
+    }
+
+    console.log('🗄️ 데이터베이스에서 계정 삭제 요청...');
+
+    const response = await fetch('/api/user/account', {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: '서버 오류' }));
+        throw new Error(`HTTP ${response.status}: ${errorData.message || '서버 오류'}`);
+    }
+
+    const result = await response.json();
+    console.log('✅ 서버 응답:', result);
+    return result;
+}
+
+// 로컬 저장소에서 계정 데이터 삭제
+function deleteLocalAccountData(userInfo) {
+    const userName = userInfo.name || userInfo.nickname || '사용자';
+    const userEmail = userInfo.email;
+    const userId = userInfo.id;
+    const loginType = userInfo.loginType;
+
+    // 1. 현재 로그인 정보 삭제
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('rememberLogin');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('tempKakaoInfo');
+    console.log('✓ 로그인 정보 삭제 완료');
+
+    // 2. 등록된 사용자 목록에서 제거
+    const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+    console.log('삭제 전 등록된 사용자 수:', registeredUsers.length);
+
+    const updatedUsers = registeredUsers.filter(user => {
+        const isTarget = (user.email === userEmail) ||
+            (user.id === userId) ||
+            (user.id === userId.toString()) ||
+            (loginType === 'kakao' && user.loginType === 'kakao' &&
+                (user.email === userEmail || user.id === userId));
+
+        if (isTarget) {
+            console.log('삭제할 계정 발견:', {
+                email: user.email,
+                id: user.id,
+                name: user.name || user.nickname,
+                loginType: user.loginType
             });
+            return false; // 삭제
+        }
+        return true; // 유지
+    });
 
-            localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers));
-            console.log('✓ 계정 데이터베이스에서 삭제 완료');
-            console.log('삭제 후 등록된 사용자 수:', updatedUsers.length);
+    localStorage.setItem('registeredUsers', JSON.stringify(updatedUsers));
+    console.log('✓ 계정 데이터베이스에서 삭제 완료');
+    console.log('삭제 후 등록된 사용자 수:', updatedUsers.length);
 
-            // 3. 해당 사용자의 모든 테스트 결과 삭제 (이메일과 ID 둘 다 확인)
-            const savedResults = JSON.parse(localStorage.getItem('savedResults') || '[]');
-            console.log('삭제 전 전체 테스트 결과 수:', savedResults.length);
+    // 3. 해당 사용자의 모든 테스트 결과 삭제
+    const savedResults = JSON.parse(localStorage.getItem('savedResults') || '[]');
+    console.log('삭제 전 전체 테스트 결과 수:', savedResults.length);
 
-            const filteredResults = savedResults.filter(result => {
-                if (result.userInfo) {
-                    const isTarget = (result.userInfo.email === userEmail) ||
-                        (result.userInfo.id === userId) ||
-                        (result.userInfo.id === userId.toString());
+    const filteredResults = savedResults.filter(result => {
+        if (result.userInfo) {
+            const isTarget = (result.userInfo.email === userEmail) ||
+                (result.userInfo.id === userId) ||
+                (result.userInfo.id === userId.toString());
 
-                    if (isTarget) {
-                        console.log('삭제할 테스트 결과:', {
-                            date: result.savedAt,
-                            score: result.overallScore,
-                            email: result.userInfo.email,
-                            id: result.userInfo.id
-                        });
-                        return false; // 삭제
-                    }
-                }
-                return true; // 다른 사용자 결과는 유지
-            });
+            if (isTarget) {
+                console.log('삭제할 테스트 결과:', {
+                    date: result.savedAt,
+                    score: result.overallScore,
+                    email: result.userInfo.email,
+                    id: result.userInfo.id
+                });
+                return false; // 삭제
+            }
+        }
+        return true; // 다른 사용자 결과는 유지
+    });
 
-            localStorage.setItem('savedResults', JSON.stringify(filteredResults));
-            console.log('✓ 사용자 테스트 결과 삭제 완료');
-            console.log('삭제 후 전체 테스트 결과 수:', filteredResults.length);
+    localStorage.setItem('savedResults', JSON.stringify(filteredResults));
+    console.log('✓ 사용자 테스트 결과 삭제 완료');
+    console.log('삭제 후 전체 테스트 결과 수:', filteredResults.length);
 
-            // 4. 기타 임시 데이터 정리
-            localStorage.removeItem('testResult'); // 임시 테스트 결과 삭제
-            console.log('✓ 임시 데이터 정리 완료');
+    // 4. 기타 임시 데이터 정리
+    localStorage.removeItem('testResult');
+    console.log('✓ 임시 데이터 정리 완료');
 
-            // 5. 카카오 로그아웃 및 연결 해제 처리 (카카오 계정인 경우)
-            if (loginType === 'kakao' && window.Kakao && window.Kakao.Auth) {
-                console.log('카카오 완전 초기화 처리 중...');
-                try {
-                    // 1) 액세스 토큰 확인 및 연결 해제
-                    if (window.Kakao.Auth.getAccessToken()) {
-                        console.log('카카오 액세스 토큰 발견, 연결 해제 시도...');
+    // 5. 카카오 로그아웃 및 연결 해제 처리
+    if (loginType === 'kakao' && window.Kakao && window.Kakao.Auth) {
+        console.log('카카오 완전 초기화 처리 중...');
+        try {
+            if (window.Kakao.Auth.getAccessToken()) {
+                console.log('카카오 액세스 토큰 발견, 연결 해제 시도...');
 
-                        // 카카오와의 연결을 완전히 끊기
-                        window.Kakao.API.request({
-                            url: '/v1/user/unlink',
-                            success: function (response) {
-                                console.log('✓ 카카오 연결 해제 완료:', response);
-
-                                // 연결 해제 후 추가 정리 작업
-                                performCompleteKakaoCleanup();
-                            },
-                            fail: function (error) {
-                                console.log('카카오 연결 해제 실패, 강제 정리 진행:', error);
-
-                                // 연결 해제가 실패해도 강제로 정리
-                                performCompleteKakaoCleanup();
-                            }
-                        });
-                    } else {
-                        console.log('카카오 액세스 토큰 없음, 직접 정리 진행');
+                window.Kakao.API.request({
+                    url: '/v1/user/unlink',
+                    success: function (response) {
+                        console.log('✓ 카카오 연결 해제 완료:', response);
+                        performCompleteKakaoCleanup();
+                    },
+                    fail: function (error) {
+                        console.log('카카오 연결 해제 실패, 강제 정리 진행:', error);
                         performCompleteKakaoCleanup();
                     }
+                });
+            } else {
+                console.log('카카오 액세스 토큰 없음, 직접 정리 진행');
+                performCompleteKakaoCleanup();
+            }
 
-                    // 완전한 카카오 정리 함수
-                    function performCompleteKakaoCleanup() {
-                        try {
-                            // 2) 로그아웃 처리
-                            window.Kakao.Auth.logout(() => {
-                                console.log('✓ 카카오 로그아웃 완료');
-                            });
+            function performCompleteKakaoCleanup() {
+                try {
+                    window.Kakao.Auth.logout(() => {
+                        console.log('✓ 카카오 로그아웃 완료');
+                    });
 
-                            // 3) 모든 카카오 관련 토큰 제거
-                            window.Kakao.Auth.setAccessToken(null);
+                    window.Kakao.Auth.setAccessToken(null);
 
-                            // 4) 브라우저 저장소에서 카카오 관련 데이터 제거
-                            const keysToRemove = [];
-
-                            // localStorage에서 카카오 관련 키 찾기
-                            for (let i = 0; i < localStorage.length; i++) {
-                                const key = localStorage.key(i);
-                                if (key && (key.includes('kakao') || key.includes('Kakao') || key.includes('KAKAO'))) {
-                                    keysToRemove.push(key);
-                                }
-                            }
-
-                            // 찾은 카카오 관련 키들 제거
-                            keysToRemove.forEach(key => {
-                                localStorage.removeItem(key);
-                                console.log('✓ 카카오 관련 저장 데이터 제거:', key);
-                            });
-
-                            // 5) sessionStorage에서도 카카오 관련 데이터 제거
-                            const sessionKeysToRemove = [];
-                            for (let i = 0; i < sessionStorage.length; i++) {
-                                const key = sessionStorage.key(i);
-                                if (key && (key.includes('kakao') || key.includes('Kakao') || key.includes('KAKAO'))) {
-                                    sessionKeysToRemove.push(key);
-                                }
-                            }
-
-                            sessionKeysToRemove.forEach(key => {
-                                sessionStorage.removeItem(key);
-                                console.log('✓ 카카오 관련 세션 데이터 제거:', key);
-                            });
-
-                            // 6) 추가 임시 카카오 정보 제거
-                            localStorage.removeItem('tempKakaoInfo');
-                            localStorage.removeItem('kakao_auth_state');
-                            sessionStorage.removeItem('kakao_auth_state');
-
-                            console.log('✓ 카카오 완전 초기화 완료');
-                        } catch (cleanupError) {
-                            console.log('카카오 정리 중 오류 (무시됨):', cleanupError);
+                    // localStorage에서 카카오 관련 데이터 제거
+                    const keysToRemove = [];
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && (key.includes('kakao') || key.includes('Kakao') || key.includes('KAKAO'))) {
+                            keysToRemove.push(key);
                         }
                     }
 
-                } catch (error) {
-                    console.log('카카오 처리 중 오류 (무시됨):', error);
+                    keysToRemove.forEach(key => {
+                        localStorage.removeItem(key);
+                        console.log('✓ 카카오 관련 저장 데이터 제거:', key);
+                    });
+
+                    // sessionStorage에서도 카카오 관련 데이터 제거
+                    const sessionKeysToRemove = [];
+                    for (let i = 0; i < sessionStorage.length; i++) {
+                        const key = sessionStorage.key(i);
+                        if (key && (key.includes('kakao') || key.includes('Kakao') || key.includes('KAKAO'))) {
+                            sessionKeysToRemove.push(key);
+                        }
+                    }
+
+                    sessionKeysToRemove.forEach(key => {
+                        sessionStorage.removeItem(key);
+                        console.log('✓ 카카오 관련 세션 데이터 제거:', key);
+                    });
+
+                    localStorage.removeItem('tempKakaoInfo');
+                    localStorage.removeItem('kakao_auth_state');
+                    sessionStorage.removeItem('kakao_auth_state');
+
+                    console.log('✓ 카카오 완전 초기화 완료');
+                } catch (cleanupError) {
+                    console.log('카카오 정리 중 오류 (무시됨):', cleanupError);
                 }
             }
 
-            console.log('=== 계정 삭제 완료 ===');
-
-            alert(`${userName}님의 탈퇴가 완료되었습니다.`);
-
-            // 6. 메인 페이지로 이동
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 1000);
+        } catch (error) {
+            console.log('카카오 처리 중 오류 (무시됨):', error);
         }
     }
+
+    console.log('=== 계정 삭제 완료 ===');
+
+    showNotification(`${userName}님의 탈퇴가 완료되었습니다.`, 'success');
+
+    // 6. 메인 페이지로 이동
+    setTimeout(() => {
+        window.location.href = '/';
+    }, 1500);
 }
 
 // 저장된 데이터 정리 함수 (개발자 도구에서 호출 가능)
