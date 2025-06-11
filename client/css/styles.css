@@ -126,7 +126,7 @@ body {
 
 .logo h2 {
     color: var(--primary-color);
-    font-size: 2rem;
+    font-size: clamp(1.2rem, 4vw, 2rem);
     font-weight: 700;
     letter-spacing: -0.5px;
 }
@@ -266,9 +266,7 @@ body {
         font-size: 1rem;
     }
 
-    .logo h2 {
-        font-size: 1.6rem;
-    }
+
 
     .auth-nav {
         gap: 6px;
@@ -321,9 +319,7 @@ body {
         font-size: 0.9rem;
     }
 
-    .logo h2 {
-        font-size: 1.4rem;
-    }
+
 
     .auth-btn {
         padding: 0.5rem 1rem;
