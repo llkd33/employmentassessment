@@ -289,23 +289,9 @@ body {
         margin-right: 12px;
     }
 
-    .test-container {
-        padding: 3rem 2rem;
-        margin: 0 1rem;
-    }
 
-    .test-title {
-        font-size: 2rem;
-    }
 
-    .test-description {
-        font-size: 1rem;
-    }
 
-    .start-btn {
-        padding: 0.875rem 2rem;
-        font-size: 1rem;
-    }
 }
 
 @media (max-width: 480px) {
@@ -332,27 +318,9 @@ body {
         padding: 2rem 1rem;
     }
 
-    .test-container {
-        padding: 2.5rem 1.5rem;
-    }
 
-    .test-title {
-        font-size: 1.75rem;
-    }
 
-    .test-description {
-        font-size: 0.95rem;
-        margin-bottom: 2rem;
-    }
 
-    .start-btn {
-        padding: 0.75rem 1.5rem;
-        font-size: 0.95rem;
-    }
-
-    .info-text {
-        font-size: 0.85rem;
-    }
 }
 
 @media (max-width: 600px) {
@@ -434,7 +402,7 @@ body {
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(10px);
     border-radius: 24px;
-    padding: 6rem 5rem;
+    padding: clamp(3rem, 8vw, 6rem) clamp(2rem, 6vw, 5rem);
     box-shadow: var(--shadow-xl);
     max-width: 1100px;
     width: 100%;
@@ -442,7 +410,7 @@ body {
 }
 
 .test-title {
-    font-size: 3.5rem;
+    font-size: clamp(2rem, 6vw, 3.5rem);
     color: var(--primary-color);
     margin-bottom: 2.5rem;
     font-weight: 700;
@@ -452,7 +420,7 @@ body {
 
 .test-description {
     color: var(--text-secondary);
-    font-size: 1.5rem;
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
     margin-bottom: 5rem;
     font-weight: 400;
     line-height: 1.6;
@@ -465,8 +433,8 @@ body {
     background-color: var(--primary-color);
     color: white;
     border: none;
-    padding: 2rem 4.5rem;
-    font-size: 1.5rem;
+    padding: clamp(1.5rem, 3vw, 2rem) clamp(3rem, 6vw, 4.5rem);
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
     font-weight: 600;
     border-radius: 15px;
     cursor: pointer;
@@ -507,7 +475,7 @@ body {
 }
 
 .info-text {
-    font-size: 1.4rem;
+    font-size: clamp(1rem, 2vw, 1.4rem);
     color: var(--text-secondary);
     font-weight: 500;
 }
