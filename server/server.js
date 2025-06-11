@@ -128,13 +128,19 @@ app.post('/api/auth/login', async (req, res) => {
         // 사용자 찾기
         const user = await db.getUserByEmail(email);
         if (!user) {
-            return res.status(401).json({ message: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+            return res.status(404).json({
+                success: false,
+                message: '가입된 이메일이 없습니다. 회원가입을 진행해주세요.'
+            });
         }
 
         // 비밀번호 확인
         const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
-            return res.status(401).json({ message: '이메일 또는 비밀번호가 올바르지 않습니다.' });
+            return res.status(401).json({
+                success: false,
+                message: '비밀번호가 올바르지 않습니다.'
+            });
         }
 
         // 토큰 생성
@@ -154,7 +160,28 @@ app.post('/api/auth/login', async (req, res) => {
         });
     } catch (error) {
         console.error('로그인 오류:', error);
-        res.status(500).json({ message: '서버 오류' });
+
+        // 데이터베이스 연결 오류
+        if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+            return res.status(503).json({
+                success: false,
+                message: '데이터베이스 연결에 실패했습니다. 잠시 후 다시 시도해주세요.'
+            });
+        }
+
+        // JWT 토큰 생성 오류
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(500).json({
+                success: false,
+                message: '인증 토큰 생성에 실패했습니다. 다시 시도해주세요.'
+            });
+        }
+
+        // 일반적인 서버 오류
+        res.status(500).json({
+            success: false,
+            message: '로그인 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
+        });
     }
 });
 
@@ -207,9 +234,27 @@ app.post('/api/auth/kakao/login', async (req, res) => {
         });
     } catch (error) {
         console.error('카카오 로그인 오류:', error);
+
+        // 데이터베이스 연결 오류
+        if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+            return res.status(503).json({
+                success: false,
+                message: '데이터베이스 연결에 실패했습니다. 잠시 후 다시 시도해주세요.'
+            });
+        }
+
+        // JWT 토큰 생성 오류
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(500).json({
+                success: false,
+                message: '인증 토큰 생성에 실패했습니다. 다시 시도해주세요.'
+            });
+        }
+
+        // 일반적인 서버 오류
         res.status(500).json({
             success: false,
-            message: '서버 오류'
+            message: '카카오 로그인 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
         });
     }
 });
@@ -264,9 +309,35 @@ app.post('/api/auth/kakao/signup', async (req, res) => {
         });
     } catch (error) {
         console.error('카카오 회원가입 오류:', error);
+
+        // 데이터베이스 연결 오류
+        if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+            return res.status(503).json({
+                success: false,
+                message: '데이터베이스 연결에 실패했습니다. 잠시 후 다시 시도해주세요.'
+            });
+        }
+
+        // 중복 키 오류 (이메일 중복)
+        if (error.code === '23505' || error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({
+                success: false,
+                message: '이미 사용 중인 이메일입니다. 다른 이메일을 사용해주세요.'
+            });
+        }
+
+        // JWT 토큰 생성 오류
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(500).json({
+                success: false,
+                message: '인증 토큰 생성에 실패했습니다. 다시 시도해주세요.'
+            });
+        }
+
+        // 일반적인 서버 오류
         res.status(500).json({
             success: false,
-            message: '서버 오류'
+            message: '카카오 회원가입 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'
         });
     }
 });

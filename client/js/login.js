@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // common.js의 개선된 카카오 SDK 초기화 사용
     initKakaoSDK();
 
+    // 카카오 로그인 상태 초기화
+    initKakaoLoginState();
+
     animatePageLoad(['.header', '.login-container']);
 
     // PostgreSQL 데이터베이스 사용 - localStorage 기반 시스템에서 서버 API 기반으로 전환 완료
@@ -97,13 +100,25 @@ function handleLoginSubmit(event) {
                 // 로그인 실패 - 서버에서 온 정확한 메시지 표시
                 console.log('❌ 로그인 실패:', response.status, data.message);
 
-                // 클라이언트 오류 (400-499): 사용자 입력 문제
-                if (response.status >= 400 && response.status < 500) {
-                    showNotification(data.message || '이메일 또는 비밀번호를 확인해주세요.', 'error');
+                // 404: 가입되지 않은 이메일
+                if (response.status === 404) {
+                    showNotification(data.message || '가입된 이메일이 없습니다. 회원가입을 진행해주세요.', 'error');
                 }
-                // 서버 오류 (500+): 서버 문제
+                // 401: 비밀번호 오류
+                else if (response.status === 401) {
+                    showNotification(data.message || '비밀번호가 올바르지 않습니다.', 'error');
+                }
+                // 400-499: 기타 클라이언트 오류
+                else if (response.status >= 400 && response.status < 500) {
+                    showNotification(data.message || '입력 정보를 확인해주세요.', 'error');
+                }
+                // 503: 데이터베이스 연결 오류
+                else if (response.status === 503) {
+                    showNotification(data.message || '데이터베이스 연결에 문제가 있습니다. 잠시 후 다시 시도해주세요.', 'error');
+                }
+                // 500+: 기타 서버 오류
                 else if (response.status >= 500) {
-                    showNotification('서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                    showNotification(data.message || '시스템 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
                 }
                 // 기타 오류
                 else {
@@ -143,6 +158,31 @@ function handleLoginSubmit(event) {
         });
 }
 
+// 카카오 로그인 상태 초기화
+function initKakaoLoginState() {
+    if (window.Kakao && window.Kakao.isInitialized()) {
+        // 기존 카카오 로그인 상태가 있다면 정리
+        if (window.Kakao.Auth.getAccessToken()) {
+            console.log('🔄 기존 카카오 로그인 상태 감지됨, 완전 로그아웃 진행');
+
+            // 사용자에게 알림
+            showNotification('카카오 로그인을 초기화하고 있습니다...', 'info');
+
+            // 카카오 로그아웃
+            window.Kakao.Auth.logout(() => {
+                console.log('✅ 카카오 완전 로그아웃 완료');
+                window.Kakao.Auth.setAccessToken(null);
+
+                // 로컬 스토리지 정리
+                localStorage.removeItem('kakao_access_token');
+                localStorage.removeItem('kakao_user_info');
+
+                showNotification('카카오 로그인 준비가 완료되었습니다. 이제 새로 로그인할 수 있습니다.', 'success');
+            });
+        }
+    }
+}
+
 // 카카오 로그인 함수
 function kakaoLogin() {
     // 탈퇴한 카카오 계정인지 확인
@@ -174,36 +214,63 @@ function kakaoLogin() {
         return;
     }
 
-    // 기존 카카오 세션 강제 정리 후 새로운 로그인 시작
-    console.log('🔄 카카오 로그인 시작 - 기존 세션 정리');
+    // 카카오 로그아웃 및 새로운 로그인 처리
+    console.log('🔄 카카오 로그인 시작 - 기존 세션 완전 정리');
+    showNotification('카카오 로그인 창이 열립니다. 새로 아이디와 비밀번호를 입력해주세요.', 'info');
 
     try {
-        // 기존 토큰이 있다면 먼저 제거
+        // 1단계: 카카오 로그아웃 (기존 세션 완전 정리)
         if (window.Kakao.Auth.getAccessToken()) {
-            console.log('🧹 기존 카카오 토큰 발견, 정리 중...');
+            console.log('🧹 기존 카카오 토큰 발견, 완전 로그아웃 진행...');
+
+            // 카카오 서버에서 로그아웃
             window.Kakao.Auth.logout(() => {
-                console.log('✓ 기존 카카오 세션 정리 완료');
-                startFreshKakaoLogin();
+                console.log('✓ 카카오 서버 로그아웃 완료');
+
+                // 2단계: 액세스 토큰 완전 제거
+                window.Kakao.Auth.setAccessToken(null);
+
+                // 3단계: 로컬 스토리지 정리
+                localStorage.removeItem('kakao_access_token');
+                localStorage.removeItem('kakao_user_info');
+
+                // 4단계: 새로운 로그인 시작
+                setTimeout(() => {
+                    startFreshKakaoLogin();
+                }, 500);
             });
-            window.Kakao.Auth.setAccessToken(null);
         } else {
+            // 기존 토큰이 없어도 로컬 정보 정리 후 로그인
+            localStorage.removeItem('kakao_access_token');
+            localStorage.removeItem('kakao_user_info');
             startFreshKakaoLogin();
         }
     } catch (error) {
-        console.log('카카오 세션 정리 중 오류 (무시됨):', error);
+        console.log('카카오 세션 정리 중 오류 (강제 진행):', error);
+        // 오류가 발생해도 강제로 새 로그인 진행
+        localStorage.removeItem('kakao_access_token');
+        localStorage.removeItem('kakao_user_info');
         startFreshKakaoLogin();
     }
 
     function startFreshKakaoLogin() {
         console.log('🚀 새로운 카카오 로그인 시작');
+
+        // 카카오 로그인 창 열기
         window.Kakao.Auth.login({
             success: function (authObj) {
-                console.log('카카오 로그인 성공:', authObj);
+                console.log('✅ 카카오 로그인 성공:', authObj);
                 getUserInfoFromKakao();
             },
             fail: function (err) {
-                console.error('카카오 로그인 실패:', err);
-                showNotification('카카오 로그인에 실패했습니다.', 'error');
+                console.error('❌ 카카오 로그인 실패:', err);
+
+                // 사용자가 로그인 창을 닫은 경우
+                if (err.error === 'cancelled') {
+                    showNotification('카카오 로그인이 취소되었습니다.', 'info');
+                } else {
+                    showNotification('카카오 로그인에 실패했습니다. 다시 시도해주세요.', 'error');
+                }
             }
         });
     }
@@ -319,8 +386,13 @@ function handleKakaoLoginSuccess(userId, nickname, email) {
                 else {
                     const errorMessage = data.message || '카카오 로그인에 실패했습니다.';
 
-                    if (response.status >= 500) {
-                        showNotification('서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                    // 503: 데이터베이스 연결 오류
+                    if (response.status === 503) {
+                        showNotification(data.message || '데이터베이스 연결에 문제가 있습니다. 잠시 후 다시 시도해주세요.', 'error');
+                    }
+                    // 500+: 기타 서버 오류  
+                    else if (response.status >= 500) {
+                        showNotification(data.message || '시스템 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
                     } else {
                         showNotification(errorMessage, 'error');
                     }
