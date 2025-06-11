@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 // 환경변수 설정
 dotenv.config();
@@ -1336,12 +1337,29 @@ async function startServer() {
         console.log('⚠️  DATABASE_URL 환경 변수를 확인해주세요.');
     }
 
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
         // Railway 환경 감지 (여러 방법으로 확인)
         const isRailway = process.env.RAILWAY_ENVIRONMENT ||
             process.env.RAILWAY_PROJECT_ID ||
             process.env.RAILWAY_SERVICE_ID ||
             process.env.NODE_ENV === 'production';
+
+        // 로컬 IP 주소 가져오기
+        const networkInterfaces = os.networkInterfaces();
+        let localIP = 'localhost';
+
+        // WiFi나 이더넷 인터페이스에서 로컬 IP 찾기
+        for (const interfaceName in networkInterfaces) {
+            const addresses = networkInterfaces[interfaceName];
+            for (const address of addresses) {
+                // IPv4이고 내부 IP가 아닌 주소 찾기
+                if (address.family === 'IPv4' && !address.internal) {
+                    localIP = address.address;
+                    break;
+                }
+            }
+            if (localIP !== 'localhost') break;
+        }
 
         console.log(`===========================================`);
         console.log(`🚀 서버가 포트 ${PORT}에서 실행중입니다.`);
@@ -1361,8 +1379,10 @@ async function startServer() {
             console.log(`📋 Health Check: [Railway_Domain]/api/health`);
         } else {
             console.log(`📋 API 테스트: http://localhost:${PORT}/api/health`);
-            console.log(`🌐 웹사이트: http://localhost:${PORT}`);
+            console.log(`🌐 로컬 접속: http://localhost:${PORT}`);
+            console.log(`🌍 외부 접속: http://${localIP}:${PORT}`);
             console.log(`💻 로컬 개발 환경에서 실행 중`);
+            console.log(`📱 다른 기기에서 접속하려면: http://${localIP}:${PORT} 사용`);
         }
         console.log(`===========================================`);
     });
