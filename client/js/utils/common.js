@@ -1,9 +1,24 @@
-// 공통 설정 정보
-const APP_CONFIG = {
-    KAKAO_API_KEY: window.location.hostname === 'localhost'
-        ? 'your_kakao_javascript_key_here'  // 개발용 (카카오 개발자 콘솔에서 발급)
-        : 'your_kakao_javascript_key_here'  // 프로덕션용 (카카오 개발자 콘솔에서 발급)
+// 공통 설정 정보 (동적으로 로드됨)
+let APP_CONFIG = {
+    KAKAO_API_KEY: null  // 서버에서 동적으로 로드
 };
+
+// 서버에서 설정 정보 가져오기
+async function loadAppConfig() {
+    try {
+        const response = await fetch('/api/config');
+        const config = await response.json();
+
+        APP_CONFIG.KAKAO_API_KEY = config.kakaoApiKey;
+        console.log('✅ 서버에서 설정 정보 로드 완료');
+        console.log('🔑 카카오 API 키 상태:', APP_CONFIG.KAKAO_API_KEY ? '설정됨' : '설정되지 않음');
+
+        return APP_CONFIG;
+    } catch (error) {
+        console.error('❌ 설정 정보 로드 실패:', error);
+        return APP_CONFIG;
+    }
+}
 
 // 알림 표시 함수 (통합)
 function showNotification(message, type = 'info', duration = 3000) {
@@ -45,17 +60,44 @@ function goHome() {
     window.location.href = '/';
 }
 
-// 카카오 SDK 초기화 함수 (통합)
-function initKakaoSDK(callback = null) {
-    if (window.Kakao) {
+// 카카오 SDK 초기화 함수 (설정 동적 로드 포함)
+async function initKakaoSDK(callback = null) {
+    try {
+        // 먼저 서버에서 설정 정보 로드
+        if (!APP_CONFIG.KAKAO_API_KEY) {
+            console.log('🔄 서버에서 카카오 API 키 로드 중...');
+            await loadAppConfig();
+        }
+
+        // 카카오 SDK가 로드될 때까지 대기
+        if (!window.Kakao) {
+            console.log('⏳ 카카오 SDK 로딩 대기 중...');
+            setTimeout(() => initKakaoSDK(callback), 1000);
+            return;
+        }
+
+        // API 키가 없으면 카카오 로그인 비활성화
+        if (!APP_CONFIG.KAKAO_API_KEY) {
+            console.log('⚠️ 카카오 API 키가 설정되지 않음. 카카오 로그인 비활성화');
+            // 카카오 로그인 버튼 숨기기
+            const kakaoButtons = document.querySelectorAll('.kakao-login-btn, .kakao-signup-btn');
+            kakaoButtons.forEach(btn => {
+                btn.style.display = 'none';
+            });
+            if (callback) callback();
+            return;
+        }
+
+        // 카카오 SDK 초기화
         if (!window.Kakao.isInitialized()) {
             window.Kakao.init(APP_CONFIG.KAKAO_API_KEY);
-            console.log('카카오 SDK 초기화 완료:', window.Kakao.isInitialized());
+            console.log('✅ 카카오 SDK 초기화 완료:', window.Kakao.isInitialized());
         }
+
         if (callback) callback();
-    } else {
-        console.log('카카오 SDK 로딩 중...');
-        setTimeout(() => initKakaoSDK(callback), 1000);
+    } catch (error) {
+        console.error('❌ 카카오 SDK 초기화 오류:', error);
+        if (callback) callback();
     }
 }
 
@@ -180,6 +222,9 @@ const ApiUtils = {
 
 // 공통 이벤트 리스너 등록
 document.addEventListener('DOMContentLoaded', function () {
+    // 앱 설정 정보 미리 로드
+    loadAppConfig();
+
     // 전역 키보드 이벤트 (ESC 키로 모달 닫기 등)
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {

@@ -1037,6 +1037,14 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// 클라이언트 설정 정보 API (카카오 API 키 등)
+app.get('/api/config', (req, res) => {
+    res.json({
+        kakaoApiKey: process.env.KAKAO_JAVASCRIPT_KEY || null,
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
 // 데이터베이스 사용자 목록 확인 API (디버깅용)
 app.get('/api/debug/users', async (req, res) => {
     try {
