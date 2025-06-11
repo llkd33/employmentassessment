@@ -186,22 +186,33 @@ function handleSignup() {
 
 // 페이지 로드 애니메이션 (원래 로직 유지)
 function animatePageLoadLocal() {
-    const testContainer = document.querySelector('.test-container');
+    // 페이지 유형에 따라 다른 컨테이너 선택
+    const testContainer = document.querySelector('.test-container') || document.querySelector('.result-container');
     const header = document.querySelector('.header');
 
-    // 초기 상태 설정
-    testContainer.style.opacity = '0';
-    testContainer.style.transform = 'translateY(20px)';
-    header.style.opacity = '0';
+    // DOM 요소가 존재하는지 확인
+    if (testContainer) {
+        // 초기 상태 설정
+        testContainer.style.opacity = '0';
+        testContainer.style.transform = 'translateY(20px)';
+    }
+
+    if (header) {
+        header.style.opacity = '0';
+    }
 
     // 애니메이션 적용
     setTimeout(() => {
-        header.style.transition = 'opacity 0.5s ease';
-        header.style.opacity = '1';
+        if (header) {
+            header.style.transition = 'opacity 0.5s ease';
+            header.style.opacity = '1';
+        }
 
-        testContainer.style.transition = 'all 0.5s ease';
-        testContainer.style.opacity = '1';
-        testContainer.style.transform = 'translateY(0)';
+        if (testContainer) {
+            testContainer.style.transition = 'all 0.5s ease';
+            testContainer.style.opacity = '1';
+            testContainer.style.transform = 'translateY(0)';
+        }
     }, 100);
 }
 
@@ -213,33 +224,37 @@ window.addEventListener('load', function () {
     // 로고 이미지 에러 처리
     if (logoImg) {
         logoImg.addEventListener('error', function () {
-            this.style.display = 'none';
-            const logoText = document.createElement('h2');
-            logoText.textContent = 'COMPANY';
-            logoText.style.cssText = 'color: #4a90e2; font-weight: 700; margin: 0;';
-            this.parentElement.appendChild(logoText);
+            if (this && this.parentElement) {
+                this.style.display = 'none';
+                const logoText = document.createElement('h2');
+                logoText.textContent = 'COMPANY';
+                logoText.style.cssText = 'color: #4a90e2; font-weight: 700; margin: 0;';
+                this.parentElement.appendChild(logoText);
+            }
         });
     }
 
-    // 테스트 이미지 에러 처리
+    // 테스트 이미지 에러 처리 (메인 페이지에만 있음)
     if (testImg) {
         testImg.addEventListener('error', function () {
-            this.style.display = 'none';
-            const placeholder = document.createElement('div');
-            placeholder.style.cssText = `
-            width: 100%;
-            height: 250px;
+            if (this && this.parentElement) {
+                this.style.display = 'none';
+                const placeholder = document.createElement('div');
+                placeholder.style.cssText = `
+                width: 100%;
+                height: 250px;
                 background-color: var(--primary-color);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 600;
-        `;
-            placeholder.textContent = '역량테스트';
-            this.parentElement.appendChild(placeholder);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 1.5rem;
+                font-weight: 600;
+            `;
+                placeholder.textContent = '역량테스트';
+                this.parentElement.appendChild(placeholder);
+            }
         });
     }
 });
