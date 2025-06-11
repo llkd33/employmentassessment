@@ -315,9 +315,7 @@
         font-size: 1rem;
     }
 
-    .logo h2 {
-        font-size: 1.6rem;
-    }
+
 
     .auth-nav {
         gap: 6px;
@@ -362,9 +360,7 @@
         font-size: 0.9rem;
     }
 
-    .logo h2 {
-        font-size: 1.4rem;
-    }
+
 
     .auth-btn {
         padding: 0.5rem 1rem;
@@ -390,27 +386,13 @@
     }
 }
 
-@media (max-width: 450px) {
-    .logo h2 {
-        font-size: 1rem !important;
-    }
-}
-
 @media (max-width: 350px) {
-    .logo h2 {
-        font-size: 0.9rem !important;
-    }
-
     .header-container {
         padding: 0 0.5rem !important;
     }
 }
 
 @media (max-width: 300px) {
-    .logo h2 {
-        font-size: 0.8rem !important;
-    }
-
     .header-container {
         padding: 0 0.25rem !important;
     }
