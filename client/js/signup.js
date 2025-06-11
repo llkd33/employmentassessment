@@ -275,6 +275,23 @@ function completeKakaoSignup() {
 
 // 카카오 로그인 함수 (체크리스트 방식)
 function kakaoSignup() {
+    // 탈퇴한 카카오 계정인지 확인
+    const deletedTime = localStorage.getItem('kakao_account_deleted');
+    if (deletedTime) {
+        const timeSinceDeleted = Date.now() - parseInt(deletedTime);
+
+        // 탈퇴 후 1시간 이내라면 재가입 차단
+        if (timeSinceDeleted < 60 * 60 * 1000) { // 1시간
+            const remainingTime = Math.ceil((60 * 60 * 1000 - timeSinceDeleted) / (60 * 1000)); // 남은 분
+            alert(`최근에 탈퇴한 카카오 계정입니다. ${remainingTime}분 후에 다시 시도해주세요.`);
+            return;
+        } else {
+            // 1시간이 지났으면 탈퇴 마크 제거
+            localStorage.removeItem('kakao_account_deleted');
+            console.log('✓ 카카오 탈퇴 제한 시간 만료, 재가입 허용');
+        }
+    }
+
     // API 키 확인
     if (!APP_CONFIG.KAKAO_API_KEY) {
         alert('카카오 회원가입 서비스가 일시적으로 사용할 수 없습니다. 이메일 회원가입을 사용해주세요.');

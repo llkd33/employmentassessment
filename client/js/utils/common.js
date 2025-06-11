@@ -113,22 +113,61 @@ async function initKakaoSDK(callback = null) {
     }
 }
 
+// 글로벌 카카오 완전 정리 함수
+function forceKakaoCleanup() {
+    if (window.Kakao && window.Kakao.Auth) {
+        try {
+            console.log('🧹 강제 카카오 정리 시작...');
+
+            // 1. 카카오 로그아웃
+            window.Kakao.Auth.logout(() => {
+                console.log('✓ 강제 카카오 로그아웃 완료');
+            });
+
+            // 2. 액세스 토큰 제거
+            window.Kakao.Auth.setAccessToken(null);
+
+            // 3. 모든 저장소에서 카카오 관련 데이터 제거
+            const allKakaoKeys = [
+                'tempKakaoInfo', 'kakao_auth_state', 'kakao_sdk', 'kakao_app_key',
+                'kakao_login_state', 'KAKAO_SDK_INITIALIZED', 'kakao_account_deleted'
+            ];
+
+            allKakaoKeys.forEach(key => {
+                localStorage.removeItem(key);
+                sessionStorage.removeItem(key);
+            });
+
+            // 4. 동적으로 찾은 카카오 관련 키들도 제거
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('kakao') || key.includes('Kakao') || key.includes('KAKAO'))) {
+                    localStorage.removeItem(key);
+                }
+            }
+
+            for (let i = sessionStorage.length - 1; i >= 0; i--) {
+                const key = sessionStorage.key(i);
+                if (key && (key.includes('kakao') || key.includes('Kakao') || key.includes('KAKAO'))) {
+                    sessionStorage.removeItem(key);
+                }
+            }
+
+            console.log('✅ 강제 카카오 정리 완료');
+        } catch (error) {
+            console.log('강제 카카오 정리 중 오류 (무시됨):', error);
+        }
+    }
+}
+
 // 로그아웃 처리 함수 (통합)
 function handleLogout() {
     if (confirm('로그아웃 하시겠습니까?')) {
         localStorage.removeItem('userInfo');
         localStorage.removeItem('rememberLogin');
 
-        // 카카오 로그아웃 처리
-        if (window.Kakao && window.Kakao.Auth && window.Kakao.Auth.getAccessToken()) {
-            try {
-                window.Kakao.Auth.logout(() => {
-                    console.log('카카오 로그아웃 완료');
-                });
-            } catch (error) {
-                console.log('카카오 로그아웃 처리 중 오류 (무시됨):', error);
-            }
-        }
+        // 강화된 카카오 정리
+        forceKakaoCleanup();
 
         showNotification('로그아웃되었습니다.', 'info');
 
