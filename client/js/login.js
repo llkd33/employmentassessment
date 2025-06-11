@@ -85,13 +85,14 @@ function handleLoginSubmit(event) {
     })
         .then(response => {
             console.log('API 응답 상태:', response.status, response.statusText);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
+
+            // 응답 본문을 먼저 읽기 (성공/실패 관계없이)
+            return response.json().then(data => {
+                return { response, data };
+            });
         })
-        .then(data => {
-            if (data.success) {
+        .then(({ response, data }) => {
+            if (response.ok && data.success) {
                 // 로그인 성공
                 console.log('✅ PostgreSQL 로그인 성공!', data);
 
@@ -120,25 +121,44 @@ function handleLoginSubmit(event) {
                     window.location.href = 'index.html';
                 }, 1000);
             } else {
-                // 로그인 실패
-                console.log('❌ 로그인 실패:', data.message);
-                showNotification(data.message || '로그인에 실패했습니다.', 'error');
+                // 로그인 실패 - 서버에서 온 정확한 메시지 표시
+                console.log('❌ 로그인 실패:', response.status, data.message);
+
+                // 클라이언트 오류 (400-499): 사용자 입력 문제
+                if (response.status >= 400 && response.status < 500) {
+                    showNotification(data.message || '이메일 또는 비밀번호를 확인해주세요.', 'error');
+                }
+                // 서버 오류 (500+): 서버 문제
+                else if (response.status >= 500) {
+                    showNotification('서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                }
+                // 기타 오류
+                else {
+                    showNotification(data.message || '로그인에 실패했습니다.', 'error');
+                }
             }
         })
         .catch(error => {
             console.error('로그인 API 오류:', error);
 
-            // 네트워크 오류 유형에 따른 상세 메시지
-            let errorMessage = '서버 연결에 문제가 발생했습니다.';
+            // 실제 네트워크 오류만 처리 (JSON 파싱 오류, fetch 실패 등)
+            let errorMessage = '로그인 중 오류가 발생했습니다.';
 
+            // 네트워크 연결 실패
             if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                errorMessage = '네트워크 연결을 확인해주세요. (인터넷 연결 또는 서버 상태)';
-            } else if (error.message.includes('CORS')) {
+                errorMessage = '네트워크 연결을 확인해주세요. 인터넷 연결이 불안정하거나 서버에 접속할 수 없습니다.';
+            }
+            // CORS 정책 오류
+            else if (error.message.includes('CORS')) {
                 errorMessage = '보안 정책으로 인한 접근 제한입니다. 페이지를 새로고침해보세요.';
-            } else if (error.message.includes('404')) {
-                errorMessage = 'API 경로를 찾을 수 없습니다. 서버 상태를 확인해주세요.';
-            } else if (error.message.includes('500')) {
-                errorMessage = '서버 내부 오류입니다. 잠시 후 다시 시도해주세요.';
+            }
+            // JSON 파싱 오류
+            else if (error.name === 'SyntaxError') {
+                errorMessage = '서버 응답 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+            }
+            // 기타 예상치 못한 오류
+            else {
+                errorMessage = '예상치 못한 오류가 발생했습니다. 페이지를 새로고침 후 다시 시도해주세요.';
             }
 
             showNotification(errorMessage, 'error');
@@ -212,13 +232,14 @@ function handleKakaoLoginSuccess(userId, nickname, email) {
     })
         .then(response => {
             console.log('카카오 API 응답 상태:', response.status);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
+
+            // 응답 본문을 먼저 읽기 (성공/실패 관계없이)
+            return response.json().then(data => {
+                return { response, data };
+            });
         })
-        .then(data => {
-            if (data.success) {
+        .then(({ response, data }) => {
+            if (response.ok && data.success) {
                 // 카카오 로그인 성공
                 console.log('✅ PostgreSQL 카카오 로그인 성공!', data);
 
@@ -246,21 +267,40 @@ function handleKakaoLoginSuccess(userId, nickname, email) {
                     window.location.href = 'index.html';
                 }, 1500);
             } else {
-                // 카카오 로그인 실패
-                console.log('❌ 카카오 로그인 실패:', data.message);
-                showNotification(data.message || '카카오 로그인에 실패했습니다.', 'error');
+                // 카카오 로그인 실패 - 서버에서 온 정확한 메시지 표시
+                console.log('❌ 카카오 로그인 실패:', response.status, data.message);
+
+                // 클라이언트 오류 (400-499): 사용자 인증 문제
+                if (response.status >= 400 && response.status < 500) {
+                    showNotification(data.message || '카카오 로그인 인증에 실패했습니다.', 'error');
+                }
+                // 서버 오류 (500+): 서버 문제
+                else if (response.status >= 500) {
+                    showNotification('서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                }
+                // 기타 오류
+                else {
+                    showNotification(data.message || '카카오 로그인에 실패했습니다.', 'error');
+                }
             }
         })
         .catch(error => {
             console.error('카카오 로그인 API 오류:', error);
 
-            // 에러 유형에 따른 메시지
-            let errorMessage = '카카오 로그인 처리 중 오류가 발생했습니다.';
+            // 실제 네트워크 오류만 처리
+            let errorMessage = '카카오 로그인 중 오류가 발생했습니다.';
 
-            if (error.message.includes('404')) {
-                errorMessage = '카카오 로그인 API를 찾을 수 없습니다.';
-            } else if (error.message.includes('500')) {
-                errorMessage = '서버 오류로 카카오 로그인에 실패했습니다.';
+            // 네트워크 연결 실패
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                errorMessage = '네트워크 연결을 확인해주세요. 인터넷 연결이 불안정하거나 서버에 접속할 수 없습니다.';
+            }
+            // JSON 파싱 오류
+            else if (error.name === 'SyntaxError') {
+                errorMessage = '서버 응답 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+            }
+            // 기타 예상치 못한 오류
+            else {
+                errorMessage = '카카오 로그인 처리 중 예상치 못한 오류가 발생했습니다. 다시 시도해주세요.';
             }
 
             showNotification(errorMessage, 'error');
