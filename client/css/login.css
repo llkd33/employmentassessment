@@ -255,19 +255,19 @@
 }
 
 /* 반응형 디자인 */
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
     .user-greeting {
         display: none;
     }
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1200px) {
     .mypage-btn {
         display: none;
     }
 }
 
-@media (max-width: 850px) {
+@media (max-width: 1000px) {
     .logout-btn {
         display: none;
     }
