@@ -117,13 +117,14 @@ function handleSignupSubmit(event) {
     })
         .then(response => {
             console.log('회원가입 API 응답 상태:', response.status);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
+
+            // 응답 본문을 먼저 읽기 (성공/실패 관계없이)
+            return response.json().then(data => {
+                return { response, data };
+            });
         })
-        .then(data => {
-            if (data.success) {
+        .then(({ response, data }) => {
+            if (response.ok && data.success) {
                 // 회원가입 성공
                 console.log('✅ PostgreSQL 회원가입 성공!', data);
 
@@ -153,22 +154,44 @@ function handleSignupSubmit(event) {
                     window.location.href = 'index.html';
                 }, 1000);
             } else {
-                // 회원가입 실패
-                console.log('❌ 회원가입 실패:', data.message);
-                alert(data.message || '회원가입에 실패했습니다.');
+                // 회원가입 실패 - 서버에서 온 정확한 메시지 표시
+                console.log('❌ 회원가입 실패:', response.status, data.message);
+
+                // 클라이언트 오류 (400-499): 사용자 입력 문제
+                if (response.status >= 400 && response.status < 500) {
+                    alert(data.message || '입력 정보를 확인해주세요.');
+                }
+                // 서버 오류 (500+): 서버 문제
+                else if (response.status >= 500) {
+                    alert('서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                }
+                // 기타 오류
+                else {
+                    alert(data.message || '회원가입에 실패했습니다.');
+                }
             }
         })
         .catch(error => {
             console.error('회원가입 API 오류:', error);
 
-            let errorMessage = '회원가입 처리 중 오류가 발생했습니다.';
+            // 실제 네트워크 오류만 처리 (JSON 파싱 오류, fetch 실패 등)
+            let errorMessage = '회원가입 중 오류가 발생했습니다.';
 
-            if (error.message.includes('404')) {
-                errorMessage = '회원가입 API를 찾을 수 없습니다. 서버 상태를 확인해주세요.';
-            } else if (error.message.includes('500')) {
-                errorMessage = '서버 내부 오류입니다. 잠시 후 다시 시도해주세요.';
-            } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                errorMessage = '네트워크 연결을 확인해주세요.';
+            // 네트워크 연결 실패
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                errorMessage = '네트워크 연결을 확인해주세요. 인터넷 연결이 불안정하거나 서버에 접속할 수 없습니다.';
+            }
+            // CORS 정책 오류
+            else if (error.message.includes('CORS')) {
+                errorMessage = '보안 정책으로 인한 접근 제한입니다. 페이지를 새로고침해보세요.';
+            }
+            // JSON 파싱 오류
+            else if (error.name === 'SyntaxError') {
+                errorMessage = '서버 응답 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+            }
+            // 기타 예상치 못한 오류
+            else {
+                errorMessage = '예상치 못한 오류가 발생했습니다. 페이지를 새로고침 후 다시 시도해주세요.';
             }
 
             alert(errorMessage);
