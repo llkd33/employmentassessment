@@ -1039,8 +1039,16 @@ app.get('/api/health', (req, res) => {
 
 // 클라이언트 설정 정보 API (카카오 API 키 등)
 app.get('/api/config', (req, res) => {
+    const kakaoKey = process.env.KAKAO_JAVASCRIPT_KEY || null;
+
+    // 디버깅 로그 추가
+    console.log('🔑 /api/config 요청 - 카카오 API 키 상태:');
+    console.log(`   - 환경변수 존재: ${process.env.KAKAO_JAVASCRIPT_KEY ? 'YES' : 'NO'}`);
+    console.log(`   - 키 길이: ${kakaoKey ? kakaoKey.length : 0}자`);
+    console.log(`   - 키 앞 8자리: ${kakaoKey ? kakaoKey.substring(0, 8) + '...' : 'null'}`);
+
     res.json({
-        kakaoApiKey: process.env.KAKAO_JAVASCRIPT_KEY || null,
+        kakaoApiKey: kakaoKey,
         environment: process.env.NODE_ENV || 'development'
     });
 });
@@ -1139,6 +1147,7 @@ async function startServer() {
         console.log(`   - DATABASE_URL: ${process.env.DATABASE_URL ? '설정됨' : 'undefined'}`);
         console.log(`   - RAILWAY_ENVIRONMENT: ${process.env.RAILWAY_ENVIRONMENT || 'undefined'}`);
         console.log(`   - NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`);
+        console.log(`   - KAKAO_JAVASCRIPT_KEY: ${process.env.KAKAO_JAVASCRIPT_KEY ? process.env.KAKAO_JAVASCRIPT_KEY.substring(0, 8) + '... (길이:' + process.env.KAKAO_JAVASCRIPT_KEY.length + ')' : 'undefined'}`);
 
         if (isRailway) {
             console.log(`🚂 Railway 환경에서 실행 중`);

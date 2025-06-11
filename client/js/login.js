@@ -145,6 +145,12 @@ function handleLoginSubmit(event) {
 
 // 카카오 로그인 함수
 function kakaoLogin() {
+    // API 키 확인
+    if (!APP_CONFIG.KAKAO_API_KEY) {
+        showNotification('카카오 로그인 서비스가 일시적으로 사용할 수 없습니다. 이메일 로그인을 사용해주세요.', 'error');
+        return;
+    }
+
     if (!window.Kakao || !window.Kakao.isInitialized()) {
         showNotification('카카오 SDK가 초기화되지 않았습니다. 페이지를 새로고침해주세요.', 'error');
         return;

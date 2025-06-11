@@ -275,6 +275,12 @@ function completeKakaoSignup() {
 
 // 카카오 로그인 함수 (체크리스트 방식)
 function kakaoSignup() {
+    // API 키 확인
+    if (!APP_CONFIG.KAKAO_API_KEY) {
+        alert('카카오 회원가입 서비스가 일시적으로 사용할 수 없습니다. 이메일 회원가입을 사용해주세요.');
+        return;
+    }
+
     // 카카오 SDK 확인
     if (!window.Kakao || !window.Kakao.isInitialized()) {
         alert('카카오 SDK가 초기화되지 않았습니다. 페이지를 새로고침해주세요.');

@@ -10,8 +10,15 @@ async function loadAppConfig() {
         const config = await response.json();
 
         APP_CONFIG.KAKAO_API_KEY = config.kakaoApiKey;
+
+        // 상세 디버깅 로그
         console.log('✅ 서버에서 설정 정보 로드 완료');
-        console.log('🔑 카카오 API 키 상태:', APP_CONFIG.KAKAO_API_KEY ? '설정됨' : '설정되지 않음');
+        console.log('🔑 카카오 API 키 디버깅:');
+        console.log(`   - 서버 응답: ${JSON.stringify(config)}`);
+        console.log(`   - 키 존재 여부: ${config.kakaoApiKey ? 'YES' : 'NO'}`);
+        console.log(`   - 키 타입: ${typeof config.kakaoApiKey}`);
+        console.log(`   - 키 길이: ${config.kakaoApiKey ? config.kakaoApiKey.length : 0}자`);
+        console.log(`   - 키 앞 8자리: ${config.kakaoApiKey ? config.kakaoApiKey.substring(0, 8) + '...' : 'null'}`);
 
         return APP_CONFIG;
     } catch (error) {
@@ -76,22 +83,27 @@ async function initKakaoSDK(callback = null) {
             return;
         }
 
-        // API 키가 없으면 카카오 로그인 비활성화
+        // API 키가 없으면 경고만 출력 (버튼은 유지)
         if (!APP_CONFIG.KAKAO_API_KEY) {
-            console.log('⚠️ 카카오 API 키가 설정되지 않음. 카카오 로그인 비활성화');
-            // 카카오 로그인 버튼 숨기기
-            const kakaoButtons = document.querySelectorAll('.kakao-login-btn, .kakao-signup-btn');
-            kakaoButtons.forEach(btn => {
-                btn.style.display = 'none';
-            });
+            console.log('⚠️ 카카오 API 키가 설정되지 않음. 카카오 로그인 기능 제한됨');
             if (callback) callback();
             return;
         }
 
         // 카카오 SDK 초기화
         if (!window.Kakao.isInitialized()) {
+            console.log('🔄 카카오 SDK 초기화 시작:');
+            console.log(`   - 사용할 키: ${APP_CONFIG.KAKAO_API_KEY ? APP_CONFIG.KAKAO_API_KEY.substring(0, 8) + '...' : 'null'}`);
+
             window.Kakao.init(APP_CONFIG.KAKAO_API_KEY);
-            console.log('✅ 카카오 SDK 초기화 완료:', window.Kakao.isInitialized());
+
+            const isInitialized = window.Kakao.isInitialized();
+            console.log(`✅ 카카오 SDK 초기화 결과: ${isInitialized ? '성공' : '실패'}`);
+            console.log(`   - SDK 상태: ${isInitialized}`);
+
+            if (!isInitialized) {
+                console.error('❌ 카카오 SDK 초기화 실패 - 키 확인 필요');
+            }
         }
 
         if (callback) callback();
