@@ -315,14 +315,11 @@ function kakaoSignup() {
 
     console.log('=== 카카오 회원가입 시작 - 강력한 세션 정리 ===');
 
-    // 사용자에게 안내 메시지
-    alert('💡 매번 새로운 계정으로 로그인할 수 있도록 카카오 세션을 완전히 정리합니다.\n\n로그인 창에서 원하는 아이디와 비밀번호를 입력해주세요.');
-
     // 강력한 카카오 세션 완전 정리
     forceCompleteKakaoLogout();
 
-    // 충분한 시간 후 새로운 로그인 시작 (정리 완료 대기)
-    setTimeout(startFreshKakaoSignup, 3000);
+    // 빠른 새로운 로그인 시작 (정리 완료 대기)
+    setTimeout(startFreshKakaoSignup, 500);
 
     function startFreshKakaoSignup() {
         console.log('🚀 새로운 카카오 회원가입 시작');

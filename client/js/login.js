@@ -215,13 +215,12 @@ function kakaoLogin() {
     }
 
     console.log('🔄 카카오 로그인 시작 - 강력한 세션 정리');
-    showNotification('카카오 세션을 정리하고 새로운 로그인 창을 열고 있습니다...', 'info');
 
     // 강력한 카카오 세션 완전 정리
     forceCompleteKakaoLogout();
 
-    // 충분한 시간 후 새로운 로그인 시작 (정리 완료 대기)
-    setTimeout(startFreshKakaoLogin, 3000);
+    // 빠른 새로운 로그인 시작 (정리 완료 대기)
+    setTimeout(startFreshKakaoLogin, 500);
 
     function startFreshKakaoLogin() {
         console.log('🚀 새로운 카카오 로그인 시작');
