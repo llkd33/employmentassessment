@@ -235,8 +235,8 @@ function handleKakaoLoginSuccess(userId, nickname, email) {
     console.log('=== 카카오 로그인 서버 API 처리 시작 ===');
     console.log('카카오 사용자 정보:', { userId, nickname, email });
 
-    // 서버 API로 카카오 로그인 처리
-    fetch('/api/auth/kakao', {
+    // 서버 API로 카카오 로그인 처리 (기존 사용자만)
+    fetch('/api/auth/kakao/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -287,20 +287,43 @@ function handleKakaoLoginSuccess(userId, nickname, email) {
                     window.location.href = 'index.html';
                 }, 1500);
             } else {
-                // 카카오 로그인 실패 - 서버에서 온 정확한 메시지 표시
+                // 카카오 로그인 실패 처리
                 console.log('❌ 카카오 로그인 실패:', response.status, data.message);
 
-                // 클라이언트 오류 (400-499): 사용자 인증 문제
-                if (response.status >= 400 && response.status < 500) {
-                    showNotification(data.message || '카카오 로그인 인증에 실패했습니다.', 'error');
+                // 404: 등록되지 않은 계정 (회원가입 필요)
+                if (response.status === 404 && data.needSignup) {
+                    console.log('🔄 등록되지 않은 카카오 계정, 회원가입 페이지로 이동');
+
+                    // 카카오 정보를 임시 저장
+                    if (data.kakaoData) {
+                        localStorage.setItem('tempKakaoInfo', JSON.stringify({
+                            userId: data.kakaoData.kakaoId,
+                            nickname: data.kakaoData.nickname,
+                            email: data.kakaoData.email,
+                            loginType: 'kakao'
+                        }));
+                    }
+
+                    showNotification('등록되지 않은 계정입니다. 회원가입 페이지로 이동합니다.', 'info');
+
+                    setTimeout(() => {
+                        window.location.href = '/signup.html';
+                    }, 1500);
                 }
-                // 서버 오류 (500+): 서버 문제
-                else if (response.status >= 500) {
-                    showNotification('서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                // 400: 다른 로그인 방식으로 가입된 계정
+                else if (response.status === 400 && data.existingLoginType) {
+                    const loginTypeText = data.existingLoginType === 'email' ? '이메일' : '다른 방식';
+                    showNotification(`이미 ${loginTypeText}으로 가입된 계정입니다. ${loginTypeText} 로그인을 사용해주세요.`, 'error');
                 }
                 // 기타 오류
                 else {
-                    showNotification(data.message || '카카오 로그인에 실패했습니다.', 'error');
+                    const errorMessage = data.message || '카카오 로그인에 실패했습니다.';
+
+                    if (response.status >= 500) {
+                        showNotification('서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                    } else {
+                        showNotification(errorMessage, 'error');
+                    }
                 }
             }
         })

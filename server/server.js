@@ -158,26 +158,37 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// 카카오 로그인
-app.post('/api/auth/kakao', async (req, res) => {
+// 카카오 로그인 (기존 사용자만)
+app.post('/api/auth/kakao/login', async (req, res) => {
     try {
         const { kakaoId, nickname, email } = req.body;
 
+        console.log('🔍 카카오 로그인 시도:', { email, nickname });
+
         // 기존 사용자 찾기 (이메일로 검색)
-        let user = await db.getUserByEmail(email);
+        const user = await db.getUserByEmail(email);
 
         if (!user) {
-            // 새 사용자 생성
-            const userId = Date.now().toString();
-            const userData = {
-                user_id: userId,
-                name: nickname,
-                email,
-                password: null, // 카카오 로그인은 비밀번호 없음
-                login_type: 'kakao'
-            };
-            user = await db.createUser(userData);
+            console.log('❌ 등록되지 않은 카카오 계정:', email);
+            return res.status(404).json({
+                success: false,
+                message: '등록되지 않은 계정입니다. 먼저 회원가입을 진행해주세요.',
+                needSignup: true,
+                kakaoData: { kakaoId, nickname, email }
+            });
         }
+
+        // 카카오 계정이지만 로그인 타입이 다른 경우
+        if (user.login_type !== 'kakao') {
+            console.log('❌ 다른 로그인 방식으로 가입된 계정:', email, 'type:', user.login_type);
+            return res.status(400).json({
+                success: false,
+                message: '이미 다른 방식으로 가입된 이메일입니다. 해당 방식으로 로그인해주세요.',
+                existingLoginType: user.login_type
+            });
+        }
+
+        console.log('✅ 카카오 로그인 성공:', user.email);
 
         const token = generateToken(user.user_id);
 
@@ -196,8 +207,81 @@ app.post('/api/auth/kakao', async (req, res) => {
         });
     } catch (error) {
         console.error('카카오 로그인 오류:', error);
-        res.status(500).json({ message: '서버 오류' });
+        res.status(500).json({
+            success: false,
+            message: '서버 오류'
+        });
     }
+});
+
+// 카카오 회원가입 (새 사용자 생성)
+app.post('/api/auth/kakao/signup', async (req, res) => {
+    try {
+        const { kakaoId, nickname, email } = req.body;
+
+        console.log('🔍 카카오 회원가입 시도:', { email, nickname });
+
+        // 기존 사용자 확인 (이메일로 검색)
+        const existingUser = await db.getUserByEmail(email);
+
+        if (existingUser) {
+            console.log('❌ 이미 가입된 이메일:', email, 'type:', existingUser.login_type);
+            return res.status(409).json({
+                success: false,
+                message: '이미 가입된 이메일입니다. 로그인을 시도해주세요.',
+                existingLoginType: existingUser.login_type,
+                shouldLogin: true
+            });
+        }
+
+        // 새 사용자 생성
+        const userId = Date.now().toString();
+        const userData = {
+            user_id: userId,
+            name: nickname,
+            email,
+            password: null, // 카카오 로그인은 비밀번호 없음
+            login_type: 'kakao'
+        };
+
+        const user = await db.createUser(userData);
+        console.log('✅ 카카오 회원가입 성공:', user.email);
+
+        const token = generateToken(user.user_id);
+
+        res.json({
+            success: true,
+            message: '카카오 회원가입 완료',
+            token,
+            user: {
+                id: user.user_id,
+                name: user.name,
+                nickname: user.name,
+                email: user.email,
+                loginType: 'kakao',
+                joinDate: user.created_at
+            }
+        });
+    } catch (error) {
+        console.error('카카오 회원가입 오류:', error);
+        res.status(500).json({
+            success: false,
+            message: '서버 오류'
+        });
+    }
+});
+
+// 기존 카카오 API 사용 방지 (안내 메시지)
+app.post('/api/auth/kakao', async (req, res) => {
+    console.log('⚠️ 구버전 카카오 API 호출 감지');
+    res.status(400).json({
+        success: false,
+        message: '구버전 API입니다. /api/auth/kakao/login 또는 /api/auth/kakao/signup을 사용해주세요.',
+        newEndpoints: {
+            login: '/api/auth/kakao/login',
+            signup: '/api/auth/kakao/signup'
+        }
+    });
 });
 
 // JWT 토큰 검증 (배포 환경에서 완벽하게 작동)

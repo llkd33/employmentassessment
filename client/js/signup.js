@@ -189,7 +189,7 @@ function completeKakaoSignup() {
         console.log('서버 API로 카카오 회원가입 처리:', kakaoData);
 
         // 서버 API로 카카오 회원가입 처리
-        fetch('/api/auth/kakao', {
+        fetch('/api/auth/kakao/signup', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -249,9 +249,18 @@ function completeKakaoSignup() {
                         window.location.href = '/index.html';
                     }, 1000);
                 } else {
-                    // 카카오 회원가입 실패
+                    // 카카오 회원가입 실패 처리
                     console.log('❌ 카카오 회원가입 실패:', data.message);
-                    alert(data.message || '카카오 회원가입에 실패했습니다.');
+
+                    // 409: 이미 가입된 이메일 (로그인 필요)
+                    if (data.shouldLogin) {
+                        alert(data.message + '\n로그인 페이지로 이동합니다.');
+                        setTimeout(() => {
+                            window.location.href = '/login.html';
+                        }, 1000);
+                    } else {
+                        alert(data.message || '카카오 회원가입에 실패했습니다.');
+                    }
                 }
             })
             .catch(error => {
@@ -418,9 +427,6 @@ function getUserInfo() {
 function handleKakaoLogin(userId, nickname, email) {
     console.log('=== 카카오 회원가입 처리 시작 ===');
     console.log('카카오 사용자 정보:', { userId, nickname, email });
-
-    // 서버 API로 카카오 사용자 중복 체크 및 회원가입/로그인 처리
-    console.log('서버에서 카카오 사용자 확인 중...');
 
     // 임시 카카오 정보 저장
     const tempKakaoInfo = {
