@@ -268,17 +268,9 @@ body {
     }
 }
 
-@media (max-width: 1200px) {
-    .mypage-btn {
-        display: none;
-    }
-}
+
 
 @media (max-width: 1000px) {
-    .logout-btn {
-        display: none;
-    }
-
     .auth-btn {
         padding: 0.7rem 1.5rem;
         font-size: 1.1rem;
