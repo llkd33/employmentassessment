@@ -1,29 +1,10 @@
-// 카카오 SDK 로드 및 초기화를 안전하게 처리
-function initKakaoSDK() {
-    if (window.Kakao && !window.Kakao.isInitialized()) {
-        // common.js의 APP_CONFIG에서 카카오 API 키 가져오기
-        const KAKAO_API_KEY = APP_CONFIG.KAKAO_API_KEY;
-
-        window.Kakao.init(KAKAO_API_KEY);
-        console.log('카카오 SDK 초기화 완료');
-    } else if (!window.Kakao) {
-        console.log('카카오 SDK 로딩 중...');
-        setTimeout(initKakaoSDK, 1000);
-    }
-}
-
-// 페이지 로드 후 SDK 초기화
-window.addEventListener('load', function () {
-    initKakaoSDK();
-    checkTempKakaoInfo();
+// 페이지 로드 후 초기화
+document.addEventListener('DOMContentLoaded', function () {
+    // common.js의 개선된 카카오 SDK 초기화 사용
+    initKakaoSDK(function () {
+        checkTempKakaoInfo();
+    });
 });
-
-// 카카오 SDK 초기화 확인
-if (window.Kakao && !window.Kakao.isInitialized()) {
-    console.log('카카오 SDK가 초기화되지 않았습니다. 키를 확인해주세요.');
-} else if (window.Kakao) {
-    console.log('카카오 SDK 초기화 상태:', window.Kakao.isInitialized());
-}
 
 // 임시 카카오 정보 확인 및 처리
 function checkTempKakaoInfo() {

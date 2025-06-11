@@ -1,36 +1,9 @@
-// 카카오 SDK 초기화 함수
-function initKakaoSDK() {
-    if (window.Kakao && !window.Kakao.isInitialized()) {
-        // common.js의 APP_CONFIG에서 카카오 API 키 가져오기
-        const KAKAO_API_KEY = APP_CONFIG.KAKAO_API_KEY;
-
-        try {
-            window.Kakao.init(KAKAO_API_KEY);
-            console.log('카카오 SDK 초기화 완료:', window.Kakao.isInitialized());
-        } catch (error) {
-            console.error('카카오 SDK 초기화 실패:', error);
-        }
-    } else if (!window.Kakao) {
-        console.log('카카오 SDK 로딩 중...');
-        setTimeout(initKakaoSDK, 1000);
-    } else {
-        console.log('카카오 SDK 이미 초기화됨:', window.Kakao.isInitialized());
-    }
-}
-
 // 로그인 페이지 초기화
 document.addEventListener('DOMContentLoaded', function () {
     console.log('로그인 페이지 JavaScript 로드 완료');
 
-    // 카카오 SDK가 로드될 때까지 기다린 후 초기화
-    if (window.Kakao) {
-        initKakaoSDK();
-    } else {
-        // 카카오 SDK 스크립트가 완전히 로드될 때까지 기다림
-        window.addEventListener('load', function () {
-            setTimeout(initKakaoSDK, 500);
-        });
-    }
+    // common.js의 개선된 카카오 SDK 초기화 사용
+    initKakaoSDK();
 
     animatePageLoad(['.header', '.login-container']);
 
