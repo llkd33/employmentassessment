@@ -214,89 +214,20 @@ function kakaoLogin() {
         return;
     }
 
-    console.log('🔄 카카오 로그인 시작 - 완전 새로운 로그인 강제');
-    showNotification('카카오 로그인 창이 열립니다. 새로 아이디와 비밀번호를 입력해주세요.', 'info');
+    console.log('🔄 카카오 로그인 시작 - 강력한 세션 정리');
+    showNotification('카카오 세션을 정리하고 새로운 로그인 창을 열고 있습니다...', 'info');
 
-    // **강력한 카카오 세션 완전 정리 (핵폭탄급)**
-    try {
-        console.log('🧹 모든 카카오 데이터 완전 소거 시작...');
+    // 강력한 카카오 세션 완전 정리
+    forceCompleteKakaoLogout();
 
-        // 1. 카카오 SDK 강제 로그아웃
-        if (window.Kakao.Auth.getAccessToken()) {
-            console.log('🔓 기존 카카오 토큰 강제 제거');
-            window.Kakao.Auth.setAccessToken(null);
-        }
+    // 충분한 시간 후 새로운 로그인 시작 (정리 완료 대기)
+    setTimeout(startFreshKakaoLogin, 3000);
 
-        // 카카오 서버에서도 로그아웃 (동기식)
-        window.Kakao.Auth.logout(() => {
-            console.log('✓ 카카오 서버 로그아웃 완료');
-        });
-
-        // 2. 브라우저 저장소 카카오 데이터 완전 소거
-        const storageKeys = [];
-
-        // localStorage 카카오 데이터 찾기
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && (key.toLowerCase().includes('kakao') || key.includes('KAKAO'))) {
-                storageKeys.push({ storage: 'local', key });
-            }
-        }
-
-        // sessionStorage 카카오 데이터 찾기
-        for (let i = 0; i < sessionStorage.length; i++) {
-            const key = sessionStorage.key(i);
-            if (key && (key.toLowerCase().includes('kakao') || key.includes('KAKAO'))) {
-                storageKeys.push({ storage: 'session', key });
-            }
-        }
-
-        // 찾은 모든 카카오 데이터 제거
-        storageKeys.forEach(({ storage, key }) => {
-            if (storage === 'local') {
-                localStorage.removeItem(key);
-            } else {
-                sessionStorage.removeItem(key);
-            }
-            console.log(`✓ ${storage}Storage에서 카카오 데이터 제거:`, key);
-        });
-
-        // 3. 카카오 관련 쿠키 제거
-        document.cookie.split(";").forEach(cookie => {
-            const eqPos = cookie.indexOf("=");
-            const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-            if (name.toLowerCase().includes('kakao')) {
-                document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-                console.log('✓ 카카오 쿠키 제거:', name);
-            }
-        });
-
-        // 4. 임시 정보 제거
-        localStorage.removeItem('tempKakaoInfo');
-        localStorage.removeItem('kakao_auth_state');
-        sessionStorage.removeItem('kakao_auth_state');
-
-        console.log('✅ 카카오 데이터 완전 소거 완료');
-
-    } catch (error) {
-        console.log('카카오 데이터 정리 중 오류 (무시하고 진행):', error);
-    }
-
-    // 카카오 세션 정리 후 새로운 로그인 시작 (지연시간 증가)
-    setTimeout(() => {
-        console.log('🚀 완전히 새로운 카카오 로그인 시작');
+    function startFreshKakaoLogin() {
+        console.log('🚀 새로운 카카오 로그인 시작');
 
         try {
-            // 추가 확인: 토큰이 여전히 있다면 다시 제거
-            if (window.Kakao.Auth.getAccessToken()) {
-                console.log('⚡ 여전히 토큰 발견, 강제 제거');
-                window.Kakao.Auth.setAccessToken(null);
-            }
-
-            // **강제로 새로운 로그인 창 열기 (prompts 사용)**
             window.Kakao.Auth.login({
-                // 강제로 재인증 요구
-                prompts: 'login',
                 success: function (authObj) {
                     console.log('✅ 새로운 카카오 로그인 성공:', authObj);
                     getUserInfoFromKakao();
@@ -304,23 +235,245 @@ function kakaoLogin() {
                 fail: function (err) {
                     console.error('❌ 카카오 로그인 실패:', err);
 
-                    // 사용자가 로그인 창을 닫은 경우
+                    // 상세한 오류 메시지
+                    let errorMessage = '카카오 로그인에 실패했습니다.';
                     if (err.error === 'cancelled') {
-                        showNotification('카카오 로그인이 취소되었습니다.', 'info');
+                        errorMessage = '로그인이 취소되었습니다.';
                     } else if (err.error === 'access_denied') {
-                        showNotification('카카오 로그인 권한이 거부되었습니다.', 'error');
-                    } else {
-                        showNotification('카카오 로그인에 실패했습니다. 다시 시도해주세요.', 'error');
+                        errorMessage = '로그인 권한이 거부되었습니다.';
+                    } else if (err.error === 'popup_blocked') {
+                        errorMessage = '팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.';
                     }
+
+                    showNotification(errorMessage, 'error');
                 }
             });
-
         } catch (error) {
-            console.error('카카오 로그인 시도 중 오류:', error);
+            console.error('카카오 로그인 호출 중 예외:', error);
             showNotification('카카오 로그인 중 오류가 발생했습니다. 페이지를 새로고침 후 다시 시도해주세요.', 'error');
         }
+    }
+}
 
-    }, 1000); // 1초 지연으로 완전 정리 대기
+// 카카오 완전 세션 정리 함수 (강제 새 로그인 유도)
+function forceCompleteKakaoLogout() {
+    try {
+        console.log('🔥 카카오 완전 세션 정리 시작 (매번 새 로그인 유도)...');
+
+        // 1단계: 카카오 SDK 레벨에서 강제 로그아웃 + 연결 해제
+        if (window.Kakao && window.Kakao.Auth) {
+            const currentToken = window.Kakao.Auth.getAccessToken();
+            if (currentToken) {
+                console.log('🔓 카카오 계정 연결 해제 시도...');
+
+                // 계정 연결 해제 (가장 강력한 방법)
+                window.Kakao.API.request({
+                    url: '/v1/user/unlink',
+                    success: function (response) {
+                        console.log('✅ 카카오 계정 연결 해제 성공 - 새 로그인 필요:', response);
+                    },
+                    fail: function (error) {
+                        console.log('⚠️ 카카오 연결 해제 실패 (무시):', error);
+                    }
+                });
+            }
+
+            // 카카오 서버 로그아웃
+            window.Kakao.Auth.logout(() => {
+                console.log('✅ 카카오 서버 로그아웃 완료');
+            });
+
+            // 토큰 완전 제거
+            window.Kakao.Auth.setAccessToken(null);
+        }
+
+        // 2단계: 확장된 카카오 쿠키 완전 삭제
+        forceDeleteAllKakaoCookies();
+
+        // 3단계: 브라우저 저장소 카카오 데이터 완전 삭제
+        clearAllKakaoStorage();
+
+        // 4단계: 브라우저 캐시 정리
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => {
+                    if (name.toLowerCase().includes('kakao')) {
+                        caches.delete(name);
+                        console.log('✅ 카카오 캐시 삭제:', name);
+                    }
+                });
+            });
+        }
+
+        console.log('🎯 카카오 완전 세션 정리 완료 - 새 로그인 필요');
+
+    } catch (error) {
+        console.log('카카오 완전 세션 정리 중 오류 (무시됨):', error);
+    }
+}
+
+// 모든 카카오 쿠키 강제 삭제
+function forceDeleteAllKakaoCookies() {
+    try {
+        console.log('🍪 모든 카카오 쿠키 강제 삭제...');
+
+        // 확장된 카카오 쿠키 목록 (자동 로그인 관련)
+        const kakaoCookieNames = [
+            // 기본 카카오 쿠키들
+            'KM', 'KSAT', 'KT', 'KUID', 'KL', 'KC', 'KLTN', 'KARMIT',
+            // 카카오 인증/세션 관련
+            '_kawlt', '_kawltea', '_kap', '_kas', '_kat', '_kad', '_karmt',
+            // 카카오 로그인 상태 관련 (자동 로그인 방지)
+            'k-popup', 'k-type', 'k-access-token', 'k-refresh-token',
+            'kakao_profile', 'kakao_token', 'klat', 'ksat', 'ku', 'kdt',
+            // 카카오 추적/분석 쿠키들
+            'TIARA', 'wcs_bt', 'APPKEY', 'PCID', 'KVID', 'ADNST',
+            // 카카오 계정 유지 관련
+            'KAU', 'KADU', 'KAUT', 'KAUR'
+        ];
+
+        // 현재 모든 쿠키 확인
+        const allCookies = document.cookie.split(';');
+        console.log('💾 현재 쿠키 개수:', allCookies.length);
+
+        // 카카오 도메인들
+        const kakaoDomains = [
+            window.location.hostname,
+            '.' + window.location.hostname,
+            '.kakao.com', '.kakaocdn.net', '.kakao.co.kr',
+            'kauth.kakao.com', 'accounts.kakao.com', 'talk.kakao.co.kr'
+        ];
+
+        const kakaoPaths = ['/', '/auth/', '/oauth/', '/login/', '/api/', '/talk/'];
+
+        // 지정된 카카오 쿠키들 삭제
+        kakaoCookieNames.forEach(cookieName => {
+            kakaoDomains.forEach(domain => {
+                kakaoPaths.forEach(path => {
+                    // 다양한 방식으로 쿠키 삭제
+                    const deletePatterns = [
+                        `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}; domain=${domain};`,
+                        `${cookieName}=; max-age=0; path=${path}; domain=${domain};`,
+                        `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=${path}; domain=${domain}; secure;`,
+                        `${cookieName}=; max-age=0; path=${path}; domain=${domain}; secure; samesite=none;`,
+                        `${cookieName}=; path=${path}; domain=${domain}; expires=Thu, 01 Jan 1970 00:00:00 GMT;`
+                    ];
+
+                    deletePatterns.forEach(pattern => {
+                        document.cookie = pattern;
+                    });
+                });
+            });
+        });
+
+        // 실제 존재하는 모든 카카오 관련 쿠키 찾아서 삭제
+        allCookies.forEach(cookie => {
+            const cookieName = cookie.split('=')[0].trim();
+            const lowerName = cookieName.toLowerCase();
+
+            // 카카오 관련 쿠키 패턴 확장
+            if (lowerName.includes('kakao') ||
+                lowerName.includes('kauth') ||
+                lowerName.includes('ktalk') ||
+                lowerName.startsWith('k') ||
+                lowerName.startsWith('_ka') ||
+                lowerName.startsWith('_k') ||
+                cookieName.startsWith('K') ||
+                cookieName.startsWith('A')) { // APPKEY 등
+
+                // 해당 쿠키를 모든 방식으로 삭제
+                const deletePatterns = [
+                    `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`,
+                    `${cookieName}=; max-age=0; path=/;`,
+                    `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname};`,
+                    `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.${window.location.hostname};`,
+                    `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; secure; samesite=none;`,
+                    `${cookieName}=; max-age=0; path=/; secure; samesite=none;`
+                ];
+
+                deletePatterns.forEach(pattern => {
+                    document.cookie = pattern;
+                });
+
+                console.log('🗑️ 의심 카카오 쿠키 삭제:', cookieName);
+            }
+        });
+
+        console.log('✅ 모든 카카오 쿠키 삭제 완료');
+
+    } catch (error) {
+        console.log('카카오 쿠키 삭제 중 오류 (무시됨):', error);
+    }
+}
+
+// 카카오 저장소 데이터 완전 삭제
+function clearAllKakaoStorage() {
+    try {
+        console.log('📦 카카오 저장소 데이터 완전 삭제...');
+
+        // localStorage에서 카카오 관련 키 찾아서 삭제
+        const localKeysToDelete = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (
+                key.toLowerCase().includes('kakao') ||
+                key.toLowerCase().includes('kauth') ||
+                key.toLowerCase().includes('ktalk') ||
+                key.startsWith('K') ||
+                key.startsWith('_k') ||
+                key.includes('oauth') ||
+                key.includes('access_token') ||
+                key.includes('refresh_token')
+            )) {
+                localKeysToDelete.push(key);
+            }
+        }
+
+        localKeysToDelete.forEach(key => {
+            localStorage.removeItem(key);
+            console.log('🗑️ localStorage 카카오 데이터 삭제:', key);
+        });
+
+        // sessionStorage에서도 삭제
+        const sessionKeysToDelete = [];
+        for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i);
+            if (key && (
+                key.toLowerCase().includes('kakao') ||
+                key.toLowerCase().includes('kauth') ||
+                key.toLowerCase().includes('ktalk') ||
+                key.startsWith('K') ||
+                key.startsWith('_k') ||
+                key.includes('oauth') ||
+                key.includes('access_token') ||
+                key.includes('refresh_token')
+            )) {
+                sessionKeysToDelete.push(key);
+            }
+        }
+
+        sessionKeysToDelete.forEach(key => {
+            sessionStorage.removeItem(key);
+            console.log('🗑️ sessionStorage 카카오 데이터 삭제:', key);
+        });
+
+        // 특정 카카오 관련 키들 명시적으로 삭제
+        const specificKeys = [
+            'tempKakaoInfo', 'kakao_auth_state', 'kakao_sdk', 'kakao_app_key',
+            'kakao_login_state', 'KAKAO_SDK_INITIALIZED', 'kakao_access_token',
+            'kakao_user_info', 'kakao_profile', 'Kakao_SDK', 'KAKAO_AUTH'
+        ];
+
+        specificKeys.forEach(key => {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+        });
+
+        console.log('✅ 카카오 저장소 데이터 완전 삭제 완료');
+
+    } catch (error) {
+        console.log('카카오 저장소 정리 중 오류 (무시됨):', error);
+    }
 }
 
 // 카카오에서 사용자 정보 가져오기
