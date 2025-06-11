@@ -510,17 +510,11 @@
     }
 }
 
-@media (max-width: 1200px) {
-    .mypage-btn {
-        display: none;
-    }
-}
+
 
 @media (max-width: 1000px) {
-    .logout-btn {
-        display: none;
-    }
 
+    /* 로그아웃 버튼도 모바일에서 유지 */
     .auth-btn {
         padding: 0.7rem 1.5rem;
         font-size: 1.1rem;
@@ -591,17 +585,21 @@
 
 @media (max-width: 600px) {
 
-    .logout-btn,
-    .auth-btn {
+    /* 로고를 숨기고 버튼들을 유지 */
+    .logo {
         display: none !important;
     }
 
     .header-container {
         padding: 0 10px !important;
+        justify-content: space-between;
     }
 
+    /* 버튼들이 화면 전체 너비를 활용할 수 있도록 */
     .auth-nav {
-        display: none !important;
+        position: static;
+        transform: none;
+        right: auto;
     }
 }
 
@@ -619,9 +617,39 @@
 
 .logo h2 {
     color: var(--primary-color);
-    /* 데스크톱에서 모바일로 갈수록 30%까지 자연스럽게 축소 */
-    font-size: clamp(0.6rem, 4vw, 2rem);
+    /* 데스크톱 기본 크기 */
+    font-size: 2rem;
     font-weight: 700;
     letter-spacing: -0.5px;
+    /* transition으로 부드러운 크기 변화 */
     transition: font-size 0.3s ease;
+}
+
+/* 단계적 축소로 자연스러운 전환 */
+@media (max-width: 1200px) {
+    .logo h2 {
+        font-size: 1.6rem;
+        /* 80% */
+    }
+}
+
+@media (max-width: 900px) {
+    .logo h2 {
+        font-size: 1.2rem;
+        /* 60% */
+    }
+}
+
+@media (max-width: 600px) {
+    .logo h2 {
+        font-size: 0.8rem;
+        /* 40% */
+    }
+}
+
+@media (max-width: 400px) {
+    .logo h2 {
+        font-size: 0.6rem;
+        /* 30% - 정확한 목표값 */
+    }
 }
