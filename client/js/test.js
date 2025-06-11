@@ -425,16 +425,32 @@ async function submitTest() {
 
         console.log('🔍 localStorage 디버깅:');
         console.log('- userInfoRaw:', userInfoRaw);
+        console.log('- userInfoRaw 타입:', typeof userInfoRaw);
         console.log('- token:', token);
+        console.log('- token 타입:', typeof token);
         console.log('- localStorage 전체 키들:', Object.keys(localStorage));
 
-        const userInfo = userInfoRaw ? JSON.parse(userInfoRaw) : null;
+        // localStorage 전체 내용 출력
+        console.log('- localStorage 전체 내용:');
+        for (let key of Object.keys(localStorage)) {
+            console.log(`  ${key}: ${localStorage.getItem(key)}`);
+        }
 
-        console.log('파싱된 사용자 정보:', userInfo);
+        let userInfo = null;
+        try {
+            userInfo = userInfoRaw ? JSON.parse(userInfoRaw) : null;
+            console.log('✅ userInfo 파싱 성공:', userInfo);
+        } catch (parseError) {
+            console.error('❌ userInfo 파싱 실패:', parseError);
+            console.log('원본 userInfoRaw:', userInfoRaw);
+        }
+
         console.log('JWT 토큰 존재:', !!token);
+        console.log('userInfo 존재:', !!userInfo);
+        console.log('userInfo.id 존재:', !!(userInfo && userInfo.id));
 
         // 사용자 정보를 제출 데이터에 포함 (토큰이 없어도 userInfo로 인식 가능)
-        if (userInfo) {
+        if (userInfo && userInfo.id) {
             submitData.userInfo = {
                 id: userInfo.id,
                 name: userInfo.name,
@@ -442,16 +458,33 @@ async function submitTest() {
             };
             console.log('✅ userInfo를 서버에 전송:', submitData.userInfo);
         } else {
-            console.log('❌ userInfo 없음');
+            console.log('❌ userInfo 전송 불가능');
+            console.log('- userInfo:', userInfo);
+            console.log('- userInfo가 존재:', !!userInfo);
+            if (userInfo) {
+                console.log('- userInfo.id 존재:', !!userInfo.id);
+                console.log('- userInfo 구조:', Object.keys(userInfo));
+            }
         }
+
+        console.log('🚀 최종 제출 데이터:', submitData);
+        console.log('🚀 제출 데이터 크기:', JSON.stringify(submitData).length, '바이트');
+        console.log('🚀 userInfo 포함 여부:', !!submitData.userInfo);
+        if (submitData.userInfo) {
+            console.log('🚀 전송할 userInfo:', submitData.userInfo);
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+        };
+
+        console.log('🚀 요청 헤더:', headers);
 
         // API 호출
         const response = await fetch('/api/test/submit', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` })
-            },
+            headers: headers,
             body: JSON.stringify(submitData)
         });
 

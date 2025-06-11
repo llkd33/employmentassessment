@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>localStorage 디버깅</title>
+</head>
+
+<body>
+    <h1>localStorage 상태 확인</h1>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+
+        console.log('=== localStorage 디버깅 ===');
+
+        // 모든 localStorage 키 확인
+        const keys = Object.keys(localStorage);
+        console.log('localStorage 키들:', keys);
+
+        // userInfo 확인
+        const userInfoRaw = localStorage.getItem('userInfo');
+        console.log('userInfo (raw):', userInfoRaw);
+
+        let userInfo = null;
+        try {
+            userInfo = userInfoRaw ? JSON.parse(userInfoRaw) : null;
+            console.log('userInfo (parsed):', userInfo);
+        } catch (e) {
+            console.error('userInfo 파싱 오류:', e);
+        }
+
+        // authToken 확인
+        const authToken = localStorage.getItem('authToken');
+        console.log('authToken:', authToken);
+
+        // HTML에도 출력
+        output.innerHTML = `
+            <h2>localStorage 상태:</h2>
+            <p><strong>모든 키들:</strong> ${keys.join(', ')}</p>
+            <p><strong>userInfo (raw):</strong> ${userInfoRaw || '없음'}</p>
+            <p><strong>userInfo (parsed):</strong> ${userInfo ? JSON.stringify(userInfo, null, 2) : '없음'}</p>
+            <p><strong>authToken:</strong> ${authToken || '없음'}</p>
+            <h2>콘솔도 확인하세요!</h2>
+        `;
+    </script>
+</body>
+
+</html>
