@@ -594,14 +594,21 @@ function handleAccountDelete() {
 
             // 1. 먼저 서버 데이터베이스에서 계정 삭제
             deleteAccountFromDatabase(userInfo)
-                .then(() => {
-                    console.log('✅ 데이터베이스에서 계정 삭제 완료');
-                    // 데이터베이스 삭제 성공 시 로컬 데이터도 삭제
-                    deleteLocalAccountData(userInfo);
+                .then((result) => {
+                    console.log('✅ 데이터베이스에서 계정 삭제 완료:', result);
+
+                    // 서버 응답 확인
+                    if (result && result.success) {
+                        // 데이터베이스 삭제 성공 시 로컬 데이터도 삭제
+                        deleteLocalAccountData(userInfo);
+                    } else {
+                        console.error('❌ 서버에서 삭제 실패 응답:', result);
+                        showNotification('계정 삭제에 실패했습니다. 다시 시도해주세요.', 'error');
+                    }
                 })
                 .catch((error) => {
                     console.error('❌ 데이터베이스 삭제 실패:', error);
-                    showNotification('서버에서 계정 삭제에 실패했습니다. 다시 시도해주세요.', 'error');
+                    showNotification(`계정 삭제 실패: ${error.message}`, 'error');
                 });
         }
     }
@@ -609,13 +616,22 @@ function handleAccountDelete() {
 
 // 서버 데이터베이스에서 계정 삭제
 async function deleteAccountFromDatabase(userInfo) {
+    console.log('🗄️ 서버 데이터베이스 계정 삭제 시작...');
+    console.log('📋 삭제할 사용자 정보:', {
+        id: userInfo.id,
+        name: userInfo.name,
+        email: userInfo.email,
+        loginType: userInfo.loginType
+    });
+
     const authToken = localStorage.getItem('authToken');
+    console.log('🔑 인증 토큰 상태:', authToken ? '존재함' : '없음');
 
     if (!authToken) {
         throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
     }
 
-    console.log('🗄️ 데이터베이스에서 계정 삭제 요청...');
+    console.log('📡 서버로 DELETE 요청 전송 중...');
 
     const response = await fetch('/api/user/account', {
         method: 'DELETE',
@@ -628,13 +644,17 @@ async function deleteAccountFromDatabase(userInfo) {
         credentials: 'same-origin'
     });
 
+    console.log('📨 서버 응답 상태:', response.status, response.statusText);
+
     if (!response.ok) {
+        console.log('❌ 서버 응답 실패');
         const errorData = await response.json().catch(() => ({ message: '서버 오류' }));
+        console.log('❌ 오류 데이터:', errorData);
         throw new Error(`HTTP ${response.status}: ${errorData.message || '서버 오류'}`);
     }
 
     const result = await response.json();
-    console.log('✅ 서버 응답:', result);
+    console.log('✅ 서버 응답 성공:', result);
     return result;
 }
 

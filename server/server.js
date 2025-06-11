@@ -34,17 +34,30 @@ const generateToken = (userId) => {
 
 // JWT 토큰 검증 미들웨어
 const authenticateToken = (req, res, next) => {
+    console.log('🔐 JWT 토큰 인증 시작 - 요청:', req.method, req.path);
+
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
+    console.log('🔑 Authorization 헤더:', authHeader ? '존재함' : '없음');
+    console.log('🔑 추출된 토큰:', token ? token.substring(0, 20) + '...' : '없음');
+
     if (!token) {
+        console.log('❌ JWT 토큰 없음');
         return res.status(401).json({ message: '토큰이 필요합니다.' });
     }
 
     jwt.verify(token, process.env.JWT_SECRET || 'secret_key_2024', (err, user) => {
         if (err) {
+            console.log('❌ JWT 토큰 검증 실패:', err.message);
             return res.status(403).json({ message: '유효하지 않은 토큰입니다.' });
         }
+
+        console.log('✅ JWT 토큰 검증 성공:', {
+            userId: user.userId,
+            email: user.email
+        });
+
         req.user = user;
         next();
     });
@@ -1017,14 +1030,52 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 app.delete('/api/user/account', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.userId;
+        console.log('🗑️ 계정 삭제 요청 받음:', userId);
+
+        // 삭제 전 사용자 정보 확인
+        const existingUser = await db.getUserByUserId(userId);
+        if (!existingUser) {
+            console.log('❌ 삭제할 사용자가 존재하지 않음:', userId);
+            return res.status(404).json({ message: '사용자를 찾을 수 없습니다.' });
+        }
+
+        console.log('📋 삭제 대상 사용자:', {
+            id: existingUser.user_id,
+            name: existingUser.name,
+            email: existingUser.email,
+            loginType: existingUser.login_type
+        });
 
         // 사용자 및 관련 데이터 삭제 (데이터베이스에서 자동 처리)
-        await db.deleteUser(userId);
+        console.log('🔄 데이터베이스에서 사용자 삭제 시작...');
+        const deletedUser = await db.deleteUser(userId);
 
-        res.json({ message: '계정이 성공적으로 삭제되었습니다.' });
+        if (deletedUser) {
+            console.log('✅ 데이터베이스에서 사용자 삭제 완료:', deletedUser.user_id);
+        } else {
+            console.log('⚠️ 삭제된 사용자 정보가 반환되지 않음');
+        }
+
+        // 삭제 후 확인
+        const checkUser = await db.getUserByUserId(userId);
+        if (checkUser) {
+            console.log('❌ 삭제 실패: 사용자가 여전히 존재함');
+            return res.status(500).json({ message: '계정 삭제에 실패했습니다.' });
+        } else {
+            console.log('✅ 삭제 확인: 사용자가 데이터베이스에서 완전히 제거됨');
+        }
+
+        res.json({
+            success: true,
+            message: '계정이 성공적으로 삭제되었습니다.'
+        });
     } catch (error) {
-        console.error('계정 삭제 오류:', error);
-        res.status(500).json({ message: '서버 오류' });
+        console.error('❌ 계정 삭제 오류:', error);
+        res.status(500).json({
+            success: false,
+            message: '계정 삭제 중 오류가 발생했습니다.',
+            error: error.message
+        });
     }
 });
 
