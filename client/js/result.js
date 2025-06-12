@@ -116,7 +116,20 @@ async function initializeResultPage() {
         return;
     }
 
-    // 1차: localStorage에서 테스트 결과 확인
+    // 1차: 마이페이지에서 전달된 서버 데이터 확인 (우선순위 최상위)
+    const tempViewResult = localStorage.getItem('tempViewResult');
+    if (tempViewResult) {
+        console.log('✅ 마이페이지에서 전달된 서버 데이터 발견');
+        const serverResult = JSON.parse(tempViewResult);
+
+        // 임시 데이터 사용 후 삭제 (보안)
+        localStorage.removeItem('tempViewResult');
+
+        calculateAndDisplayResults(serverResult);
+        return;
+    }
+
+    // 2차: localStorage에서 테스트 결과 확인 (최근 테스트 완료 시)
     const testResult = localStorage.getItem('testResult');
     if (testResult) {
         console.log('✅ localStorage에서 테스트 결과 발견');
@@ -124,8 +137,8 @@ async function initializeResultPage() {
         return;
     }
 
-    // 2차: 서버에서 최근 테스트 결과 불러오기
-    console.log('⚠️ localStorage에 결과 없음, 서버에서 최근 결과 조회 시도...');
+    // 3차: 서버에서 최근 테스트 결과 불러오기 (백업)
+    console.log('⚠️ 로컬 데이터 없음, 서버에서 최근 결과 조회 시도...');
     try {
         await loadLatestResultFromServer();
     } catch (error) {

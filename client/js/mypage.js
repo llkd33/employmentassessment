@@ -632,6 +632,8 @@ async function goToDetailResult() {
         return;
     }
 
+    console.log('🔍 데이터베이스에서 최신 테스트 결과 조회 시작...');
+
     try {
         // 서버에서 최신 테스트 결과 가져오기
         const response = await fetch('/api/user/profile', {
@@ -646,6 +648,8 @@ async function goToDetailResult() {
             const profileData = await response.json();
             const userResults = profileData.testResults || [];
 
+            console.log('✅ 서버에서 테스트 결과 조회 성공:', userResults.length, '개 발견');
+
             if (userResults.length > 0) {
                 // 가장 최근 결과로 정렬
                 userResults.sort((a, b) => {
@@ -655,8 +659,13 @@ async function goToDetailResult() {
                 });
 
                 const latestResult = userResults[0];
+                console.log('📊 가장 최근 결과:', {
+                    id: latestResult.id,
+                    score: latestResult.overallScore,
+                    date: latestResult.testDate
+                });
 
-                // 서버 데이터를 로컬 호환 형식으로 변환하여 임시 저장
+                // 서버 데이터를 결과 페이지 호환 형식으로 변환
                 const tempViewResult = {
                     userInfo: userInfo,
                     testResult: {
@@ -669,28 +678,43 @@ async function goToDetailResult() {
                     overallScore: latestResult.overallScore,
                     savedAt: latestResult.submittedAt || latestResult.testDate,
                     testDate: latestResult.testDate,
-                    sessionId: latestResult.sessionId
+                    sessionId: latestResult.sessionId,
+                    isExisting: true,
+                    fromDatabase: true, // 데이터베이스에서 가져온 것임을 명시
+                    answers: {} // 빈 답변 객체 (결과 페이지에서 필요)
                 };
 
+                // 결과 페이지에서 읽을 수 있도록 임시 저장
                 localStorage.setItem('tempViewResult', JSON.stringify(tempViewResult));
+
+                console.log('✅ 데이터베이스 결과를 tempViewResult에 저장 완료');
+                console.log('🔄 결과 페이지로 이동...');
+
                 window.location.href = '/result.html';
                 return;
+            } else {
+                console.log('❌ 서버에 저장된 테스트 결과가 없음');
             }
+        } else {
+            console.error('❌ 서버 응답 실패:', response.status, response.statusText);
         }
     } catch (error) {
-        console.error('서버에서 결과 조회 실패:', error);
+        console.error('❌ 서버 조회 중 오류 발생:', error);
     }
 
-    // 서버 실패 시 로컬 데이터 확인
+    // 서버 실패 시 로컬 데이터 확인 (백업)
+    console.log('⚠️ 서버 조회 실패, 로컬 데이터 확인 중...');
     const savedResults = JSON.parse(localStorage.getItem('savedResults')) || [];
     const userResults = savedResults.filter(result =>
         result.userInfo && result.userInfo.email === userInfo.email
     );
 
     if (userResults.length === 0) {
-        alert('표시할 테스트 결과가 없습니다. 먼저 테스트를 진행해주세요.');
+        alert('표시할 테스트 결과가 없습니다.\n\n데이터베이스와 로컬 저장소 모두에서 테스트 결과를 찾을 수 없습니다.\n먼저 테스트를 진행해주세요.');
         return;
     }
+
+    console.log('✅ 로컬에서 테스트 결과 발견:', userResults.length, '개');
 
     // 결과 페이지로 이동 (가장 최근 결과 표시)
     userResults.sort((a, b) => {
@@ -701,9 +725,10 @@ async function goToDetailResult() {
 
     // 최신 결과를 임시 저장소에 저장하고 결과 페이지로 이동
     const latestResult = userResults[0];
+    latestResult.fromDatabase = false; // 로컬 데이터임을 명시
     localStorage.setItem('tempViewResult', JSON.stringify(latestResult));
 
-    // 결과 페이지로 이동
+    console.log('⚠️ 로컬 데이터로 결과 페이지 이동');
     window.location.href = '/result.html';
 }
 
