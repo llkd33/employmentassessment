@@ -346,18 +346,6 @@
     }
 }
 
-
-
-@media (max-width: 1000px) {
-
-    /* 로그아웃 버튼도 모바일에서 유지 */
-    .auth-btn {
-        padding: 0.7rem 1.5rem;
-        font-size: 1.1rem;
-        height: 42px;
-    }
-}
-
 @media (max-width: 768px) {
     .test-progress-container {
         padding: 1rem;
@@ -404,11 +392,6 @@
         font-size: 1rem;
     }
 
-    .header-container {
-        padding: 0 0 0 12px;
-        grid-template-columns: auto 1fr auto;
-    }
-
     .home-btn {
         width: 32px;
         height: 32px;
@@ -417,17 +400,6 @@
 
     .logo h2 {
         font-size: 1.6rem;
-    }
-
-    .auth-nav {
-        gap: 6px;
-    }
-
-    .auth-btn {
-        padding: 0.6rem 1.2rem;
-        font-size: 1rem;
-        height: 38px;
-        min-width: 70px;
     }
 
     .user-info {
@@ -466,10 +438,6 @@
         font-size: 0.9rem;
     }
 
-    .header-container {
-        padding: 0 0 0 8px;
-    }
-
     .home-btn {
         width: 30px;
         height: 30px;
@@ -480,44 +448,6 @@
         font-size: 1.4rem;
     }
 
-    .auth-btn {
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-        height: 34px;
-        min-width: 60px;
-    }
-}
-
-@media (max-width: 600px) {
-
-    /* 로고를 숨기고 버튼들을 유지 */
-    .logo {
-        display: none !important;
-    }
-
-    .header-container {
-        padding: 0 10px !important;
-        justify-content: space-between;
-    }
-
-    /* 버튼들이 화면 전체 너비를 활용할 수 있도록 */
-    .auth-nav {
-        position: static;
-        transform: none;
-        right: auto;
-    }
-}
-
-@media (max-width: 350px) {
-    .header-container {
-        padding: 0 0.5rem !important;
-    }
-}
-
-@media (max-width: 300px) {
-    .header-container {
-        padding: 0 0.25rem !important;
-    }
 }
 
 .logo h2 {
