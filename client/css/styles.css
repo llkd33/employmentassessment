@@ -332,10 +332,10 @@ body {
 
 
     .auth-btn {
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-        height: 34px;
-        min-width: 60px;
+        padding: 0.5rem 0;
+        font-size: 11px;
+        height: 30px;
+        min-width: 55px;
     }
 
     .main-content {
@@ -348,22 +348,32 @@ body {
 }
 
 @media (max-width: 600px) {
-
+    .header{
+        height: 70px;
+    }
+    .home-btn-container {
+        margin-right: 5px;
+    }
     /* 로고를 숨기고 버튼들을 유지 */
     .logo {
-        display: none !important;
+        display: inline-block;
+        transform: none;
+        width: 220px;
+        position: static;
+    }
+    
+    .logo img{
+        max-width: 100%;
     }
 
     .header-container {
         padding: 0 10px !important;
-        justify-content: space-between;
+        justify-content: normal;
     }
 
     /* 버튼들이 화면 전체 너비를 활용할 수 있도록 */
     .auth-nav {
-        position: static;
-        transform: none;
-        right: auto;
+        right: 10px;
     }
 }
 

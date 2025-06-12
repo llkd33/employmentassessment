@@ -6,7 +6,7 @@
     "scripts": {
         "start": "cd server && node server.js",
         "dev": "cd server && nodemon server.js",
-        "setup": "node local-setup.js",
+        "setup": "node setup.js",
         "migrate": "node migrate-data.js migrate",
         "backup": "node migrate-data.js backup",
         "init-db": "node migrate-data.js both",
