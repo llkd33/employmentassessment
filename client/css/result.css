@@ -540,6 +540,15 @@
         font-size: 3rem;
     }
 
+    /* 모바일에서 기업 로고와 환영 인사 숨기기 */
+    .logo {
+        display: none !important;
+    }
+
+    .user-greeting {
+        display: none !important;
+    }
+
     .competency-details,
     .overall-score-section {
         padding: 2rem;
@@ -588,9 +597,9 @@
     }
 
     .progress-line {
-        top: 25px;
         left: 25px;
         right: 25px;
+        top: 25px;
     }
 }
 

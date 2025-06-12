@@ -898,6 +898,11 @@
         font-size: 1rem;
     }
 
+    /* 모바일에서 기업 로고 숨기기 */
+    .logo {
+        display: none !important;
+    }
+
     .logo h2 {
         font-size: 1.6rem;
     }
