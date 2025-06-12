@@ -97,7 +97,7 @@ body {
     right: 0;
     top: 0;
     bottom: 0;
-    transform: scale(0.24);
+    transform: scale(1.0);
     width: auto;
     height: auto;
     text-align: center;
@@ -109,7 +109,7 @@ body {
 }
 
 .logo:hover {
-    transform: scale(0.28);
+    transform: scale(1.1);
 }
 
 .logo img {
