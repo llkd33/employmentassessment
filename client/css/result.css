@@ -6,6 +6,11 @@
     min-height: calc(100vh - 130px);
 }
 
+/* 결과 페이지에서 환영 인사 완전 제거 */
+.user-greeting {
+    display: none !important;
+}
+
 .result-container {
     max-width: 900px;
     margin: 0 auto;
@@ -540,12 +545,8 @@
         font-size: 3rem;
     }
 
-    /* 모바일에서 기업 로고와 환영 인사 숨기기 */
+    /* 모바일에서 기업 로고 숨기기 */
     .logo {
-        display: none !important;
-    }
-
-    .user-greeting {
         display: none !important;
     }
 

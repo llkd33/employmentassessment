@@ -16,6 +16,11 @@
     margin: 0 auto;
 }
 
+/* 마이페이지에서 마이페이지 버튼 완전 제거 */
+.mypage-btn {
+    display: none !important;
+}
+
 /* 홈 버튼 스타일 - styles.css로 이동됨 */
 
 /* 프로필 카드 */
