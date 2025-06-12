@@ -351,6 +351,11 @@
         padding: 1rem;
     }
 
+    /* 모바일에서 테스트 페이지의 헤더 로고 숨기기 */
+    .logo {
+        display: none !important;
+    }
+
     .question-card {
         padding: 2rem 1.5rem;
         min-height: 500px;
