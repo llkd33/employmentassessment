@@ -255,6 +255,10 @@ body {
         font-size: 1rem;
     }
 
+    .logo {
+        transform: scale(0.8);
+    }
+
     .auth-nav {
         gap: 6px;
     }
@@ -278,6 +282,10 @@ body {
         font-size: 0.9rem;
     }
 
+    .logo {
+        transform: scale(0.8);
+    }
+
     .auth-btn {
         padding: 0.5rem 1rem;
         font-size: 0.8rem;
@@ -299,10 +307,10 @@ body {
         margin-right: 5px;
     }
 
-    /* 로고를 숨기고 버튼들을 유지 */
+    /* 모바일에서 로고 크기 80% 축소 */
     .logo {
         display: inline-block;
-        transform: none;
+        transform: scale(0.8);
         width: 220px;
         position: static;
     }
