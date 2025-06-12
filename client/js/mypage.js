@@ -243,7 +243,109 @@ function loadUserProfile(user) {
 }
 
 // 테스트 점수 업데이트
-function updateTestScore() {
+async function updateTestScore() {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    const authToken = localStorage.getItem('authToken');
+
+    if (!userInfo) {
+        console.error('사용자 정보가 없습니다.');
+        return;
+    }
+
+    console.log('=== 테스트 점수 업데이트 시작 (서버에서 불러오기) ===');
+    console.log('현재 사용자:', userInfo.email || userInfo.name);
+
+    try {
+        // 서버에서 사용자 프로필과 검사 결과 가져오기
+        const response = await fetch('/api/user/profile', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (!response.ok) {
+            console.error('서버에서 프로필 조회 실패:', response.status);
+            // 서버 실패 시 localStorage로 대체
+            return updateTestScoreFromLocalStorage();
+        }
+
+        const profileData = await response.json();
+        console.log('서버에서 받은 프로필 데이터:', profileData);
+
+        const userResults = profileData.testResults || [];
+        console.log('서버에서 받은 검사 결과:', userResults.length, '개');
+
+        // 최신 결과 표시
+        const overallScore = document.getElementById('overallScore');
+        if (userResults.length > 0) {
+            // 날짜순으로 정렬해서 가장 최근 결과 가져오기
+            userResults.sort((a, b) => {
+                const dateA = new Date(a.testDate || a.submittedAt);
+                const dateB = new Date(b.testDate || b.submittedAt);
+                return dateB - dateA; // 최신순
+            });
+
+            const latestResult = userResults[0]; // 가장 최근 결과
+            console.log('가장 최근 결과:', latestResult);
+
+            if (overallScore) {
+                overallScore.textContent = `${latestResult.overallScore}점`;
+            }
+
+            // 점수 구간별 유형 정보 표시
+            displayScoreType(latestResult.overallScore);
+
+            // 차트 업데이트 (시간순으로 다시 정렬)
+            userResults.sort((a, b) => {
+                const dateA = new Date(a.testDate || a.submittedAt);
+                const dateB = new Date(b.testDate || b.submittedAt);
+                return dateA - dateB; // 오래된 순
+            });
+
+            updateTrendChart(userResults);
+
+            // 서버 데이터를 로컬에도 백업 (호환성 유지)
+            syncServerDataToLocal(userResults, userInfo);
+        } else {
+            console.log('서버에 저장된 테스트 결과가 없음');
+
+            // 서버에 결과가 없으면 로컬 데이터 확인
+            const localResults = getLocalTestResults(userInfo);
+            if (localResults.length > 0) {
+                console.log('로컬에서 결과 발견, 서버에 동기화 시도');
+                // TODO: 로컬 데이터를 서버에 업로드하는 기능 추가
+            }
+
+            // 테스트 결과가 없는 경우
+            if (overallScore) {
+                overallScore.textContent = '-';
+            }
+
+            // 유형 정보 숨기기
+            const scoreTypeSection = document.getElementById('scoreTypeSection');
+            if (scoreTypeSection) {
+                scoreTypeSection.style.display = 'none';
+            }
+
+            // 빈 차트 표시
+            updateTrendChart([]);
+        }
+
+        console.log('=== 테스트 점수 업데이트 완료 (서버) ===');
+
+    } catch (error) {
+        console.error('서버에서 검사 결과 불러오기 실패:', error);
+        console.log('로컬 데이터로 대체');
+        return updateTestScoreFromLocalStorage();
+    }
+}
+
+// 로컬 스토리지에서 검사 결과 불러오기 (fallback)
+function updateTestScoreFromLocalStorage() {
+    console.log('=== 로컬 스토리지에서 검사 결과 불러오기 ===');
+
     // 저장된 결과들 가져오기
     const savedResults = JSON.parse(localStorage.getItem('savedResults')) || [];
     const userInfo = JSON.parse(localStorage.getItem('userInfo'));
@@ -253,7 +355,6 @@ function updateTestScore() {
         return;
     }
 
-    console.log('=== 테스트 점수 업데이트 시작 ===');
     console.log('전체 저장된 결과:', savedResults.length, '개');
     console.log('현재 사용자 이메일:', userInfo.email);
 
@@ -263,13 +364,6 @@ function updateTestScore() {
         if (!result.userInfo || result.userInfo.email !== userInfo.email) {
             return false;
         }
-
-        console.log('사용자 결과 발견:', {
-            overallScore: result.overallScore,
-            testDate: result.testDate,
-            savedAt: result.savedAt,
-            competencyScores: result.competencyScores
-        });
 
         // 점수가 유효한지 확인 (0-100 범위)
         if (result.overallScore === undefined || result.overallScore < 0 || result.overallScore > 100) {
@@ -300,16 +394,6 @@ function updateTestScore() {
     });
 
     console.log('필터링된 사용자 결과:', userResults.length, '개');
-
-    // 유효한 결과만 다시 저장 (더미 데이터 정리)
-    if (userResults.length !== savedResults.filter(r => r.userInfo && r.userInfo.email === userInfo.email).length) {
-        const otherUsersResults = savedResults.filter(result =>
-            !result.userInfo || result.userInfo.email !== userInfo.email
-        );
-        const cleanedResults = [...otherUsersResults, ...userResults];
-        localStorage.setItem('savedResults', JSON.stringify(cleanedResults));
-        console.log('더미 데이터 정리 완료. 유효한 결과:', userResults.length, '개');
-    }
 
     // 최신 결과 표시
     const overallScore = document.getElementById('overallScore');
@@ -356,7 +440,52 @@ function updateTestScore() {
         updateTrendChart([]);
     }
 
-    console.log('=== 테스트 점수 업데이트 완료 ===');
+    console.log('=== 로컬 스토리지 검사 결과 업데이트 완료 ===');
+}
+
+// 로컬에서 검사 결과 가져오기
+function getLocalTestResults(userInfo) {
+    const savedResults = JSON.parse(localStorage.getItem('savedResults')) || [];
+    return savedResults.filter(result => {
+        return result.userInfo && result.userInfo.email === userInfo.email &&
+            result.overallScore !== undefined && result.competencyScores;
+    });
+}
+
+// 서버 데이터를 로컬에 동기화 (호환성 유지)
+function syncServerDataToLocal(serverResults, userInfo) {
+    try {
+        const localResults = JSON.parse(localStorage.getItem('savedResults')) || [];
+
+        // 다른 사용자의 로컬 결과는 유지
+        const otherUsersResults = localResults.filter(result =>
+            !result.userInfo || result.userInfo.email !== userInfo.email
+        );
+
+        // 서버 결과를 로컬 형식으로 변환
+        const convertedServerResults = serverResults.map(result => ({
+            userInfo: userInfo,
+            testResult: {
+                id: result.id,
+                sessionId: result.sessionId,
+                testDate: result.testDate,
+                submittedAt: result.submittedAt
+            },
+            competencyScores: result.competencyScores,
+            overallScore: result.overallScore,
+            savedAt: result.submittedAt || result.testDate,
+            testDate: result.testDate,
+            sessionId: result.sessionId
+        }));
+
+        // 합쳐서 다시 저장
+        const mergedResults = [...otherUsersResults, ...convertedServerResults];
+        localStorage.setItem('savedResults', JSON.stringify(mergedResults));
+
+        console.log('서버 데이터를 로컬에 동기화 완료:', convertedServerResults.length, '개');
+    } catch (error) {
+        console.error('서버 데이터 로컬 동기화 실패:', error);
+    }
 }
 
 // 결과 추이 차트 업데이트
@@ -409,8 +538,8 @@ function updateTrendChart(userResults) {
     function getValidDate(result) {
         let date;
 
-        // testDate 또는 savedAt 사용
-        const dateString = result.testDate || result.savedAt;
+        // testDate, submittedAt 또는 savedAt 사용 (서버/로컬 호환)
+        const dateString = result.testDate || result.submittedAt || result.savedAt;
 
         if (dateString) {
             date = new Date(dateString);
@@ -491,6 +620,91 @@ function updateTrendChart(userResults) {
             chartNote.textContent = `💡 현재까지 ${testCount}회의 테스트를 완료했습니다.`;
         }
     }
+}
+
+// 결과 상세보기 페이지로 이동
+async function goToDetailResult() {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    const authToken = localStorage.getItem('authToken');
+
+    if (!userInfo) {
+        alert('로그인이 필요합니다.');
+        return;
+    }
+
+    try {
+        // 서버에서 최신 테스트 결과 가져오기
+        const response = await fetch('/api/user/profile', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            const profileData = await response.json();
+            const userResults = profileData.testResults || [];
+
+            if (userResults.length > 0) {
+                // 가장 최근 결과로 정렬
+                userResults.sort((a, b) => {
+                    const dateA = new Date(a.testDate || a.submittedAt);
+                    const dateB = new Date(b.testDate || b.submittedAt);
+                    return dateB - dateA; // 최신순
+                });
+
+                const latestResult = userResults[0];
+
+                // 서버 데이터를 로컬 호환 형식으로 변환하여 임시 저장
+                const tempViewResult = {
+                    userInfo: userInfo,
+                    testResult: {
+                        id: latestResult.id,
+                        sessionId: latestResult.sessionId,
+                        testDate: latestResult.testDate,
+                        submittedAt: latestResult.submittedAt
+                    },
+                    competencyScores: latestResult.competencyScores,
+                    overallScore: latestResult.overallScore,
+                    savedAt: latestResult.submittedAt || latestResult.testDate,
+                    testDate: latestResult.testDate,
+                    sessionId: latestResult.sessionId
+                };
+
+                localStorage.setItem('tempViewResult', JSON.stringify(tempViewResult));
+                window.location.href = '/result.html';
+                return;
+            }
+        }
+    } catch (error) {
+        console.error('서버에서 결과 조회 실패:', error);
+    }
+
+    // 서버 실패 시 로컬 데이터 확인
+    const savedResults = JSON.parse(localStorage.getItem('savedResults')) || [];
+    const userResults = savedResults.filter(result =>
+        result.userInfo && result.userInfo.email === userInfo.email
+    );
+
+    if (userResults.length === 0) {
+        alert('표시할 테스트 결과가 없습니다. 먼저 테스트를 진행해주세요.');
+        return;
+    }
+
+    // 결과 페이지로 이동 (가장 최근 결과 표시)
+    userResults.sort((a, b) => {
+        const dateA = new Date(a.testDate || a.savedAt);
+        const dateB = new Date(b.testDate || b.savedAt);
+        return dateB - dateA; // 최신순
+    });
+
+    // 최신 결과를 임시 저장소에 저장하고 결과 페이지로 이동
+    const latestResult = userResults[0];
+    localStorage.setItem('tempViewResult', JSON.stringify(latestResult));
+
+    // 결과 페이지로 이동
+    window.location.href = '/result.html';
 }
 
 // 홈으로 이동
@@ -1089,38 +1303,4 @@ window.resetAllJoinDatesToRecent = function () {
     console.log('마이페이지를 새로고침하면 변경된 가입일을 확인할 수 있습니다.');
 
     return registeredUsers;
-};
-
-// 결과 상세보기 페이지로 이동
-function goToDetailResult() {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-    if (!userInfo) {
-        alert('로그인이 필요합니다.');
-        return;
-    }
-
-    // 테스트 결과가 있는지 확인
-    const savedResults = JSON.parse(localStorage.getItem('savedResults')) || [];
-    const userResults = savedResults.filter(result =>
-        result.userInfo && result.userInfo.email === userInfo.email
-    );
-
-    if (userResults.length === 0) {
-        alert('표시할 테스트 결과가 없습니다. 먼저 테스트를 진행해주세요.');
-        return;
-    }
-
-    // 결과 페이지로 이동 (가장 최근 결과 표시)
-    userResults.sort((a, b) => {
-        const dateA = new Date(a.testDate || a.savedAt);
-        const dateB = new Date(b.testDate || b.savedAt);
-        return dateB - dateA; // 최신순
-    });
-
-    // 최신 결과를 임시 저장소에 저장하고 결과 페이지로 이동
-    const latestResult = userResults[0];
-    localStorage.setItem('tempViewResult', JSON.stringify(latestResult));
-
-    // 결과 페이지로 이동
-    window.location.href = '/result.html';
-} 
+}; 
