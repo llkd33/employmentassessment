@@ -170,106 +170,11 @@ const Header = (() => {
 
     /**
      * 반응형 스타일 적용
+     * styles.css의 스타일을 사용하므로 중복 제거
      */
     function applyResponsiveStyles() {
-        // 기존 스타일이 있으면 제거
-        const existingStyle = document.getElementById('header-responsive-styles');
-        if (existingStyle) {
-            existingStyle.remove();
-        }
-
-        const style = document.createElement('style');
-        style.id = 'header-responsive-styles';
-        style.textContent = `
-            /* 반응형 헤더 스타일 - 로그인 전후 동일한 레이아웃 유지 */
-            
-            /* 작은 로고 스타일 */
-            .small-logo {
-                width: 24px;
-                height: 24px;
-                margin-right: 8px;
-                object-fit: contain;
-            }
-
-            /* 모든 버튼 동일한 스타일 적용 */
-            .auth-btn {
-                min-width: 80px;
-                height: 40px;
-                padding: 0.7rem 1.2rem;
-                font-size: 1rem;
-                border-radius: 8px;
-                border: 1px solid #e2e8f0;
-                background: white;
-                color: #374151;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-
-            .auth-btn:hover {
-                background: #f9fafb;
-                border-color: #d1d5db;
-                transform: translateY(-1px);
-            }
-
-            /* 로그인/마이페이지 버튼 (첫 번째 버튼) */
-            .login-btn,
-            .mypage-btn {
-                background: #3b82f6;
-                color: white;
-                border-color: #3b82f6;
-            }
-
-            .login-btn:hover,
-            .mypage-btn:hover {
-                background: #2563eb;
-                border-color: #2563eb;
-            }
-
-            /* 회원가입/로그아웃 버튼 (두 번째 버튼) */
-            .signup-btn,
-            .logout-btn {
-                background: white;
-                color: #374151;
-                border-color: #e2e8f0;
-            }
-
-            .signup-btn:hover,
-            .logout-btn:hover {
-                background: #f3f4f6;
-                border-color: #d1d5db;
-            }
-
-            /* 모바일 반응형 - 모든 상태에서 동일하게 적용 */
-            @media (max-width: 768px) {
-                .auth-btn {
-                    min-width: 70px;
-                    height: 36px;
-                    padding: 0.5rem 1rem;
-                    font-size: 0.9rem;
-                }
-            }
-
-            @media (max-width: 600px) {
-                .auth-btn {
-                    min-width: 60px;
-                    height: 32px;
-                    padding: 0.4rem 0.8rem;
-                    font-size: 0.8rem;
-                }
-            }
-
-            @media (max-width: 480px) {
-                .auth-btn {
-                    min-width: 50px;
-                    height: 30px;
-                    padding: 0.3rem 0.6rem;
-                    font-size: 0.75rem;
-                }
-            }
-        `;
-
-        document.head.appendChild(style);
+        // styles.css의 스타일 사용, 중복 스타일 제거
+        // 필요시 특수한 케이스만 여기서 처리
     }
 
     /**

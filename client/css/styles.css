@@ -177,8 +177,8 @@ body {
 .auth-btn {
     padding: 0.8rem 1.8rem;
     border: 2px solid transparent;
-    border-radius: 6px;
-    font-size: 1.2rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -187,10 +187,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 80px;
-    height: 50px;
+    min-width: 90px;
+    height: 48px;
     background-color: transparent;
     color: var(--text-primary);
+    letter-spacing: 0.025em;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* 첫 번째 버튼 (로그인/마이페이지) - 강조 스타일 */
@@ -206,7 +208,7 @@ body {
     background-color: var(--primary-hover);
     border-color: var(--primary-hover);
     transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 8px rgba(30, 41, 59, 0.15);
 }
 
 /* 두 번째 버튼 (회원가입/로그아웃) - 보조 스타일 */
@@ -214,25 +216,31 @@ body {
 .logout-btn {
     background-color: transparent;
     color: var(--text-primary);
-    border-color: var(--text-secondary);
+    border-color: var(--border-color);
 }
 
 .signup-btn:hover,
 .logout-btn:hover {
-    background-color: var(--text-secondary);
-    color: white;
+    background-color: var(--accent-color);
+    color: var(--primary-color);
     border-color: var(--text-secondary);
     transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 4px 8px rgba(100, 116, 139, 0.1);
 }
 
 /* 반응형 헤더 - 로그인 전후 동일한 레이아웃 유지 */
+@media (max-width: 1400px) {
+    .user-greeting {
+        display: none !important;
+    }
+}
 
 @media (max-width: 1000px) {
     .auth-btn {
         padding: 0.7rem 1.5rem;
-        font-size: 1.1rem;
-        height: 42px;
+        font-size: 1rem;
+        height: 44px;
+        min-width: 80px;
     }
 }
 
@@ -253,7 +261,7 @@ body {
 
     .auth-btn {
         padding: 0.6rem 1.2rem;
-        font-size: 1rem;
+        font-size: 0.9rem;
         height: 38px;
         min-width: 70px;
     }
@@ -271,9 +279,9 @@ body {
     }
 
     .auth-btn {
-        padding: 0.5rem 0;
-        font-size: 11px;
-        height: 30px;
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+        height: 32px;
         min-width: 60px;
     }
 
