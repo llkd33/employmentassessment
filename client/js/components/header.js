@@ -139,12 +139,8 @@ const Header = (() => {
      * @returns {string}
      */
     function generateLoggedInNav() {
-        const user = User.getCurrentUser();
-        const displayName = user ? User.getDisplayName(user) : '사용자';
-
         return `
             <nav class="auth-nav">
-                <span class="user-info user-greeting">안녕하세요, ${displayName}님!</span>
                 <button class="auth-btn mypage-btn" data-action="goToMyPage">
                     마이페이지
                 </button>
@@ -185,26 +181,90 @@ const Header = (() => {
         const style = document.createElement('style');
         style.id = 'header-responsive-styles';
         style.textContent = `
-            /* 반응형 헤더 추가 스타일 (기본 스타일은 styles.css에 있음) */
+            /* 반응형 헤더 스타일 - 로그인 전후 동일한 레이아웃 유지 */
             
-            /* 환영 인사 숨김 브레이크포인트 */
-            @media (max-width: 1200px) {
-                .user-greeting {
-                    display: none !important;
+            /* 작은 로고 스타일 */
+            .small-logo {
+                width: 24px;
+                height: 24px;
+                margin-right: 8px;
+                object-fit: contain;
+            }
+
+            /* 모든 버튼 동일한 스타일 적용 */
+            .auth-btn {
+                min-width: 80px;
+                height: 40px;
+                padding: 0.7rem 1.2rem;
+                font-size: 1rem;
+                border-radius: 8px;
+                border: 1px solid #e2e8f0;
+                background: white;
+                color: #374151;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .auth-btn:hover {
+                background: #f9fafb;
+                border-color: #d1d5db;
+                transform: translateY(-1px);
+            }
+
+            /* 로그인/마이페이지 버튼 (첫 번째 버튼) */
+            .login-btn,
+            .mypage-btn {
+                background: #3b82f6;
+                color: white;
+                border-color: #3b82f6;
+            }
+
+            .login-btn:hover,
+            .mypage-btn:hover {
+                background: #2563eb;
+                border-color: #2563eb;
+            }
+
+            /* 회원가입/로그아웃 버튼 (두 번째 버튼) */
+            .signup-btn,
+            .logout-btn {
+                background: white;
+                color: #374151;
+                border-color: #e2e8f0;
+            }
+
+            .signup-btn:hover,
+            .logout-btn:hover {
+                background: #f3f4f6;
+                border-color: #d1d5db;
+            }
+
+            /* 모바일 반응형 - 모든 상태에서 동일하게 적용 */
+            @media (max-width: 768px) {
+                .auth-btn {
+                    min-width: 70px;
+                    height: 36px;
+                    padding: 0.5rem 1rem;
+                    font-size: 0.9rem;
                 }
             }
 
-            /* 마이페이지 버튼 숨김 */
-            @media (max-width: 850px) {
-                .mypage-btn {
-                    display: none !important;
+            @media (max-width: 600px) {
+                .auth-btn {
+                    min-width: 60px;
+                    height: 32px;
+                    padding: 0.4rem 0.8rem;
+                    font-size: 0.8rem;
                 }
             }
 
-            /* 로그아웃 버튼 숨김 */
-            @media (max-width: 680px) {
-                .logout-btn {
-                    display: none !important;
+            @media (max-width: 480px) {
+                .auth-btn {
+                    min-width: 50px;
+                    height: 30px;
+                    padding: 0.3rem 0.6rem;
+                    font-size: 0.75rem;
                 }
             }
         `;
@@ -312,14 +372,10 @@ const Header = (() => {
      * 사용자 정보 업데이트
      */
     function updateUserInfo() {
-        const userGreeting = Core.DOM.$('.user-greeting');
-        if (!userGreeting) return;
-
-        const user = User.getCurrentUser();
-        if (user) {
-            const displayName = User.getDisplayName(user);
-            userGreeting.textContent = `안녕하세요, ${displayName}님!`;
-        }
+        // 로그인 상태가 변경되었을 때 헤더를 새로 생성
+        // 환영 인사가 제거되었으므로 전체 헤더를 리프레시
+        createHeader();
+        setupEventListeners();
     }
 
     /**

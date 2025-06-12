@@ -176,7 +176,7 @@ body {
 
 .auth-btn {
     padding: 0.8rem 1.8rem;
-    border: none;
+    border: 2px solid transparent;
     border-radius: 6px;
     font-size: 1.2rem;
     font-weight: 600;
@@ -184,91 +184,49 @@ body {
     transition: all 0.2s ease;
     font-family: inherit;
     text-decoration: none;
-    display: inline-block;
-    text-align: center;
-    line-height: 1;
-    min-width: 80px;
-    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.login-btn {
+    min-width: 80px;
+    height: 50px;
     background-color: transparent;
     color: var(--text-primary);
-    border: 2px solid var(--text-secondary);
-    font-weight: 600;
 }
 
-.login-btn:hover {
+/* 첫 번째 버튼 (로그인/마이페이지) - 강조 스타일 */
+.login-btn,
+.mypage-btn {
     background-color: var(--primary-color);
-    border-color: var(--primary-color);
     color: white;
+    border-color: var(--primary-color);
+}
+
+.login-btn:hover,
+.mypage-btn:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
 
-.signup-btn {
-    background-color: var(--primary-color);
-    color: white;
-    border: 1px solid var(--primary-color);
-}
-
-.signup-btn:hover {
-    background-color: var(--primary-hover);
-    border-color: var(--primary-hover);
-}
-
-/* 마이페이지 버튼 스타일 */
-.mypage-btn {
-    background-color: var(--secondary-color);
-    color: white;
-    border: 1px solid var(--secondary-color);
-}
-
-.mypage-btn:hover {
-    background-color: var(--secondary-hover);
-    border-color: var(--secondary-hover);
-}
-
-/* 로그아웃 버튼 스타일 */
+/* 두 번째 버튼 (회원가입/로그아웃) - 보조 스타일 */
+.signup-btn,
 .logout-btn {
+    background-color: transparent;
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+}
+
+.signup-btn:hover,
+.logout-btn:hover {
     background-color: var(--text-secondary);
     color: white;
-    border: 1px solid var(--text-secondary);
+    border-color: var(--text-secondary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
-.logout-btn:hover {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-}
-
-/* 사용자 정보 스타일 */
-.user-info {
-    color: var(--text-secondary);
-    font-size: 1rem;
-    font-weight: 500;
-    white-space: nowrap;
-    margin-right: 15px;
-}
-
-.user-greeting {
-    color: #1e293b;
-    font-weight: 600;
-    font-size: 1.2rem;
-    margin-right: 20px;
-    white-space: nowrap;
-}
-
-/* 반응형 헤더 */
-@media (max-width: 1400px) {
-    .user-greeting {
-        display: none;
-    }
-}
-
-
+/* 반응형 헤더 - 로그인 전후 동일한 레이아웃 유지 */
 
 @media (max-width: 1000px) {
     .auth-btn {
@@ -281,7 +239,6 @@ body {
 @media (max-width: 768px) {
     .header-container {
         padding: 0 0 0 12px;
-        grid-template-columns: auto 1fr auto;
     }
 
     .home-btn {
@@ -289,8 +246,6 @@ body {
         height: 32px;
         font-size: 1rem;
     }
-
-
 
     .auth-nav {
         gap: 6px;
@@ -302,20 +257,6 @@ body {
         height: 38px;
         min-width: 70px;
     }
-
-    .user-info {
-        font-size: 0.85rem;
-        margin-right: 10px;
-    }
-
-    .user-greeting {
-        font-size: 1rem;
-        margin-right: 12px;
-    }
-
-
-
-
 }
 
 @media (max-width: 480px) {
@@ -329,31 +270,27 @@ body {
         font-size: 0.9rem;
     }
 
-
-
     .auth-btn {
         padding: 0.5rem 0;
         font-size: 11px;
         height: 30px;
-        min-width: 55px;
+        min-width: 60px;
     }
 
     .main-content {
         padding: 2rem 1rem;
     }
-
-
-
-
 }
 
 @media (max-width: 600px) {
-    .header{
+    .header {
         height: 70px;
     }
+
     .home-btn-container {
         margin-right: 5px;
     }
+
     /* 로고를 숨기고 버튼들을 유지 */
     .logo {
         display: inline-block;
@@ -361,8 +298,8 @@ body {
         width: 220px;
         position: static;
     }
-    
-    .logo img{
+
+    .logo img {
         max-width: 100%;
     }
 
