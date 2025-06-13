@@ -333,6 +333,7 @@ function createCommonHeader() {
     const isMainPage = currentPage === '/' || currentPage.includes('index.html');
     const isLoginPage = currentPage.includes('login.html');
     const isSignupPage = currentPage.includes('signup.html') || currentPage.includes('signup-form.html');
+    const isTestPage = currentPage.includes('test.html');
 
     // 뒤로가기 버튼 (원래대로 복원)
     const homeBtn = isMainPage ?
@@ -371,6 +372,11 @@ function createCommonHeader() {
     // 헤더 내용 설정
     header.innerHTML = homeBtn + logo + authButtons;
 
+    // 테스트 페이지에서 모바일 로그아웃 버튼 숨김 처리
+    if (isTestPage) {
+        addTestPageMobileStyles();
+    }
+
     // 메인페이지가 아니면서 로그인된 사용자가 있는 경우 사용자 정보 업데이트
     if (!isMainPage && !isLoginPage && !isSignupPage) {
         const userInfo = localStorage.getItem('userInfo');
@@ -389,4 +395,24 @@ function updateHeaderUserInfo(user) {
         const displayName = UserUtils.getDisplayName(user);
         userGreeting.textContent = `안녕하세요, ${displayName}님!`;
     }
+}
+
+// 테스트 페이지 전용 모바일 스타일 추가 함수
+function addTestPageMobileStyles() {
+    // 이미 스타일이 추가되었는지 확인
+    if (document.getElementById('test-page-mobile-styles')) {
+        return;
+    }
+
+    const style = document.createElement('style');
+    style.id = 'test-page-mobile-styles';
+    style.textContent = `
+        @media (max-width: 768px) {
+            /* 테스트 페이지에서만 모바일 로그아웃 버튼 숨김 */
+            .auth-nav .logout-btn {
+                display: none !important;
+            }
+        }
+    `;
+    document.head.appendChild(style);
 } 

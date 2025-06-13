@@ -21,103 +21,7 @@
             line-height: 1.6;
         }
 
-        /* 헤더 스타일 */
-        .header {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 55px;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .back-btn {
-            background: none;
-            border: none;
-            font-size: 18px;
-            color: #666;
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 5px;
-            transition: background-color 0.2s;
-        }
-
-        .back-btn:hover {
-            background-color: #f0f0f0;
-        }
-
-        .header-logo {
-            display: none;
-        }
-
-        .logo-image {
-            width: 28px;
-            height: 28px;
-            background: linear-gradient(135deg, #4A90E2, #357ABD);
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 12px;
-        }
-
-        .logo-text {
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .welcome-text {
-            font-size: 12px;
-            color: #666;
-        }
-
-        .header-btn {
-            background: none;
-            border: 1px solid #ddd;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .header-btn.primary {
-            background: #4A90E2;
-            color: white;
-            border-color: #4A90E2;
-        }
-
-        .header-btn:hover {
-            background: #f0f0f0;
-        }
-
-        .header-btn.primary:hover {
-            background: #357ABD;
-        }
+        /* 헤더 스타일은 styles.css에서 관리 */
 
         /* 메인 컨테이너 */
         .main-container {
@@ -524,33 +428,6 @@
 
         /* 반응형 디자인 */
         @media (max-width: 768px) {
-            .header-container {
-                padding: 0 12px;
-                height: 50px;
-                justify-content: flex-start;
-            }
-
-            .header-left {
-                justify-content: flex-start;
-                flex: 1;
-            }
-
-            .header-logo {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                transform: scale(0.8);
-                margin-left: 0;
-            }
-
-            .header-right {
-                margin-left: auto;
-            }
-
-            /* 모바일에서 로그아웃 버튼 숨김 */
-            .header-right .header-btn:last-child {
-                display: none;
-            }
 
             .main-container {
                 padding: 12px;
@@ -647,18 +524,7 @@
     <!-- 헤더 -->
     <header class="header">
         <div class="header-container">
-            <div class="header-left">
-                <button class="back-btn" onclick="goBack()">←</button>
-                <div class="header-logo">
-                    <div class="logo-image">㈜</div>
-                    <div class="logo-text">대구·경북철단·벤처기업연합회</div>
-                </div>
-            </div>
-            <div class="header-right">
-                <span class="welcome-text">안녕하세요, 테스트님!</span>
-                <button class="header-btn" onclick="goToMyPage()">마이페이지</button>
-                <button class="header-btn" onclick="logout()">로그아웃</button>
-            </div>
+            <!-- JavaScript로 동적 생성 -->
         </div>
     </header>
 
@@ -732,6 +598,7 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script src="js/utils/common.js"></script>
+    <script src="js/script.js"></script>
     <script src="js/test.js"></script>
 </body>
 

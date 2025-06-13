@@ -367,37 +367,8 @@ function isCurrentPageCompleted() {
     return true;
 }
 
-// 헤더 버튼 함수들
-function goBack() {
-    if (confirm('테스트를 중단하고 메인 페이지로 돌아가시겠습니까?\n입력한 답변은 저장되지 않습니다.')) {
-        window.location.href = '/';
-    }
-}
-
-function goToMyPage() {
-    if (confirm('마이페이지로 이동하시겠습니까?\n현재 진행 중인 테스트는 저장되지 않습니다.')) {
-        window.location.href = '/mypage.html';
-    }
-}
-
-function logout() {
-    if (confirm('로그아웃하시겠습니까?\n현재 진행 중인 테스트는 저장되지 않습니다.')) {
-        // localStorage에서 사용자 정보 제거
-        localStorage.removeItem('userInfo');
-        localStorage.removeItem('authToken');
-
-        // 세션 정리
-        sessionStorage.removeItem('testSessionId');
-
-        // 로그인 페이지로 이동
-        window.location.href = '/login.html';
-    }
-}
-
-// goHome 함수 추가 (script.js에서 제거됨)
-function goHome() {
-    window.location.href = '/';
-}
+// 헤더 버튼 함수들 - 공통 헤더 사용으로 대부분 불필요해짐
+// goHome, goToMyPage, handleLogout 함수들은 script.js와 common.js에서 관리됨
 
 // 테스트 제출 함수
 async function submitTest() {
