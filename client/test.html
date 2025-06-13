@@ -527,10 +527,24 @@
             .header-container {
                 padding: 0 12px;
                 height: 50px;
+                justify-content: flex-start;
+            }
+
+            .header-left {
+                justify-content: flex-start;
+                flex: 1;
             }
 
             .header-logo {
-                display: none;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                transform: scale(0.8);
+                margin-left: 0;
+            }
+
+            .header-right {
+                margin-left: auto;
             }
 
             .main-container {
