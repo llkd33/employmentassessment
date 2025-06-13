@@ -394,6 +394,11 @@ function logout() {
     }
 }
 
+// goHome 함수 추가 (script.js에서 제거됨)
+function goHome() {
+    window.location.href = '/';
+}
+
 // 테스트 제출 함수
 async function submitTest() {
     try {
