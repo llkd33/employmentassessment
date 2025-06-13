@@ -5,7 +5,7 @@ function goBack() {
 
 // 비밀번호 유효성 검사
 function validatePassword(password) {
-    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&^#\(\)])[A-Za-z\d@$!%*?&^#\(\)]{8,}$/;
     return passwordRegex.test(password);
 }
 
