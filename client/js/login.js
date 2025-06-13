@@ -65,6 +65,16 @@ function handleLoginSubmit(event) {
             // 응답 본문을 먼저 읽기 (성공/실패 관계없이)
             return response.json().then(data => {
                 return { response, data };
+            }).catch(jsonError => {
+                // JSON 파싱 실패 시 기본 에러 데이터 반환
+                console.error('JSON 파싱 실패:', jsonError);
+                return {
+                    response,
+                    data: {
+                        success: false,
+                        message: '아이디와 비밀번호가 일치하지 않습니다.'
+                    }
+                };
             });
         })
         .then(({ response, data }) => {
@@ -97,20 +107,20 @@ function handleLoginSubmit(event) {
                     window.location.href = 'index.html';
                 }, 1000);
             } else {
-                // 로그인 실패 - 서버에서 온 정확한 메시지 표시
+                // 로그인 실패 - 아이디/비밀번호 불일치 등
                 console.log('❌ 로그인 실패:', response.status, data.message);
 
                 // 404: 가입되지 않은 이메일
                 if (response.status === 404) {
-                    showNotification(data.message || '가입된 이메일이 없습니다. 회원가입을 진행해주세요.', 'error');
+                    showNotification('아이디와 비밀번호가 일치하지 않습니다.', 'error');
                 }
                 // 401: 비밀번호 오류
                 else if (response.status === 401) {
-                    showNotification(data.message || '비밀번호가 올바르지 않습니다.', 'error');
+                    showNotification('아이디와 비밀번호가 일치하지 않습니다.', 'error');
                 }
-                // 400-499: 기타 클라이언트 오류
+                // 400-499: 기타 클라이언트 오류 (아이디/비밀번호 관련)
                 else if (response.status >= 400 && response.status < 500) {
-                    showNotification(data.message || '입력 정보를 확인해주세요.', 'error');
+                    showNotification('아이디와 비밀번호가 일치하지 않습니다.', 'error');
                 }
                 // 503: 데이터베이스 연결 오류
                 else if (response.status === 503) {
@@ -120,34 +130,28 @@ function handleLoginSubmit(event) {
                 else if (response.status >= 500) {
                     showNotification(data.message || '시스템 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
                 }
-                // 기타 오류
+                // 기타 오류 (일반적으로 아이디/비밀번호 불일치)
                 else {
-                    showNotification(data.message || '로그인에 실패했습니다.', 'error');
+                    showNotification('아이디와 비밀번호가 일치하지 않습니다.', 'error');
                 }
             }
         })
         .catch(error => {
             console.error('로그인 API 오류:', error);
 
-            // 실제 네트워크 오류만 처리 (JSON 파싱 오류, fetch 실패 등)
-            let errorMessage = '로그인 중 오류가 발생했습니다.';
+            // 대부분의 경우 아이디/비밀번호 불일치로 처리
+            let errorMessage = '아이디와 비밀번호가 일치하지 않습니다.';
 
-            // 네트워크 연결 실패
-            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            // 실제 네트워크 연결 실패만 네트워크 메시지 표시
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
                 errorMessage = '네트워크 연결을 확인해주세요. 인터넷 연결이 불안정하거나 서버에 접속할 수 없습니다.';
             }
             // CORS 정책 오류
             else if (error.message.includes('CORS')) {
                 errorMessage = '보안 정책으로 인한 접근 제한입니다. 페이지를 새로고침해보세요.';
             }
-            // JSON 파싱 오류
-            else if (error.name === 'SyntaxError') {
-                errorMessage = '서버 응답 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-            }
-            // 기타 예상치 못한 오류
-            else {
-                errorMessage = '예상치 못한 오류가 발생했습니다. 페이지를 새로고침 후 다시 시도해주세요.';
-            }
+            // 그 외의 모든 오류는 로그인 실패로 처리 (JSON 파싱 오류 포함)
+            // JSON 파싱 오류나 기타 오류는 대부분 서버가 에러 응답을 보낸 것이므로 로그인 실패로 간주
 
             showNotification(errorMessage, 'error');
         })
@@ -291,6 +295,16 @@ function handleKakaoLoginSuccess(userId, nickname, email) {
             // 응답 본문을 먼저 읽기 (성공/실패 관계없이)
             return response.json().then(data => {
                 return { response, data };
+            }).catch(jsonError => {
+                // JSON 파싱 실패 시 기본 에러 데이터 반환
+                console.error('카카오 로그인 JSON 파싱 실패:', jsonError);
+                return {
+                    response,
+                    data: {
+                        success: false,
+                        message: '카카오 로그인 중 오류가 발생했습니다.'
+                    }
+                };
             });
         })
         .then(({ response, data }) => {
@@ -370,21 +384,14 @@ function handleKakaoLoginSuccess(userId, nickname, email) {
         .catch(error => {
             console.error('카카오 로그인 API 오류:', error);
 
-            // 실제 네트워크 오류만 처리
+            // 카카오 로그인은 특별히 처리
             let errorMessage = '카카오 로그인 중 오류가 발생했습니다.';
 
-            // 네트워크 연결 실패
-            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            // 실제 네트워크 연결 실패만 네트워크 메시지 표시
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
                 errorMessage = '네트워크 연결을 확인해주세요. 인터넷 연결이 불안정하거나 서버에 접속할 수 없습니다.';
             }
-            // JSON 파싱 오류
-            else if (error.name === 'SyntaxError') {
-                errorMessage = '서버 응답 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-            }
-            // 기타 예상치 못한 오류
-            else {
-                errorMessage = '카카오 로그인 처리 중 예상치 못한 오류가 발생했습니다. 다시 시도해주세요.';
-            }
+            // 그 외의 모든 오류는 카카오 로그인 실패로 처리
 
             showNotification(errorMessage, 'error');
         });
