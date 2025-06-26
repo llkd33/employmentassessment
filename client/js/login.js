@@ -138,8 +138,7 @@ function handleLoginSubmit(event) {
             // 기본적으로 아이디/비밀번호 불일치로 처리
             let errorMessage = '아이디와 비밀번호가 일치하지 않습니다.';
 
-            // 실제 네트워크 연결 실패인 경우만 네트워크 메시지 표시
-            // 서버가 실행되지 않거나 완전히 접근 불가능한 경우
+            // 모든 오류를 로그인 실패로 처리
             if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
                 // 서버 연결 실패 확인을 위한 추가 체크
                 // 하지만 대부분의 경우 로그인 실패로 간주
@@ -382,14 +381,8 @@ function handleKakaoLoginSuccess(userId, nickname, email) {
         .catch(error => {
             console.error('카카오 로그인 API 오류:', error);
 
-            // 카카오 로그인은 특별히 처리
+            // 카카오 로그인 실패로 통일
             let errorMessage = '카카오 로그인 중 오류가 발생했습니다.';
-
-            // 실제 네트워크 연결 실패만 네트워크 메시지 표시
-            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                errorMessage = '네트워크 연결을 확인해주세요. 인터넷 연결이 불안정하거나 서버에 접속할 수 없습니다.';
-            }
-            // 그 외의 모든 오류는 카카오 로그인 실패로 처리
 
             showNotification(errorMessage, 'error');
         });

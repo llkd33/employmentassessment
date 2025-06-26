@@ -174,25 +174,8 @@ function handleSignupSubmit(event) {
         .catch(error => {
             console.error('회원가입 API 오류:', error);
 
-            // 실제 네트워크 오류만 처리 (JSON 파싱 오류, fetch 실패 등)
-            let errorMessage = '회원가입 중 오류가 발생했습니다.';
-
-            // 네트워크 연결 실패
-            if (error.name === 'TypeError' && error.message.includes('fetch')) {
-                errorMessage = '네트워크 연결을 확인해주세요. 인터넷 연결이 불안정하거나 서버에 접속할 수 없습니다.';
-            }
-            // CORS 정책 오류
-            else if (error.message.includes('CORS')) {
-                errorMessage = '보안 정책으로 인한 접근 제한입니다. 페이지를 새로고침해보세요.';
-            }
-            // JSON 파싱 오류
-            else if (error.name === 'SyntaxError') {
-                errorMessage = '서버 응답 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-            }
-            // 기타 예상치 못한 오류
-            else {
-                errorMessage = '예상치 못한 오류가 발생했습니다. 페이지를 새로고침 후 다시 시도해주세요.';
-            }
+            // 모든 오류를 회원가입 실패로 처리
+            let errorMessage = '회원가입 중 오류가 발생했습니다. 입력 정보를 확인하고 다시 시도해주세요.';
 
             alert(errorMessage);
         })
