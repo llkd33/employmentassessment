@@ -417,26 +417,42 @@ function displayCompetencyScores(scores) {
 
         // 피드백 표시
         displayCompetencyFeedback(competency, score);
-
-        // 60점 미만인 경우 향상방안 표시
-        displayImprovementSection(competency, score);
     });
+
+    // 60점 미만인 항목이 있는지 확인하고 향상방안 섹션 표시
+    displayImprovementRecommendations(scores);
 }
 
-// 향상방안 표시 함수
-function displayImprovementSection(competency, score) {
-    const improvementSection = document.querySelector(`.improvement-section[data-competency="${competency}"]`);
+// 향상방안 섹션 표시 함수
+function displayImprovementRecommendations(scores) {
+    const improvementSection = document.getElementById('improvementRecommendations');
+    let hasLowScores = false;
 
-    if (improvementSection) {
-        if (score < 60) {
-            // 60점 미만인 경우 향상방안 표시
-            improvementSection.style.display = 'block';
-            console.log(`${competency}: ${score}점 - 향상방안 표시`);
-        } else {
-            // 60점 이상인 경우 향상방안 숨김
-            improvementSection.style.display = 'none';
-            console.log(`${competency}: ${score}점 - 향상방안 숨김`);
+    // 60점 미만인 항목들 찾기
+    Object.entries(scores).forEach(([competency, score]) => {
+        const improvementCard = document.querySelector(`.improvement-item-card[data-competency="${competency}"]`);
+
+        if (improvementCard) {
+            if (score < 60) {
+                // 60점 미만인 경우 카드 표시
+                improvementCard.style.display = 'block';
+                hasLowScores = true;
+                console.log(`${competency}: ${score}점 - 향상방안 카드 표시`);
+            } else {
+                // 60점 이상인 경우 카드 숨김
+                improvementCard.style.display = 'none';
+                console.log(`${competency}: ${score}점 - 향상방안 카드 숨김`);
+            }
         }
+    });
+
+    // 60점 미만인 항목이 하나라도 있으면 전체 섹션 표시
+    if (hasLowScores && improvementSection) {
+        improvementSection.style.display = 'block';
+        console.log('향상방안 섹션 표시 - 60점 미만인 역량이 있음');
+    } else if (improvementSection) {
+        improvementSection.style.display = 'none';
+        console.log('향상방안 섹션 숨김 - 모든 역량이 60점 이상');
     }
 }
 

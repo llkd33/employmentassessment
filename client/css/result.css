@@ -527,65 +527,6 @@
     font-weight: 600;
 }
 
-/* 향상 방안 섹션 스타일 */
-.improvement-section {
-    margin-top: 1rem;
-    padding: 1.5rem;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-    animation: slideInDown 0.6s ease-out;
-}
-
-.improvement-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #e2e8f0;
-}
-
-.improvement-header span {
-    color: #1e293b;
-}
-
-.improvement-content {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.improvement-item {
-    padding: 1rem;
-    background: #f8fafc;
-    border-radius: 8px;
-    border-left: 4px solid #3b82f6;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: #374151;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
-}
-
-.improvement-item:hover {
-    transform: translateX(2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background: #f1f5f9;
-}
-
-.improvement-item strong {
-    color: #1f2937;
-    font-weight: 600;
-    display: block;
-    margin-bottom: 0.3rem;
-}
-
 @keyframes slideInDown {
     from {
         opacity: 0;
@@ -674,18 +615,7 @@
         top: 25px;
     }
 
-    .improvement-section {
-        padding: 1rem;
-    }
 
-    .improvement-item {
-        padding: 0.8rem;
-        font-size: 0.9rem;
-    }
-
-    .improvement-header {
-        font-size: 1.1rem;
-    }
 }
 
 @media (max-width: 480px) {
@@ -736,5 +666,126 @@
         top: 22px;
         left: 22px;
         right: 22px;
+    }
+}
+
+/* 역량별 향상방안 섹션 스타일 */
+.improvement-recommendations {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    border: 1px solid #e2e8f0;
+    animation: fadeIn 0.6s ease-out;
+}
+
+.improvement-subtitle {
+    font-size: 1.1rem;
+    color: #64748b;
+    margin: 0 0 2rem 0;
+    text-align: center;
+    font-weight: 500;
+}
+
+.improvement-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.improvement-item-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.improvement-item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.improvement-card-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    padding: 1.2rem 1.5rem;
+    color: white;
+}
+
+.improvement-card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+}
+
+.improvement-card-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.improvement-point {
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #374151;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.improvement-point:hover {
+    transform: translateX(2px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.improvement-point strong {
+    color: #1f2937;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.3rem;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .improvement-recommendations {
+        padding: 1.5rem;
+    }
+
+    .improvement-card-header {
+        padding: 1rem;
+    }
+
+    .improvement-card-title {
+        font-size: 1.2rem;
+    }
+
+    .improvement-card-content {
+        padding: 1rem;
+    }
+
+    .improvement-point {
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .improvement-recommendations {
+        padding: 1rem;
+    }
+
+    .improvement-subtitle {
+        font-size: 1rem;
+    }
+
+    .improvement-card-title {
+        font-size: 1.1rem;
     }
 }
