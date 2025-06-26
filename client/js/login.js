@@ -135,22 +135,8 @@ function handleLoginSubmit(event) {
         .catch(error => {
             console.error('로그인 API 오류:', error);
 
-            // 기본적으로 아이디/비밀번호 불일치로 처리
-            let errorMessage = '아이디와 비밀번호가 일치하지 않습니다.';
-
-            // 모든 오류를 로그인 실패로 처리
-            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                // 서버 연결 실패 확인을 위한 추가 체크
-                // 하지만 대부분의 경우 로그인 실패로 간주
-                errorMessage = '아이디와 비밀번호가 일치하지 않습니다.';
-            }
-            // CORS 정책 오류도 로그인 실패로 처리
-            else if (error.message.includes('CORS')) {
-                errorMessage = '아이디와 비밀번호가 일치하지 않습니다.';
-            }
-            // 그 외의 모든 오류는 로그인 실패로 처리
-
-            showNotification(errorMessage, 'error');
+            // 모든 오류를 아이디/비밀번호 불일치로 처리 (보안상 이유)
+            showNotification('아이디와 비밀번호가 일치하지 않습니다.', 'error');
         })
         .finally(() => {
             // 로딩 상태 해제
@@ -381,10 +367,8 @@ function handleKakaoLoginSuccess(userId, nickname, email) {
         .catch(error => {
             console.error('카카오 로그인 API 오류:', error);
 
-            // 카카오 로그인 실패로 통일
-            let errorMessage = '카카오 로그인 중 오류가 발생했습니다.';
-
-            showNotification(errorMessage, 'error');
+            // 모든 오류를 카카오 로그인 실패로 처리
+            showNotification('카카오 로그인 중 오류가 발생했습니다.', 'error');
         });
 }
 

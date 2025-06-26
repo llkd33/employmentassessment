@@ -81,48 +81,15 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const request = event.request;
 
-    // API 요청은 항상 네트워크에서 가져오기
+    // API 요청은 항상 네트워크에서 가져오기 (서비스 워커 개입 없이)
     if (request.url.includes('/api/')) {
-        event.respondWith(
-            fetch(request)
-                .then(response => {
-                    // 응답이 성공적이면 반환
-                    if (response.ok) {
-                        return response;
-                    }
-                    throw new Error('Network response was not ok');
-                })
-                .catch(() => {
-                    // 네트워크 오류 시 기본 에러 응답
-                    return new Response(
-                        JSON.stringify({
-                            error: 'Network error',
-                            message: '서버 연결에 실패했습니다.'
-                        }),
-                        {
-                            status: 503,
-                            statusText: 'Service Unavailable',
-                            headers: { 'Content-Type': 'application/json' }
-                        }
-                    );
-                })
-        );
+        event.respondWith(fetch(request));
         return;
     }
 
-    // POST 요청은 네트워크만 사용
+    // POST 요청은 네트워크만 사용 (서비스 워커 개입 없이)
     if (request.method === 'POST') {
-        event.respondWith(
-            fetch(request).catch(() => {
-                return new Response(
-                    JSON.stringify({ error: 'Network error' }),
-                    {
-                        status: 503,
-                        headers: { 'Content-Type': 'application/json' }
-                    }
-                );
-            })
-        );
+        event.respondWith(fetch(request));
         return;
     }
 
