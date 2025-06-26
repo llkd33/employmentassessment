@@ -417,7 +417,27 @@ function displayCompetencyScores(scores) {
 
         // 피드백 표시
         displayCompetencyFeedback(competency, score);
+
+        // 60점 미만인 경우 향상방안 표시
+        displayImprovementSection(competency, score);
     });
+}
+
+// 향상방안 표시 함수
+function displayImprovementSection(competency, score) {
+    const improvementSection = document.querySelector(`.improvement-section[data-competency="${competency}"]`);
+
+    if (improvementSection) {
+        if (score < 60) {
+            // 60점 미만인 경우 향상방안 표시
+            improvementSection.style.display = 'block';
+            console.log(`${competency}: ${score}점 - 향상방안 표시`);
+        } else {
+            // 60점 이상인 경우 향상방안 숨김
+            improvementSection.style.display = 'none';
+            console.log(`${competency}: ${score}점 - 향상방안 숨김`);
+        }
+    }
 }
 
 // 테스트 정보 표시
