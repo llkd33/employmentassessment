@@ -97,7 +97,7 @@ self.addEventListener('fetch', event => {
                     return new Response(
                         JSON.stringify({
                             error: 'Network error',
-                            message: '네트워크 연결을 확인해주세요.'
+                            message: '서버 연결에 실패했습니다.'
                         }),
                         {
                             status: 503,
