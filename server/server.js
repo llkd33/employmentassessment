@@ -24,6 +24,22 @@ app.use(express.json());
 // 정적 파일 서빙 - Railway 환경 고려
 const clientPath = path.join(__dirname, '../client');
 console.log(`정적 파일 경로: ${clientPath}`);
+
+// Cache-Control 헤더 설정 미들웨어
+app.use((req, res, next) => {
+    // HTML, CSS, JS 파일은 캐시하지 않음 (항상 최신 버전)
+    if (req.url.endsWith('.html') || req.url.endsWith('.css') || req.url.endsWith('.js') || req.url === '/') {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+    }
+    // 이미지 등 정적 자원은 짧은 캐시 허용
+    else if (req.url.match(/\.(png|jpg|jpeg|gif|ico|svg)$/)) {
+        res.setHeader('Cache-Control', 'public, max-age=3600'); // 1시간
+    }
+    next();
+});
+
 app.use(express.static(clientPath));
 
 // JWT 토큰 생성

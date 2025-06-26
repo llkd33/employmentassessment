@@ -1,6 +1,6 @@
 // service-worker.js - 오프라인 지원 및 캐싱
 
-const CACHE_NAME = 'employee-test-v4';
+const CACHE_NAME = `employee-test-v${Date.now()}`; // 항상 새로운 캐시 버전
 const isProduction = location.hostname !== 'localhost' && !location.hostname.includes('127.0.0.1');
 const urlsToCache = [
     '/',
@@ -164,58 +164,86 @@ self.addEventListener('fetch', event => {
                 })
         );
     } else {
-        // 프로덕션 환경: Cache First 전략 (기존 코드)
-        event.respondWith(
-            caches.match(request)
-                .then(response => {
-                    if (response) {
-                        console.log('Serving from cache:', request.url);
-                        return response;
-                    }
+        // 프로덕션 환경: 중요한 파일은 Network First, 이미지는 Cache First
+        const isImportantFile = request.url.includes('.html') ||
+            request.url.includes('.css') ||
+            request.url.includes('.js') ||
+            request.url.endsWith('/');
 
-                    console.log('Fetching from network:', request.url);
-                    return fetch(request).then(networkResponse => {
-                        // 유효한 응답이 아니면 그대로 반환
-                        if (!networkResponse ||
-                            networkResponse.status !== 200 ||
-                            networkResponse.type !== 'basic') {
-                            return networkResponse;
+        if (isImportantFile) {
+            // HTML, CSS, JS 파일은 Network First (항상 최신 버전 확인)
+            event.respondWith(
+                fetch(request)
+                    .then(networkResponse => {
+                        if (networkResponse && networkResponse.status === 200) {
+                            const responseToCache = networkResponse.clone();
+                            caches.open(CACHE_NAME)
+                                .then(cache => {
+                                    if (request.url.startsWith('http')) {
+                                        cache.put(request, responseToCache);
+                                    }
+                                })
+                                .catch(error => console.warn('Failed to cache response:', error));
+                        }
+                        return networkResponse;
+                    })
+                    .catch(() => {
+                        // 네트워크 실패 시 캐시에서 가져오기
+                        console.log('Network failed, trying cache:', request.url);
+                        return caches.match(request)
+                            .then(response => {
+                                if (response) {
+                                    console.log('Serving from cache (fallback):', request.url);
+                                    return response;
+                                }
+                                if (request.destination === 'document') {
+                                    return caches.match('/offline.html');
+                                }
+                                return new Response('', { status: 404 });
+                            });
+                    })
+            );
+        } else {
+            // 이미지 등 정적 자원은 Cache First
+            event.respondWith(
+                caches.match(request)
+                    .then(response => {
+                        if (response) {
+                            console.log('Serving from cache:', request.url);
+                            return response;
                         }
 
-                        // 응답 복제 (캐시 저장용)
-                        const responseToCache = networkResponse.clone();
+                        console.log('Fetching from network:', request.url);
+                        return fetch(request).then(networkResponse => {
+                            if (!networkResponse ||
+                                networkResponse.status !== 200 ||
+                                networkResponse.type !== 'basic') {
+                                return networkResponse;
+                            }
 
-                        caches.open(CACHE_NAME)
-                            .then(cache => {
-                                // 캐시할 수 있는 요청만 저장
-                                if (request.url.startsWith('http')) {
-                                    cache.put(request, responseToCache);
-                                }
-                            })
-                            .catch(error => {
-                                console.warn('Failed to cache response:', error);
-                            });
+                            const responseToCache = networkResponse.clone();
+                            caches.open(CACHE_NAME)
+                                .then(cache => {
+                                    if (request.url.startsWith('http')) {
+                                        cache.put(request, responseToCache);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.warn('Failed to cache response:', error);
+                                });
 
-                        return networkResponse;
-                    });
-                })
-                .catch(() => {
-                    console.log('Network and cache failed for:', request.url);
-
-                    // HTML 문서 요청이면 오프라인 페이지 반환
-                    if (request.destination === 'document') {
-                        return caches.match('/offline.html');
-                    }
-
-                    // 이미지 요청이면 기본 이미지 반환 (있다면)
-                    if (request.destination === 'image') {
+                            return networkResponse;
+                        });
+                    })
+                    .catch(() => {
+                        console.log('Network and cache failed for:', request.url);
+                        if (request.destination === 'image') {
+                            return new Response('', { status: 404 });
+                        }
                         return new Response('', { status: 404 });
-                    }
-
-                    // 그 외는 404
-                    return new Response('', { status: 404 });
-                })
-        );
+                    })
+            );
+        }
     }
 });
 
