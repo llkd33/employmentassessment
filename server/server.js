@@ -129,9 +129,9 @@ app.post('/api/auth/login', async (req, res) => {
         // 사용자 찾기
         const user = await db.getUserByEmail(email);
         if (!user) {
-            return res.status(404).json({
+            return res.status(401).json({
                 success: false,
-                message: '가입된 이메일이 없습니다. 회원가입을 진행해주세요.'
+                message: '아이디와 비밀번호가 일치하지 않습니다.'
             });
         }
 
@@ -140,7 +140,7 @@ app.post('/api/auth/login', async (req, res) => {
         if (!isValidPassword) {
             return res.status(401).json({
                 success: false,
-                message: '비밀번호가 올바르지 않습니다.'
+                message: '아이디와 비밀번호가 일치하지 않습니다.'
             });
         }
 

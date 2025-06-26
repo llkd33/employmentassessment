@@ -110,12 +110,8 @@ function handleLoginSubmit(event) {
                 // 로그인 실패 - 아이디/비밀번호 불일치 등
                 console.log('❌ 로그인 실패:', response.status, data.message);
 
-                // 404: 가입되지 않은 이메일
-                if (response.status === 404) {
-                    showNotification('아이디와 비밀번호가 일치하지 않습니다.', 'error');
-                }
-                // 401: 비밀번호 오류
-                else if (response.status === 401) {
+                // 401: 아이디/비밀번호 불일치
+                if (response.status === 401) {
                     showNotification('아이디와 비밀번호가 일치하지 않습니다.', 'error');
                 }
                 // 400-499: 기타 클라이언트 오류 (아이디/비밀번호 관련)
@@ -139,19 +135,21 @@ function handleLoginSubmit(event) {
         .catch(error => {
             console.error('로그인 API 오류:', error);
 
-            // 대부분의 경우 아이디/비밀번호 불일치로 처리
+            // 기본적으로 아이디/비밀번호 불일치로 처리
             let errorMessage = '아이디와 비밀번호가 일치하지 않습니다.';
 
-            // 실제 네트워크 연결 실패만 네트워크 메시지 표시
+            // 실제 네트워크 연결 실패인 경우만 네트워크 메시지 표시
+            // 서버가 실행되지 않거나 완전히 접근 불가능한 경우
             if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                errorMessage = '네트워크 연결을 확인해주세요. 인터넷 연결이 불안정하거나 서버에 접속할 수 없습니다.';
+                // 서버 연결 실패 확인을 위한 추가 체크
+                // 하지만 대부분의 경우 로그인 실패로 간주
+                errorMessage = '아이디와 비밀번호가 일치하지 않습니다.';
             }
-            // CORS 정책 오류
+            // CORS 정책 오류도 로그인 실패로 처리
             else if (error.message.includes('CORS')) {
-                errorMessage = '보안 정책으로 인한 접근 제한입니다. 페이지를 새로고침해보세요.';
+                errorMessage = '아이디와 비밀번호가 일치하지 않습니다.';
             }
-            // 그 외의 모든 오류는 로그인 실패로 처리 (JSON 파싱 오류 포함)
-            // JSON 파싱 오류나 기타 오류는 대부분 서버가 에러 응답을 보낸 것이므로 로그인 실패로 간주
+            // 그 외의 모든 오류는 로그인 실패로 처리
 
             showNotification(errorMessage, 'error');
         })
