@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>직원 가입 - 신입사원 역량테스트</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/signup-form.css">
+    <style>
+        .signup-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .signup-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .signup-header h1 {
+            font-size: 28px;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .signup-header p {
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        .signup-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        .code-input-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .code-input-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .code-input-wrapper {
+            display: flex;
+            gap: 10px;
+            max-width: 350px;
+            margin: 0 auto;
+        }
+
+        .code-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .code-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .code-input:focus {
+            outline: none;
+            border-color: white;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .verify-btn {
+            padding: 12px 24px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .verify-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .company-info {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            display: none;
+        }
+
+        .company-info.active {
+            display: block;
+        }
+
+        .company-info h3 {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .company-name {
+            font-size: 20px;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #475569;
+            font-size: 14px;
+        }
+
+        .form-group label .required {
+            color: #ef4444;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group input:disabled {
+            background: #f8fafc;
+            cursor: not-allowed;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 4px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .password-strength {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .strength-bar {
+            flex: 1;
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+
+        .strength-bar.active.weak {
+            background: #ef4444;
+        }
+
+        .strength-bar.active.medium {
+            background: #f59e0b;
+        }
+
+        .strength-bar.active.strong {
+            background: #10b981;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .form-group.error input {
+            border-color: #ef4444;
+        }
+
+        .form-group.error .error-message {
+            display: block;
+        }
+
+        .success-message {
+            background: #10b98120;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alternative-signup {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .alternative-signup p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .alternative-signup a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .alternative-signup a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .signup-container {
+                padding: 20px 15px;
+            }
+
+            .signup-card {
+                padding: 20px;
+            }
+
+            .code-input-wrapper {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header"></div>
+
+    <div class="signup-container">
+        <div class="signup-header">
+            <h1>직원 가입</h1>
+            <p>기업 코드를 입력하여 회사에 가입하세요</p>
+        </div>
+
+        <div class="signup-card">
+            <div class="success-message" id="successMessage">
+                가입이 완료되었습니다! 로그인 페이지로 이동합니다...
+            </div>
+
+            <!-- 기업 코드 입력 섹션 -->
+            <div class="code-input-section">
+                <h2>기업 코드 입력</h2>
+                <div class="code-input-wrapper">
+                    <input type="text" 
+                           class="code-input" 
+                           id="corporateCode" 
+                           placeholder="예: SAM_2024_0001"
+                           maxlength="20">
+                    <button class="verify-btn" onclick="verifyCode()">확인</button>
+                </div>
+            </div>
+
+            <!-- 회사 정보 표시 -->
+            <div class="company-info" id="companyInfo">
+                <h3>소속 회사</h3>
+                <div class="company-name" id="companyName">-</div>
+            </div>
+
+            <!-- 가입 폼 -->
+            <form id="employeeSignupForm" style="display: none;">
+                <input type="hidden" name="corporate_code" id="verifiedCode">
+                
+                <div class="form-group">
+                    <label>이름 <span class="required">*</span></label>
+                    <input type="text" name="name" required>
+                    <span class="error-message">이름을 입력해주세요</span>
+                </div>
+
+                <div class="form-group">
+                    <label>이메일 <span class="required">*</span></label>
+                    <input type="email" name="email" required>
+                    <small>회사 이메일을 사용해주세요</small>
+                    <span class="error-message">올바른 이메일 주소를 입력해주세요</span>
+                </div>
+
+                <div class="form-group">
+                    <label>비밀번호 <span class="required">*</span></label>
+                    <input type="password" name="password" required id="password">
+                    <div class="password-strength" id="passwordStrength">
+                        <div class="strength-bar"></div>
+                        <div class="strength-bar"></div>
+                        <div class="strength-bar"></div>
+                        <div class="strength-bar"></div>
+                    </div>
+                    <small>8자 이상, 대소문자, 숫자, 특수문자 포함</small>
+                    <span class="error-message">비밀번호 요구사항을 확인해주세요</span>
+                </div>
+
+                <div class="form-group">
+                    <label>비밀번호 확인 <span class="required">*</span></label>
+                    <input type="password" name="password_confirm" required>
+                    <span class="error-message">비밀번호가 일치하지 않습니다</span>
+                </div>
+
+                <div class="form-group">
+                    <label>부서</label>
+                    <select name="department">
+                        <option value="">선택하세요</option>
+                        <option value="개발팀">개발팀</option>
+                        <option value="디자인팀">디자인팀</option>
+                        <option value="마케팅팀">마케팅팀</option>
+                        <option value="영업팀">영업팀</option>
+                        <option value="인사팀">인사팀</option>
+                        <option value="재무팀">재무팀</option>
+                        <option value="기타">기타</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>직급</label>
+                    <input type="text" name="position" placeholder="예: 사원, 대리, 과장">
+                </div>
+
+                <div class="form-group">
+                    <label>사번</label>
+                    <input type="text" name="employee_number" placeholder="예: 2024001">
+                    <small>회사에서 부여받은 사번이 있다면 입력해주세요</small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                        다시 입력
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        가입하기
+                    </button>
+                </div>
+            </form>
+
+            <div class="alternative-signup">
+                <p>기업 코드가 없으신가요?</p>
+                <a href="/signup.html">일반 회원가입</a> |
+                <a href="/corporate-signup.html">기업 가입 신청</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils/common.js"></script>
+    <script src="js/components/header.js"></script>
+    <script>
+        let verifiedCompanyInfo = null;
+
+        // 기업 코드 확인
+        async function verifyCode() {
+            const code = document.getElementById('corporateCode').value.trim();
+            
+            if (!code) {
+                alert('기업 코드를 입력해주세요.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/corporate/codes/validate/${code}`);
+                const result = await response.json();
+
+                if (response.ok && result.valid) {
+                    // 코드 확인 성공
+                    verifiedCompanyInfo = result;
+                    document.getElementById('verifiedCode').value = code;
+                    document.getElementById('companyName').textContent = result.company_name;
+                    document.getElementById('companyInfo').classList.add('active');
+                    document.getElementById('employeeSignupForm').style.display = 'block';
+                    
+                    // 코드 입력 섹션 비활성화
+                    document.getElementById('corporateCode').disabled = true;
+                    document.querySelector('.verify-btn').disabled = true;
+                } else {
+                    alert('유효하지 않은 기업 코드입니다.\n회사 관리자에게 문의해주세요.');
+                }
+            } catch (error) {
+                console.error('코드 확인 오류:', error);
+                alert('기업 코드 확인 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 폼 초기화
+        function resetForm() {
+            document.getElementById('corporateCode').value = '';
+            document.getElementById('corporateCode').disabled = false;
+            document.querySelector('.verify-btn').disabled = false;
+            document.getElementById('companyInfo').classList.remove('active');
+            document.getElementById('employeeSignupForm').style.display = 'none';
+            document.getElementById('employeeSignupForm').reset();
+            verifiedCompanyInfo = null;
+        }
+
+        // 가입 폼 제출
+        document.getElementById('employeeSignupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!validateForm()) {
+                return;
+            }
+
+            const formData = new FormData(e.target);
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '처리 중...';
+
+            const data = {
+                corporate_code: formData.get('corporate_code'),
+                name: formData.get('name'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+                department: formData.get('department'),
+                position: formData.get('position'),
+                employee_number: formData.get('employee_number')
+            };
+
+            try {
+                const response = await fetch('/api/corporate/employees/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // 성공 메시지 표시
+                    document.getElementById('successMessage').style.display = 'block';
+                    document.querySelector('.signup-card > *:not(#successMessage)').style.display = 'none';
+                    
+                    // 3초 후 로그인 페이지로 이동
+                    setTimeout(() => {
+                        window.location.href = '/login.html';
+                    }, 3000);
+                } else {
+                    alert(result.message || '가입 실패');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '가입하기';
+                }
+            } catch (error) {
+                console.error('가입 오류:', error);
+                alert('가입 처리 중 오류가 발생했습니다.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '가입하기';
+            }
+        });
+
+        // 폼 유효성 검사
+        function validateForm() {
+            const form = document.getElementById('employeeSignupForm');
+            let isValid = true;
+
+            // 모든 에러 메시지 초기화
+            document.querySelectorAll('.form-group').forEach(group => {
+                group.classList.remove('error');
+            });
+
+            // 필수 필드 검사
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.closest('.form-group').classList.add('error');
+                    isValid = false;
+                }
+            });
+
+            // 이메일 형식 검사
+            const email = form.email.value;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email && !emailRegex.test(email)) {
+                form.email.closest('.form-group').classList.add('error');
+                isValid = false;
+            }
+
+            // 비밀번호 강도 검사
+            const password = form.password.value;
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (password && !passwordRegex.test(password)) {
+                form.password.closest('.form-group').classList.add('error');
+                isValid = false;
+            }
+
+            // 비밀번호 확인
+            const passwordConfirm = form.password_confirm.value;
+            if (password !== passwordConfirm) {
+                form.password_confirm.closest('.form-group').classList.add('error');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // 비밀번호 강도 표시
+        document.getElementById('password').addEventListener('input', function(e) {
+            const password = e.target.value;
+            const strengthBars = document.querySelectorAll('.strength-bar');
+            
+            // 초기화
+            strengthBars.forEach(bar => {
+                bar.classList.remove('active', 'weak', 'medium', 'strong');
+            });
+
+            if (password.length === 0) return;
+
+            let strength = 0;
+            
+            // 길이 검사
+            if (password.length >= 8) strength++;
+            if (password.length >= 12) strength++;
+            
+            // 문자 종류 검사
+            if (/[a-z]/.test(password)) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[@$!%*?&]/.test(password)) strength++;
+
+            // 강도 표시
+            const level = Math.min(Math.floor(strength / 1.5), 4);
+            const strengthClass = level <= 1 ? 'weak' : level <= 2 ? 'medium' : 'strong';
+            
+            for (let i = 0; i < level; i++) {
+                strengthBars[i].classList.add('active', strengthClass);
+            }
+        });
+
+        // 엔터키로 코드 확인
+        document.getElementById('corporateCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                verifyCode();
+            }
+        });
+
+        // 실시간 유효성 검사
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('blur', function() {
+                const formGroup = this.closest('.form-group');
+                if (formGroup) {
+                    formGroup.classList.remove('error');
+                    
+                    // 필수 필드 검사
+                    if (this.hasAttribute('required') && !this.value.trim()) {
+                        formGroup.classList.add('error');
+                    }
+                    
+                    // 이메일 검사
+                    if (this.type === 'email' && this.value) {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(this.value)) {
+                            formGroup.classList.add('error');
+                        }
+                    }
+                    
+                    // 비밀번호 검사
+                    if (this.name === 'password' && this.value) {
+                        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+                        if (!passwordRegex.test(this.value)) {
+                            formGroup.classList.add('error');
+                        }
+                    }
+                    
+                    // 비밀번호 확인 검사
+                    if (this.name === 'password_confirm' && this.value) {
+                        const password = document.querySelector('input[name="password"]').value;
+                        if (this.value !== password) {
+                            formGroup.classList.add('error');
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

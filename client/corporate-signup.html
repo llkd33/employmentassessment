@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기업 가입 신청 - 신입사원 역량테스트</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/signup-form.css">
+    <style>
+        .signup-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .signup-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .signup-header h1 {
+            font-size: 32px;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .signup-header p {
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        .form-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #475569;
+            font-size: 14px;
+        }
+
+        .form-group label .required {
+            color: #ef4444;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 4px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        .password-requirements {
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .password-requirements h4 {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .password-requirements ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .password-requirements li {
+            margin-bottom: 4px;
+        }
+
+        .terms-section {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .terms-section h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #1e293b;
+        }
+
+        .terms-content {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+        }
+
+        .checkbox-group label {
+            flex: 1;
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+        }
+
+        .progress-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .progress-step.active {
+            color: #667eea;
+        }
+
+        .progress-step.completed {
+            color: #10b981;
+        }
+
+        .progress-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .progress-step.active .progress-circle {
+            background: #667eea;
+            color: white;
+        }
+
+        .progress-step.completed .progress-circle {
+            background: #10b981;
+            color: white;
+        }
+
+        .progress-line {
+            width: 100px;
+            height: 2px;
+            background: #e2e8f0;
+            margin: 0 10px;
+        }
+
+        .progress-step.completed + .progress-line {
+            background: #10b981;
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .form-group.error input,
+        .form-group.error select,
+        .form-group.error textarea {
+            border-color: #ef4444;
+        }
+
+        .form-group.error .error-message {
+            display: block;
+        }
+
+        .success-message {
+            background: #10b98120;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .progress-line {
+                width: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header"></div>
+
+    <div class="signup-container">
+        <div class="signup-header">
+            <h1>기업 가입 신청</h1>
+            <p>기업 가입을 통해 직원들의 역량 테스트를 관리할 수 있습니다</p>
+        </div>
+
+        <!-- 진행 상태 표시 -->
+        <div class="progress-indicator">
+            <div class="progress-step active">
+                <div class="progress-circle">1</div>
+                <span>기업 정보</span>
+            </div>
+            <div class="progress-line"></div>
+            <div class="progress-step">
+                <div class="progress-circle">2</div>
+                <span>담당자 정보</span>
+            </div>
+            <div class="progress-line"></div>
+            <div class="progress-step">
+                <div class="progress-circle">3</div>
+                <span>관리자 계정</span>
+            </div>
+        </div>
+
+        <div class="success-message" id="successMessage">
+            가입 신청이 완료되었습니다. 승인 후 이메일로 안내드리겠습니다.
+        </div>
+
+        <form id="corporateSignupForm">
+            <!-- 기업 정보 -->
+            <div class="form-section">
+                <h2 class="section-title">기업 정보</h2>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>기업명 <span class="required">*</span></label>
+                        <input type="text" name="company_name" required>
+                        <span class="error-message">기업명을 입력해주세요</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>사업자등록번호 <span class="required">*</span></label>
+                        <input type="text" name="business_number" placeholder="000-00-00000" required>
+                        <small>하이픈(-) 포함하여 입력</small>
+                        <span class="error-message">올바른 사업자등록번호를 입력해주세요</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>대표자명</label>
+                        <input type="text" name="ceo_name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>업종</label>
+                        <select name="industry">
+                            <option value="">선택하세요</option>
+                            <option value="IT/소프트웨어">IT/소프트웨어</option>
+                            <option value="제조업">제조업</option>
+                            <option value="금융/보험">금융/보험</option>
+                            <option value="유통/물류">유통/물류</option>
+                            <option value="건설/부동산">건설/부동산</option>
+                            <option value="의료/제약">의료/제약</option>
+                            <option value="교육">교육</option>
+                            <option value="서비스">서비스</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>예상 이용 인원</label>
+                        <select name="expected_users">
+                            <option value="">선택하세요</option>
+                            <option value="1-10">1-10명</option>
+                            <option value="11-50">11-50명</option>
+                            <option value="51-100">51-100명</option>
+                            <option value="101-500">101-500명</option>
+                            <option value="500+">500명 이상</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>주소</label>
+                        <textarea name="address" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 담당자 정보 -->
+            <div class="form-section">
+                <h2 class="section-title">담당자 정보</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>담당자명 <span class="required">*</span></label>
+                        <input type="text" name="contact_name" required>
+                        <span class="error-message">담당자명을 입력해주세요</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>담당자 연락처 <span class="required">*</span></label>
+                        <input type="tel" name="contact_phone" placeholder="010-0000-0000" required>
+                        <span class="error-message">연락처를 입력해주세요</span>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>담당자 이메일 <span class="required">*</span></label>
+                        <input type="email" name="contact_email" required>
+                        <small>가입 승인 결과를 받을 이메일 주소</small>
+                        <span class="error-message">올바른 이메일 주소를 입력해주세요</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 관리자 계정 정보 -->
+            <div class="form-section">
+                <h2 class="section-title">관리자 계정 정보</h2>
+                <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">
+                    승인 후 이 계정으로 로그인하여 직원 관리를 할 수 있습니다.
+                </p>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>관리자 이름 <span class="required">*</span></label>
+                        <input type="text" name="admin_name" required>
+                        <span class="error-message">관리자 이름을 입력해주세요</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>관리자 이메일 <span class="required">*</span></label>
+                        <input type="email" name="admin_email" required>
+                        <small>로그인 ID로 사용됩니다</small>
+                        <span class="error-message">올바른 이메일 주소를 입력해주세요</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>비밀번호 <span class="required">*</span></label>
+                        <input type="password" name="admin_password" required>
+                        <span class="error-message">비밀번호를 입력해주세요</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>비밀번호 확인 <span class="required">*</span></label>
+                        <input type="password" name="admin_password_confirm" required>
+                        <span class="error-message">비밀번호가 일치하지 않습니다</span>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <div class="password-requirements">
+                            <h4>비밀번호 요구사항</h4>
+                            <ul>
+                                <li>최소 8자 이상</li>
+                                <li>대문자 포함</li>
+                                <li>소문자 포함</li>
+                                <li>숫자 포함</li>
+                                <li>특수문자(@$!%*?&) 포함</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 이용약관 -->
+            <div class="form-section">
+                <div class="terms-section">
+                    <h3>이용약관</h3>
+                    <div class="terms-content">
+                        <h4>제1조 (목적)</h4>
+                        <p>본 약관은 신입사원 역량테스트 시스템(이하 "서비스")의 이용에 관한 조건 및 절차, 회사와 이용자의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+                        
+                        <h4>제2조 (서비스의 내용)</h4>
+                        <p>1. 회사는 기업 고객에게 직원 역량 평가 도구를 제공합니다.</p>
+                        <p>2. 기업 관리자는 직원 계정 관리, 테스트 결과 조회 등의 기능을 이용할 수 있습니다.</p>
+                        
+                        <h4>제3조 (개인정보의 보호)</h4>
+                        <p>회사는 이용자의 개인정보를 관련 법령에 따라 보호하며, 개인정보의 수집 및 이용에 대해서는 별도의 개인정보처리방침에 따릅니다.</p>
+                        
+                        <h4>제4조 (서비스 이용료)</h4>
+                        <p>서비스 이용료는 별도 협의에 따라 결정되며, 가입 승인 시 안내드립니다.</p>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="agreeTerms" name="agree_terms" required>
+                        <label for="agreeTerms">
+                            위 이용약관을 읽었으며 동의합니다 <span class="required">*</span>
+                        </label>
+                    </div>
+                    
+                    <div class="checkbox-group" style="margin-top: 10px;">
+                        <input type="checkbox" id="agreePrivacy" name="agree_privacy" required>
+                        <label for="agreePrivacy">
+                            개인정보 수집 및 이용에 동의합니다 <span class="required">*</span>
+                        </label>
+                    </div>
+                    
+                    <div class="checkbox-group" style="margin-top: 10px;">
+                        <input type="checkbox" id="agreeMarketing" name="agree_marketing">
+                        <label for="agreeMarketing">
+                            마케팅 정보 수신에 동의합니다 (선택)
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/'">
+                    취소
+                </button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    가입 신청하기
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script src="js/utils/common.js"></script>
+    <script src="js/components/header.js"></script>
+    <script>
+        document.getElementById('corporateSignupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // 폼 유효성 검사
+            if (!validateForm()) {
+                return;
+            }
+
+            const formData = new FormData(e.target);
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '처리 중...';
+
+            const data = {
+                company_name: formData.get('company_name'),
+                business_number: formData.get('business_number'),
+                ceo_name: formData.get('ceo_name'),
+                industry: formData.get('industry'),
+                address: formData.get('address'),
+                contact_name: formData.get('contact_name'),
+                contact_email: formData.get('contact_email'),
+                contact_phone: formData.get('contact_phone'),
+                admin_name: formData.get('admin_name'),
+                admin_email: formData.get('admin_email'),
+                admin_password: formData.get('admin_password')
+            };
+
+            try {
+                const response = await fetch('/api/corporate/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // 성공 메시지 표시
+                    document.getElementById('successMessage').style.display = 'block';
+                    e.target.style.display = 'none';
+                    
+                    // 3초 후 메인 페이지로 이동
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 3000);
+                } else {
+                    alert(result.message || '가입 신청 실패');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '가입 신청하기';
+                }
+            } catch (error) {
+                console.error('가입 신청 오류:', error);
+                alert('가입 신청 중 오류가 발생했습니다.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '가입 신청하기';
+            }
+        });
+
+        function validateForm() {
+            const form = document.getElementById('corporateSignupForm');
+            let isValid = true;
+
+            // 모든 에러 메시지 초기화
+            document.querySelectorAll('.form-group').forEach(group => {
+                group.classList.remove('error');
+            });
+
+            // 필수 필드 검사
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.closest('.form-group').classList.add('error');
+                    isValid = false;
+                }
+            });
+
+            // 이메일 형식 검사
+            const emailFields = form.querySelectorAll('input[type="email"]');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            emailFields.forEach(field => {
+                if (field.value && !emailRegex.test(field.value)) {
+                    field.closest('.form-group').classList.add('error');
+                    isValid = false;
+                }
+            });
+
+            // 사업자등록번호 형식 검사
+            const businessNumber = form.business_number.value;
+            const businessRegex = /^\d{3}-\d{2}-\d{5}$/;
+            if (businessNumber && !businessRegex.test(businessNumber)) {
+                form.business_number.closest('.form-group').classList.add('error');
+                isValid = false;
+            }
+
+            // 비밀번호 강도 검사
+            const password = form.admin_password.value;
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+            if (password && !passwordRegex.test(password)) {
+                form.admin_password.closest('.form-group').classList.add('error');
+                isValid = false;
+            }
+
+            // 비밀번호 확인
+            const passwordConfirm = form.admin_password_confirm.value;
+            if (password !== passwordConfirm) {
+                form.admin_password_confirm.closest('.form-group').classList.add('error');
+                isValid = false;
+            }
+
+            // 약관 동의 확인
+            if (!form.agree_terms.checked || !form.agree_privacy.checked) {
+                alert('필수 약관에 동의해주세요.');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // 실시간 유효성 검사
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('blur', function() {
+                const formGroup = this.closest('.form-group');
+                if (formGroup) {
+                    formGroup.classList.remove('error');
+                    
+                    // 필수 필드 검사
+                    if (this.hasAttribute('required') && !this.value.trim()) {
+                        formGroup.classList.add('error');
+                    }
+                    
+                    // 이메일 검사
+                    if (this.type === 'email' && this.value) {
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!emailRegex.test(this.value)) {
+                            formGroup.classList.add('error');
+                        }
+                    }
+                    
+                    // 비밀번호 검사
+                    if (this.name === 'admin_password' && this.value) {
+                        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+                        if (!passwordRegex.test(this.value)) {
+                            formGroup.classList.add('error');
+                        }
+                    }
+                    
+                    // 비밀번호 확인 검사
+                    if (this.name === 'admin_password_confirm' && this.value) {
+                        const password = document.querySelector('input[name="admin_password"]').value;
+                        if (this.value !== password) {
+                            formGroup.classList.add('error');
+                        }
+                    }
+                }
+            });
+        });
+
+        // 사업자등록번호 자동 포맷팅
+        document.querySelector('input[name="business_number"]').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^\d]/g, '');
+            if (value.length >= 3 && value.length < 5) {
+                value = value.slice(0, 3) + '-' + value.slice(3);
+            } else if (value.length >= 5) {
+                value = value.slice(0, 3) + '-' + value.slice(3, 5) + '-' + value.slice(5, 10);
+            }
+            e.target.value = value;
+        });
+
+        // 전화번호 자동 포맷팅
+        document.querySelector('input[name="contact_phone"]').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^\d]/g, '');
+            if (value.length >= 3 && value.length < 7) {
+                value = value.slice(0, 3) + '-' + value.slice(3);
+            } else if (value.length >= 7) {
+                value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
+            }
+            e.target.value = value;
+        });
+    </script>
+</body>
+</html>
