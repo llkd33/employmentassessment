@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../../database/database');
-const { adminAuth } = require('../middleware/adminAuth');
+const { authenticateAdmin } = require('../middleware/adminAuth');
 const { apiResponse, ErrorHandler } = require('../utils/apiResponse');
 
 // 승인 대기 중인 사용자 목록 조회
-router.get('/pending', adminAuth, async (req, res) => {
+router.get('/pending', authenticateAdmin, async (req, res) => {
     try {
         const { page = 1, limit = 20 } = req.query;
         const offset = (page - 1) * limit;
@@ -48,10 +48,10 @@ router.get('/pending', adminAuth, async (req, res) => {
 });
 
 // 사용자 승인
-router.post('/approve/:userId', adminAuth, async (req, res) => {
+router.post('/approve/:userId', authenticateAdmin, async (req, res) => {
     try {
         const { userId } = req.params;
-        const adminId = req.user.userId;
+        const adminId = req.admin.id;
         
         // 사용자 존재 확인
         const user = await db.getUserByUserId(userId);
@@ -96,11 +96,11 @@ router.post('/approve/:userId', adminAuth, async (req, res) => {
 });
 
 // 사용자 승인 거부
-router.post('/reject/:userId', adminAuth, async (req, res) => {
+router.post('/reject/:userId', authenticateAdmin, async (req, res) => {
     try {
         const { userId } = req.params;
         const { reason } = req.body;
-        const adminId = req.user.userId;
+        const adminId = req.admin.id;
         
         // 사용자 존재 확인
         const user = await db.getUserByUserId(userId);
@@ -132,10 +132,10 @@ router.post('/reject/:userId', adminAuth, async (req, res) => {
 });
 
 // 일괄 승인
-router.post('/approve-bulk', adminAuth, async (req, res) => {
+router.post('/approve-bulk', authenticateAdmin, async (req, res) => {
     try {
         const { userIds } = req.body;
-        const adminId = req.user.userId;
+        const adminId = req.admin.id;
         
         if (!Array.isArray(userIds) || userIds.length === 0) {
             return apiResponse(res, null, '승인할 사용자 ID 목록이 필요합니다', 400);
