@@ -43,14 +43,14 @@ pool.on('error', (err) => {
 const db = {
     // 사용자 관련 함수들
     async createUser(userData) {
-        const { user_id, name, email, password, login_type } = userData;
+        const { user_id, name, email, password, login_type, role = 'user' } = userData; // Add role with default
         const query = `
-            INSERT INTO users (user_id, name, email, password, login_type)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO users (user_id, name, email, password, login_type, role)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
         `;
         try {
-            const result = await pool.query(query, [user_id, name, email, password, login_type]);
+            const result = await pool.query(query, [user_id, name, email, password, login_type, role]);
             return result.rows[0];
         } catch (error) {
             console.error('사용자 생성 오류:', error);

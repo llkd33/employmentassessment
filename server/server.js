@@ -1349,6 +1349,14 @@ async function startServer() {
         // 스키마 마이그레이션 실행
         const migrateSchema = require('../database/migrate-schema');
         await migrateSchema();
+
+        // 관리자 기능 마이그레이션 (role 컬럼 추가)
+        try {
+            const { migrateAdminFeature } = require('../database/migrate-admin-feature');
+            await migrateAdminFeature();
+        } catch (adminFeatureError) {
+            console.log('⚠️ 관리자 기능 마이그레이션 스킵:', adminFeatureError.message);
+        }
         
         // 승인 시스템 추가
         try {
