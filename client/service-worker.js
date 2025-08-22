@@ -83,7 +83,24 @@ self.addEventListener('fetch', event => {
 
     // API 요청은 항상 네트워크에서 가져오기 (서비스 워커 개입 없이)
     if (request.url.includes('/api/')) {
-        event.respondWith(fetch(request));
+        event.respondWith(
+            fetch(request, {
+                credentials: 'same-origin',
+                mode: 'cors'
+            }).catch(error => {
+                console.error('API request failed:', error);
+                return new Response(
+                    JSON.stringify({ error: 'Network request failed' }),
+                    {
+                        status: 503,
+                        statusText: 'Service Unavailable',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+            })
+        );
         return;
     }
 

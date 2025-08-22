@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 // PostgreSQL 연결 풀 설정
 console.log('🔍 NODE_ENV:', process.env.NODE_ENV);
@@ -8,10 +9,26 @@ if (process.env.DATABASE_URL) {
     console.log('🔍 DATABASE_URL 프로토콜:', process.env.DATABASE_URL.split('://')[0]);
 }
 
-const pool = new Pool({
+// Railway PostgreSQL 연결 설정
+const connectionConfig = {
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
+};
+
+// Production 환경에서 SSL 설정
+if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL) {
+    // Railway는 SSL을 사용하지만 자체 서명 인증서를 사용할 수 있음
+    connectionConfig.ssl = {
+        rejectUnauthorized: false
+    };
+    
+    // Railway 데이터베이스 URL이 sslmode를 포함하는 경우 처리
+    if (process.env.DATABASE_URL.includes('sslmode=')) {
+        // DATABASE_URL에 이미 SSL 설정이 포함된 경우
+        connectionConfig.ssl = true;
+    }
+}
+
+const pool = new Pool(connectionConfig);
 
 // 연결 테스트
 pool.on('connect', () => {
@@ -272,6 +289,295 @@ const db = {
             };
         } catch (error) {
             console.error('통계 조회 오류:', error);
+            throw error;
+        }
+    },
+
+    // 회사 관련 함수들
+    async getCompanyById(company_id) {
+        const query = 'SELECT * FROM companies WHERE id = $1';
+        try {
+            const result = await pool.query(query, [company_id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('회사 ID로 조회 오류:', error);
+            throw error;
+        }
+    },
+
+    async getCompanyByCode(code) {
+        const query = 'SELECT * FROM companies WHERE code = $1';
+        try {
+            const result = await pool.query(query, [code]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('회사 코드로 조회 오류:', error);
+            throw error;
+        }
+    },
+
+    async getAllCompanies() {
+        const query = 'SELECT * FROM companies ORDER BY name';
+        try {
+            const result = await pool.query(query);
+            return result.rows;
+        } catch (error) {
+            console.error('모든 회사 조회 오류:', error);
+            throw error;
+        }
+    },
+
+    async createCompany(companyData) {
+        const { name, code, domain } = companyData;
+        const query = `
+            INSERT INTO companies (name, code, domain)
+            VALUES ($1, $2, $3)
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, [name, code, domain]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('회사 생성 오류:', error);
+            throw error;
+        }
+    },
+
+    // 관리자 관련 함수들
+    async createAdmin(adminData) {
+        const { user_id, name, email, password, role, company_id } = adminData;
+        const query = `
+            INSERT INTO users (user_id, name, email, password, login_type, role, company_id)
+            VALUES ($1, $2, $3, $4, 'email', $5, $6)
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, [user_id, name, email, password, role, company_id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('관리자 생성 오류:', error);
+            throw error;
+        }
+    },
+
+    async getAdminsByCompany(company_id) {
+        const query = `
+            SELECT u.*, c.name as company_name
+            FROM users u
+            LEFT JOIN companies c ON u.company_id = c.id
+            WHERE u.company_id = $1 AND u.role IN ('company_admin', 'hr_manager')
+            ORDER BY u.created_at DESC
+        `;
+        try {
+            const result = await pool.query(query, [company_id]);
+            return result.rows;
+        } catch (error) {
+            console.error('회사별 관리자 조회 오류:', error);
+            throw error;
+        }
+    },
+
+    async getAllAdmins() {
+        const query = `
+            SELECT u.*, c.name as company_name
+            FROM users u
+            LEFT JOIN companies c ON u.company_id = c.id
+            WHERE u.role IN ('super_admin', 'company_admin', 'hr_manager')
+            ORDER BY u.role, u.created_at DESC
+        `;
+        try {
+            const result = await pool.query(query);
+            return result.rows;
+        } catch (error) {
+            console.error('모든 관리자 조회 오류:', error);
+            throw error;
+        }
+    },
+
+    async updateUserRole(user_id, role) {
+        const query = `
+            UPDATE users
+            SET role = $1, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = $2
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, [role, user_id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('사용자 역할 업데이트 오류:', error);
+            throw error;
+        }
+    },
+
+    async updateUserCompany(user_id, company_id) {
+        const query = `
+            UPDATE users
+            SET company_id = $1, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = $2
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, [company_id, user_id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('사용자 회사 업데이트 오류:', error);
+            throw error;
+        }
+    },
+
+    // 초대 관련 함수들
+    async createInvitation(invitationData) {
+        const { token, email, company_id, role, invited_by, expires_at } = invitationData;
+        const query = `
+            INSERT INTO admin_invitations (token, email, company_id, role, invited_by, expires_at)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, [token, email, company_id, role, invited_by, expires_at]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('초대 생성 오류:', error);
+            throw error;
+        }
+    },
+
+    async getInvitationByToken(token) {
+        const query = `
+            SELECT i.*, c.name as company_name, u.name as inviter_name
+            FROM admin_invitations i
+            LEFT JOIN companies c ON i.company_id = c.id
+            LEFT JOIN users u ON i.invited_by = u.user_id
+            WHERE i.token = $1 AND i.used = FALSE AND i.expires_at > NOW()
+        `;
+        try {
+            const result = await pool.query(query, [token]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('초대 토큰 조회 오류:', error);
+            throw error;
+        }
+    },
+
+    async markInvitationUsed(token) {
+        const query = `
+            UPDATE admin_invitations
+            SET used = TRUE
+            WHERE token = $1
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, [token]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('초대 사용 처리 오류:', error);
+            throw error;
+        }
+    },
+
+    // 배치 업로드 관련 함수들
+    async createBatchUpload(uploadData) {
+        const { uploaded_by, company_id, file_name, total_count } = uploadData;
+        const query = `
+            INSERT INTO batch_user_uploads (uploaded_by, company_id, file_name, total_count, status)
+            VALUES ($1, $2, $3, $4, 'processing')
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, [uploaded_by, company_id, file_name, total_count]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('배치 업로드 생성 오류:', error);
+            throw error;
+        }
+    },
+
+    async updateBatchUpload(upload_id, updateData) {
+        const { success_count, failed_count, status, error_details, completed_at } = updateData;
+        const query = `
+            UPDATE batch_user_uploads
+            SET success_count = $1, failed_count = $2, status = $3, 
+                error_details = $4, completed_at = $5
+            WHERE id = $6
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, 
+                [success_count, failed_count, status, error_details, completed_at, upload_id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('배치 업로드 업데이트 오류:', error);
+            throw error;
+        }
+    },
+
+    async addBatchUploadDetail(detailData) {
+        const { upload_id, row_number, email, name, status, error_message, user_id } = detailData;
+        const query = `
+            INSERT INTO batch_user_upload_details 
+            (upload_id, row_number, email, name, status, error_message, user_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, 
+                [upload_id, row_number, email, name, status, error_message, user_id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('배치 업로드 상세 추가 오류:', error);
+            throw error;
+        }
+    },
+
+    // 관리자 활동 로그 관련
+    async logAdminActivity(activityData) {
+        const { admin_id, action, target_type, target_id, details, ip_address } = activityData;
+        const query = `
+            INSERT INTO admin_activity_logs 
+            (admin_id, action, target_type, target_id, details, ip_address)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, 
+                [admin_id, action, target_type, target_id, details, ip_address]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('관리자 활동 로그 오류:', error);
+            // 로그 실패시에도 메인 작업은 계속 진행
+            return null;
+        }
+    },
+
+    async getAdminActivityLogs(filters = {}) {
+        const { admin_id, action, limit = 100, offset = 0 } = filters;
+        let query = `
+            SELECT al.*, u.name as admin_name, u.email as admin_email
+            FROM admin_activity_logs al
+            LEFT JOIN users u ON al.admin_id = u.user_id
+            WHERE 1=1
+        `;
+        const params = [];
+        
+        if (admin_id) {
+            params.push(admin_id);
+            query += ` AND al.admin_id = $${params.length}`;
+        }
+        
+        if (action) {
+            params.push(action);
+            query += ` AND al.action = $${params.length}`;
+        }
+        
+        query += ` ORDER BY al.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        params.push(limit, offset);
+        
+        try {
+            const result = await pool.query(query, params);
+            return result.rows;
+        } catch (error) {
+            console.error('관리자 활동 로그 조회 오류:', error);
             throw error;
         }
     },
