@@ -124,6 +124,12 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     
+    // --- DEBUG LOGGING START ---
+    console.log('--- ADMIN LOGIN ATTEMPT ---');
+    console.log(`[${new Date().toISOString()}]`);
+    console.log('1. Received login request for email:', email);
+    // --- DEBUG LOGGING END ---
+
     try {
         // 필수 필드 검증
         if (!email || !password) {
@@ -133,6 +139,9 @@ router.post('/login', async (req, res) => {
         }
         
         // 관리자 계정 조회 (회사 정보 포함)
+        // --- DEBUG LOGGING START ---
+        console.log('2. Querying database for admin user...');
+        // --- DEBUG LOGGING END ---
         const result = await pool.query(
             `SELECT u.*, c.name as company_name 
             FROM users u
@@ -142,22 +151,43 @@ router.post('/login', async (req, res) => {
         );
         
         if (!result.rows.length) {
+            // --- DEBUG LOGGING START ---
+            console.log('3. [FAIL] User not found in database or does not have admin role.');
+            console.log('--- END OF ATTEMPT ---');
+            // --- DEBUG LOGGING END ---
             return res.status(401).json({ 
                 error: '관리자 계정을 찾을 수 없습니다.' 
             });
         }
         
         const user = result.rows[0];
-        
+        // --- DEBUG LOGGING START ---
+        console.log('3. [SUCCESS] User found in database.');
+        console.log('   - User ID:', user.user_id);
+        console.log('   - User Role:', user.role);
+        console.log('   - Stored Password Hash:', user.password);
+        console.log('4. Comparing provided password with stored hash...');
+        // --- DEBUG LOGGING END ---
+
         // 비밀번호 검증
         const validPassword = await bcrypt.compare(password, user.password);
         
         if (!validPassword) {
+            // --- DEBUG LOGGING START ---
+            console.log('5. [FAIL] Password comparison returned false.');
+            console.log('--- END OF ATTEMPT ---');
+            // --- DEBUG LOGGING END ---
             return res.status(401).json({ 
                 error: '비밀번호가 일치하지 않습니다.' 
             });
         }
         
+        // --- DEBUG LOGGING START ---
+        console.log('5. [SUCCESS] Password is valid.');
+        console.log('6. Proceeding with token generation and login success.');
+        console.log('--- END OF ATTEMPT ---');
+        // --- DEBUG LOGGING END ---
+
         // 로그인 시간 업데이트
         await pool.query(
             'UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = $1',
