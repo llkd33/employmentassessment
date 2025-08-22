@@ -1371,6 +1371,10 @@ async function startServer() {
         const stats = await db.getTestStats();
         console.log('✅ 데이터베이스 연결 성공!');
         console.log(`📊 현재 통계: 사용자 ${stats.totalUsers}명, 테스트 ${stats.totalTests}개`);
+
+        // Ensure super admin exists
+        const ensureSuperAdmin = require('../database/ensure_super_admin');
+        await ensureSuperAdmin();
     } catch (error) {
         console.error('❌ 데이터베이스 초기화 실패:', error.message);
         console.log('⚠️  DATABASE_URL 환경 변수를 확인해주세요.');
