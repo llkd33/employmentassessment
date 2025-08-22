@@ -20,6 +20,10 @@ const adminInvitationRouter = require('./routes/admin-invitation');
 const adminBatchUploadRouter = require('./routes/admin-batch-upload');
 const adminApprovalRouter = require('./routes/admin-approval');
 
+// 기업 시스템 라우터
+const corporateSignupRouter = require('./routes/corporate-signup');
+const corporateEmployeeRouter = require('./routes/corporate-employee');
+
 // 보안 미들웨어
 const { 
     securityHeaders, 
@@ -1266,6 +1270,10 @@ app.use('/api/admin', adminRouter);
 app.use('/api/admin/invitation', adminInvitationRouter);
 app.use('/api/admin/batch', adminBatchUploadRouter);
 app.use('/api/admin/approval', adminApprovalRouter);
+
+// 기업 시스템 라우터 등록
+app.use('/api/corporate', corporateSignupRouter);
+app.use('/api/corporate/employees', corporateEmployeeRouter);
 
 // 클라이언트 설정 정보 API (카카오 API 키 등)
 app.get('/api/config', (req, res) => {

@@ -184,6 +184,33 @@ const refreshToken = (req, res, next) => {
     }
 };
 
+// 역할 기반 권한 체크 미들웨어
+const authorizeRole = (allowedRoles) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({ error: '인증이 필요합니다.' });
+        }
+        
+        const userRole = req.user.role || 'user';
+        
+        // Super Admin은 모든 권한 허용
+        if (userRole === 'super_admin') {
+            return next();
+        }
+        
+        // 허용된 역할 목록에 있는지 확인
+        if (!allowedRoles.includes(userRole)) {
+            return res.status(403).json({ 
+                error: '이 작업을 수행할 권한이 없습니다.',
+                required: allowedRoles,
+                current: userRole
+            });
+        }
+        
+        next();
+    };
+};
+
 module.exports = {
     authenticateToken,
     requireAdmin,
@@ -192,5 +219,6 @@ module.exports = {
     requireSelfAccess,
     logAdminActivity,
     generateToken,
-    refreshToken
+    refreshToken,
+    authorizeRole
 };

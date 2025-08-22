@@ -582,6 +582,434 @@ const db = {
         }
     },
 
+    // 기업 가입 신청 관련 함수들
+    async createCorporateRegistration(registrationData) {
+        const {
+            company_name, business_number, ceo_name, industry, address,
+            contact_name, contact_email, contact_phone,
+            admin_name, admin_email, admin_password
+        } = registrationData;
+        
+        const query = `
+            INSERT INTO corporate_registrations (
+                company_name, business_number, ceo_name, industry, address,
+                contact_name, contact_email, contact_phone,
+                admin_name, admin_email, admin_password
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            RETURNING *
+        `;
+        
+        try {
+            const result = await pool.query(query, [
+                company_name, business_number, ceo_name, industry, address,
+                contact_name, contact_email, contact_phone,
+                admin_name, admin_email, admin_password
+            ]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('기업 가입 신청 생성 오류:', error);
+            throw error;
+        }
+    },
+
+    async getCorporateRegistrations(status = null) {
+        let query = 'SELECT * FROM corporate_registrations';
+        const params = [];
+        
+        if (status) {
+            query += ' WHERE status = $1';
+            params.push(status);
+        }
+        
+        query += ' ORDER BY created_at DESC';
+        
+        try {
+            const result = await pool.query(query, params);
+            return result.rows;
+        } catch (error) {
+            console.error('기업 가입 신청 조회 오류:', error);
+            throw error;
+        }
+    },
+
+    async getCorporateRegistrationById(id) {
+        const query = 'SELECT * FROM corporate_registrations WHERE id = $1';
+        try {
+            const result = await pool.query(query, [id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('기업 가입 신청 상세 조회 오류:', error);
+            throw error;
+        }
+    },
+
+    async approveCorporateRegistration(id, approved_by, corporate_code) {
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            
+            // 1. 가입 신청 정보 조회
+            const registration = await client.query(
+                'SELECT * FROM corporate_registrations WHERE id = $1',
+                [id]
+            );
+            
+            if (!registration.rows[0]) {
+                throw new Error('가입 신청을 찾을 수 없습니다.');
+            }
+            
+            const reg = registration.rows[0];
+            
+            // 2. 회사 생성
+            const companyResult = await client.query(`
+                INSERT INTO companies (name, code, domain, business_number, ceo_name, industry, address)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING *
+            `, [reg.company_name, corporate_code, `@${reg.company_name.toLowerCase().replace(/\s/g, '')}.com`,
+                reg.business_number, reg.ceo_name, reg.industry, reg.address]);
+            
+            const company = companyResult.rows[0];
+            
+            // 3. 기업 코드 생성
+            await client.query(`
+                INSERT INTO corporate_codes (company_id, code, issued_by)
+                VALUES ($1, $2, $3)
+            `, [company.id, corporate_code, approved_by]);
+            
+            // 4. 기업 관리자 계정 생성
+            const user_id = `admin_${company.id}_${Date.now()}`;
+            await client.query(`
+                INSERT INTO users (user_id, name, email, password, login_type, role, company_id)
+                VALUES ($1, $2, $3, $4, 'email', 'company_admin', $5)
+            `, [user_id, reg.admin_name, reg.admin_email, reg.admin_password, company.id]);
+            
+            // 5. 가입 신청 상태 업데이트
+            await client.query(`
+                UPDATE corporate_registrations 
+                SET status = 'approved', approved_by = $1, approved_at = CURRENT_TIMESTAMP
+                WHERE id = $2
+            `, [approved_by, id]);
+            
+            await client.query('COMMIT');
+            return { company, user_id };
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('기업 가입 승인 오류:', error);
+            throw error;
+        } finally {
+            client.release();
+        }
+    },
+
+    async rejectCorporateRegistration(id, rejected_by, rejection_reason) {
+        const query = `
+            UPDATE corporate_registrations 
+            SET status = 'rejected', approved_by = $1, rejection_reason = $2, approved_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, [rejected_by, rejection_reason, id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('기업 가입 거절 오류:', error);
+            throw error;
+        }
+    },
+
+    // 기업 코드 관련 함수들
+    async generateCorporateCode(company_id, issued_by, options = {}) {
+        const { expires_at, max_usage, description } = options;
+        
+        // 코드 생성 (형식: COMPANY_YYYY_XXXX)
+        const company = await this.getCompanyById(company_id);
+        const year = new Date().getFullYear();
+        const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        const code = `${company.name.toUpperCase().substring(0, 3)}_${year}_${random}`;
+        
+        const query = `
+            INSERT INTO corporate_codes (company_id, code, issued_by, expires_at, max_usage, description)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *
+        `;
+        
+        try {
+            const result = await pool.query(query, [
+                company_id, code, issued_by, expires_at, max_usage, description
+            ]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('기업 코드 생성 오류:', error);
+            throw error;
+        }
+    },
+
+    async validateCorporateCode(code) {
+        const query = `
+            SELECT cc.*, c.name as company_name, c.id as company_id
+            FROM corporate_codes cc
+            JOIN companies c ON cc.company_id = c.id
+            WHERE cc.code = $1 
+                AND cc.is_active = true
+                AND (cc.expires_at IS NULL OR cc.expires_at > NOW())
+                AND (cc.max_usage IS NULL OR cc.usage_count < cc.max_usage)
+        `;
+        try {
+            const result = await pool.query(query, [code]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('기업 코드 검증 오류:', error);
+            throw error;
+        }
+    },
+
+    async incrementCorporateCodeUsage(code) {
+        const query = `
+            UPDATE corporate_codes 
+            SET usage_count = usage_count + 1
+            WHERE code = $1
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, [code]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('기업 코드 사용 횟수 증가 오류:', error);
+            throw error;
+        }
+    },
+
+    async getCorporateCodesByCompany(company_id) {
+        const query = `
+            SELECT * FROM corporate_codes 
+            WHERE company_id = $1 
+            ORDER BY created_at DESC
+        `;
+        try {
+            const result = await pool.query(query, [company_id]);
+            return result.rows;
+        } catch (error) {
+            console.error('기업별 코드 조회 오류:', error);
+            throw error;
+        }
+    },
+
+    async deactivateCorporateCode(id) {
+        const query = `
+            UPDATE corporate_codes 
+            SET is_active = false
+            WHERE id = $1
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, [id]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('기업 코드 비활성화 오류:', error);
+            throw error;
+        }
+    },
+
+    // 기업 직원 관련 함수들
+    async getEmployeesByCompany(company_id, filters = {}) {
+        const { is_active, department, position, limit = 100, offset = 0 } = filters;
+        
+        let query = `
+            SELECT u.*, 
+                   COUNT(tr.result_id) as test_count,
+                   MAX(tr.test_date) as last_test_date,
+                   AVG(tr.overall_score) as avg_score
+            FROM users u
+            LEFT JOIN test_results tr ON u.user_id = tr.user_id
+            WHERE u.company_id = $1 AND u.role IN ('employee', 'hr_manager')
+        `;
+        const params = [company_id];
+        
+        if (is_active !== undefined) {
+            params.push(is_active);
+            query += ` AND u.is_active = $${params.length}`;
+        }
+        
+        if (department) {
+            params.push(department);
+            query += ` AND u.department = $${params.length}`;
+        }
+        
+        if (position) {
+            params.push(position);
+            query += ` AND u.position = $${params.length}`;
+        }
+        
+        query += ` GROUP BY u.id, u.user_id, u.name, u.email, u.password, u.login_type, 
+                          u.created_at, u.updated_at, u.role, u.company_id, 
+                          u.department, u.position, u.employee_number, u.is_active`;
+        query += ` ORDER BY u.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        params.push(limit, offset);
+        
+        try {
+            const result = await pool.query(query, params);
+            return result.rows;
+        } catch (error) {
+            console.error('기업 직원 조회 오류:', error);
+            throw error;
+        }
+    },
+
+    async updateEmployee(user_id, updateData) {
+        const { department, position, employee_number, is_active } = updateData;
+        const fields = [];
+        const values = [];
+        let paramCount = 0;
+        
+        if (department !== undefined) {
+            paramCount++;
+            fields.push(`department = $${paramCount}`);
+            values.push(department);
+        }
+        
+        if (position !== undefined) {
+            paramCount++;
+            fields.push(`position = $${paramCount}`);
+            values.push(position);
+        }
+        
+        if (employee_number !== undefined) {
+            paramCount++;
+            fields.push(`employee_number = $${paramCount}`);
+            values.push(employee_number);
+        }
+        
+        if (is_active !== undefined) {
+            paramCount++;
+            fields.push(`is_active = $${paramCount}`);
+            values.push(is_active);
+        }
+        
+        if (fields.length === 0) {
+            throw new Error('업데이트할 필드가 없습니다.');
+        }
+        
+        paramCount++;
+        values.push(user_id);
+        
+        const query = `
+            UPDATE users 
+            SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = $${paramCount}
+            RETURNING *
+        `;
+        
+        try {
+            const result = await pool.query(query, values);
+            return result.rows[0];
+        } catch (error) {
+            console.error('직원 정보 업데이트 오류:', error);
+            throw error;
+        }
+    },
+
+    async logCompanyUserAction(logData) {
+        const { company_id, user_id, action, details, performed_by } = logData;
+        const query = `
+            INSERT INTO company_user_logs (company_id, user_id, action, details, performed_by)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+        `;
+        try {
+            const result = await pool.query(query, [
+                company_id, user_id, action, details ? JSON.stringify(details) : null, performed_by
+            ]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('기업 사용자 활동 로그 오류:', error);
+            // 로그 실패시에도 메인 작업은 계속 진행
+            return null;
+        }
+    },
+
+    async getCompanyUserLogs(company_id, filters = {}) {
+        const { user_id, action, limit = 100, offset = 0 } = filters;
+        
+        let query = `
+            SELECT cul.*, u.name as user_name, pu.name as performed_by_name
+            FROM company_user_logs cul
+            LEFT JOIN users u ON cul.user_id = u.user_id
+            LEFT JOIN users pu ON cul.performed_by = pu.user_id
+            WHERE cul.company_id = $1
+        `;
+        const params = [company_id];
+        
+        if (user_id) {
+            params.push(user_id);
+            query += ` AND cul.user_id = $${params.length}`;
+        }
+        
+        if (action) {
+            params.push(action);
+            query += ` AND cul.action = $${params.length}`;
+        }
+        
+        query += ` ORDER BY cul.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        params.push(limit, offset);
+        
+        try {
+            const result = await pool.query(query, params);
+            return result.rows;
+        } catch (error) {
+            console.error('기업 사용자 로그 조회 오류:', error);
+            throw error;
+        }
+    },
+
+    async getCompanyStats(company_id) {
+        try {
+            // 직원 수
+            const employeeCount = await pool.query(
+                `SELECT COUNT(*) as count FROM users 
+                 WHERE company_id = $1 AND role IN ('employee', 'hr_manager') AND is_active = true`,
+                [company_id]
+            );
+            
+            // 테스트 완료 수
+            const testCount = await pool.query(
+                `SELECT COUNT(DISTINCT u.user_id) as count 
+                 FROM users u 
+                 JOIN test_results tr ON u.user_id = tr.user_id 
+                 WHERE u.company_id = $1`,
+                [company_id]
+            );
+            
+            // 평균 점수
+            const avgScore = await pool.query(
+                `SELECT AVG(tr.overall_score) as avg 
+                 FROM test_results tr 
+                 JOIN users u ON tr.user_id = u.user_id 
+                 WHERE u.company_id = $1`,
+                [company_id]
+            );
+            
+            // 부서별 통계
+            const departmentStats = await pool.query(
+                `SELECT department, COUNT(*) as count 
+                 FROM users 
+                 WHERE company_id = $1 AND department IS NOT NULL 
+                 GROUP BY department`,
+                [company_id]
+            );
+            
+            return {
+                totalEmployees: parseInt(employeeCount.rows[0].count),
+                completedTests: parseInt(testCount.rows[0].count),
+                averageScore: Math.round(parseFloat(avgScore.rows[0].avg) || 0),
+                departmentStats: departmentStats.rows
+            };
+        } catch (error) {
+            console.error('기업 통계 조회 오류:', error);
+            throw error;
+        }
+    },
+
     // 연결 종료
     async close() {
         await pool.end();
