@@ -16,9 +16,8 @@ async function createSuperAdmin() {
             // Optional: Check if role is correct
             if (existingAdmin.role !== 'super_admin') {
                 console.log('⚠️  기존 계정의 역할이 super_admin이 아닙니다. 역할을 업데이트합니다.');
-                // updateUserRole function needs to be implemented or verified
-                // For now, we will just log this.
-                console.log('updateUserRole 함수를 구현하여 역할을 업데이트할 수 있습니다.');
+                await db.updateUserRole(existingAdmin.user_id, 'super_admin');
+                console.log('✅ 역할이 super_admin으로 업데이트되었습니다.');
             }
             return;
         }
