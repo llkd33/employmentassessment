@@ -18,6 +18,7 @@ const adminAuthRouter = require('./routes/admin-auth');
 const adminRouter = require('./routes/admin');
 const adminInvitationRouter = require('./routes/admin-invitation');
 const adminBatchUploadRouter = require('./routes/admin-batch-upload');
+const adminApprovalRouter = require('./routes/admin-approval');
 
 // 보안 미들웨어
 const { 
@@ -1264,6 +1265,7 @@ app.use('/api/admin/auth', adminAuthRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/admin/invitation', adminInvitationRouter);
 app.use('/api/admin/batch', adminBatchUploadRouter);
+app.use('/api/admin/approval', adminApprovalRouter);
 
 // 클라이언트 설정 정보 API (카카오 API 키 등)
 app.get('/api/config', (req, res) => {
@@ -1347,6 +1349,14 @@ async function startServer() {
         // 스키마 마이그레이션 실행
         const migrateSchema = require('../database/migrate-schema');
         await migrateSchema();
+        
+        // 승인 시스템 추가
+        try {
+            const addApprovalSystem = require('../database/add-approval-system');
+            await addApprovalSystem();
+        } catch (approvalError) {
+            console.log('⚠️ 승인 시스템 마이그레이션 스킵 (이미 존재할 수 있음)');
+        }
 
         // 데이터베이스 연결 및 통계 확인
         console.log('🔍 데이터베이스 연결 확인 중...');

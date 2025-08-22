@@ -2,11 +2,23 @@ const { Pool } = require('pg');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
-// PostgreSQL 연결 풀 설정
-const pool = new Pool({
+// Railway PostgreSQL 연결 설정
+const connectionConfig = {
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
+};
+
+// Production 환경에서 SSL 설정
+if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL) {
+    connectionConfig.ssl = {
+        rejectUnauthorized: false
+    };
+    
+    if (process.env.DATABASE_URL.includes('sslmode=')) {
+        connectionConfig.ssl = true;
+    }
+}
+
+const pool = new Pool(connectionConfig);
 
 async function initializeSchema() {
     console.log('🔍 데이터베이스 스키마 초기화 시작...');
