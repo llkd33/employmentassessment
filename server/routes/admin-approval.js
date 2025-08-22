@@ -2,10 +2,26 @@ const express = require('express');
 const router = express.Router();
 const db = require('../../database/database');
 const { authenticateAdmin } = require('../middleware/adminAuth');
-const { apiResponse, ErrorHandler } = require('../utils/apiResponse');
+const { ApiResponse, ErrorHandler } = require('../utils/apiResponse');
+
+// 호환 레이어: utils/apiResponse의 표준 클래스 기반 인터페이스에 맞춤
+const apiResponse = (res, data, message, statusCode = 200) => 
+    ApiResponse.success(res, data, message, statusCode);
+
+// 방어적 처리: 미들웨어 로딩 문제 시 서버 크래시 방지 및 원인 로그 출력
+const ensureAuthenticateAdmin = 
+    typeof authenticateAdmin === 'function' 
+        ? authenticateAdmin 
+        : (req, res, next) => {
+            console.error('adminAuth.authenticateAdmin 미들웨어가 로딩되지 않았습니다. 라우트 접근 차단.');
+            return res.status(500).json({
+                success: false,
+                error: '서버 구성 오류: 관리자 인증 미들웨어를 로드하지 못했습니다.'
+            });
+        };
 
 // 승인 대기 중인 사용자 목록 조회
-router.get('/pending', authenticateAdmin, async (req, res) => {
+router.get('/pending', ensureAuthenticateAdmin, async (req, res) => {
     try {
         const { page = 1, limit = 20 } = req.query;
         const offset = (page - 1) * limit;
@@ -43,12 +59,12 @@ router.get('/pending', authenticateAdmin, async (req, res) => {
             }
         }, '승인 대기 사용자 목록 조회 성공');
     } catch (error) {
-        ErrorHandler(res, error, '승인 대기 사용자 조회 실패');
+        ErrorHandler.handle(error, req, res);
     }
 });
 
 // 사용자 승인
-router.post('/approve/:userId', authenticateAdmin, async (req, res) => {
+router.post('/approve/:userId', ensureAuthenticateAdmin, async (req, res) => {
     try {
         const { userId } = req.params;
         const adminId = req.admin.id;
@@ -91,12 +107,12 @@ router.post('/approve/:userId', authenticateAdmin, async (req, res) => {
         
         apiResponse(res, result.rows[0], '사용자 승인 완료');
     } catch (error) {
-        ErrorHandler(res, error, '사용자 승인 실패');
+        ErrorHandler.handle(error, req, res);
     }
 });
 
 // 사용자 승인 거부
-router.post('/reject/:userId', authenticateAdmin, async (req, res) => {
+router.post('/reject/:userId', ensureAuthenticateAdmin, async (req, res) => {
     try {
         const { userId } = req.params;
         const { reason } = req.body;
@@ -127,12 +143,12 @@ router.post('/reject/:userId', authenticateAdmin, async (req, res) => {
         
         apiResponse(res, null, '사용자 승인 거부 및 삭제 완료');
     } catch (error) {
-        ErrorHandler(res, error, '사용자 승인 거부 실패');
+        ErrorHandler.handle(error, req, res);
     }
 });
 
 // 일괄 승인
-router.post('/approve-bulk', authenticateAdmin, async (req, res) => {
+router.post('/approve-bulk', ensureAuthenticateAdmin, async (req, res) => {
     try {
         const { userIds } = req.body;
         const adminId = req.admin.id;
@@ -176,7 +192,7 @@ router.post('/approve-bulk', authenticateAdmin, async (req, res) => {
             approvedUsers: result.rows
         }, `${result.rows.length}명의 사용자를 승인했습니다`);
     } catch (error) {
-        ErrorHandler(res, error, '일괄 승인 실패');
+        ErrorHandler.handle(error, req, res);
     }
 });
 

@@ -23,6 +23,22 @@ const pool = new Pool(connectionConfig);
 async function initializeSchema() {
     console.log('🔍 데이터베이스 스키마 초기화 시작...');
 
+    // 연결 사전 점검: 현재 사용자/DB/버전 정보 출력 (문제 진단에 도움)
+    try {
+        const preflight = await pool.query('SELECT current_user, current_database(), version()');
+        const row = preflight.rows[0];
+        console.log(`👤 current_user: ${row.current_user}`);
+        console.log(`🗃️  current_database: ${row.current_database}`);
+        console.log(`🧬 server_version: ${row.version.split('\n')[0]}`);
+    } catch (preErr) {
+        console.error('❌ 초기 연결/권한 확인 실패:', preErr.message);
+        if (preErr.code) console.error('   - error.code:', preErr.code);
+        if (preErr.detail) console.error('   - error.detail:', preErr.detail);
+        if (preErr.hint) console.error('   - error.hint:', preErr.hint);
+        // 연결 자체가 불가하면 스키마 생성도 진행할 수 없으므로 throw
+        throw preErr;
+    }
+
     try {
         // 테이블 존재 여부 확인
         const tablesCheck = await pool.query(`
@@ -115,6 +131,9 @@ async function initializeSchema() {
 
     } catch (error) {
         console.error('❌ 스키마 생성 오류:', error.message);
+        if (error.code) console.error('   - error.code:', error.code);
+        if (error.detail) console.error('   - error.detail:', error.detail);
+        if (error.hint) console.error('   - error.hint:', error.hint);
         throw error;
     }
 }
