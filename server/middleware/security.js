@@ -180,13 +180,13 @@ const securityHeaders = helmet({
         directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://developers.kakao.com"],
             // Allow inline event handler attributes (e.g., onclick) used in current client HTML
             // NOTE: Consider refactoring inline handlers to addEventListener and remove this later.
             scriptSrcAttr: ["'unsafe-inline'"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https://cdn.jsdelivr.net", "https://kauth.kakao.com", "https://kapi.kakao.com", "https://developers.kakao.com"],
+            connectSrc: ["'self'", "https://cdn.jsdelivr.net", "https://kauth.kakao.com", "https://kapi.kakao.com", "https://kapis.kakao.com", "https://developers.kakao.com"],
             frameSrc: ["'none'"],
             objectSrc: ["'none'"]
         },

@@ -7,29 +7,44 @@ function initializeKakao() {
     try {
         // Check if Kakao SDK is loaded
         if (typeof Kakao === 'undefined') {
-            console.error('Kakao SDK not loaded');
+            console.error('❌ Kakao SDK not loaded. Please check:');
+            console.error('1. Internet connection');
+            console.error('2. CSP settings allow developers.kakao.com');
+            console.error('3. Script tag is properly included');
+            return false;
+        }
+
+        // Check if key is configured
+        if (KAKAO_JAVASCRIPT_KEY === 'YOUR_JAVASCRIPT_KEY') {
+            console.warn('⚠️ Kakao JavaScript key not configured.');
+            console.warn('Please update KAKAO_JAVASCRIPT_KEY in kakao-config.js');
             return false;
         }
 
         // Initialize only if not already initialized
         if (!Kakao.isInitialized()) {
+            console.log('🔄 Initializing Kakao SDK...');
             Kakao.init(KAKAO_JAVASCRIPT_KEY);
-            console.log('Kakao SDK initialized:', Kakao.isInitialized());
             
             // Verify initialization
             if (Kakao.isInitialized()) {
                 console.log('✅ Kakao SDK 초기화 성공');
+                console.log('SDK Version:', Kakao.VERSION);
+                window.KAKAO_INITIALIZED = true;
                 return true;
             } else {
                 console.error('❌ Kakao SDK 초기화 실패');
+                console.error('Please check if the JavaScript key is correct');
                 return false;
             }
         } else {
-            console.log('Kakao SDK already initialized');
+            console.log('✅ Kakao SDK already initialized');
+            window.KAKAO_INITIALIZED = true;
             return true;
         }
     } catch (error) {
-        console.error('Kakao SDK initialization error:', error);
+        console.error('❌ Kakao SDK initialization error:', error);
+        console.error('Error details:', error.message);
         return false;
     }
 }
@@ -132,10 +147,28 @@ function logoutFromKakao() {
     });
 }
 
+// Helper function to check SDK status
+function checkKakaoStatus() {
+    console.log('=== Kakao SDK Status ===');
+    console.log('Kakao object exists:', typeof Kakao !== 'undefined');
+    if (typeof Kakao !== 'undefined') {
+        console.log('Kakao.isInitialized():', Kakao.isInitialized());
+        console.log('Kakao.VERSION:', Kakao.VERSION);
+        console.log('JavaScript Key configured:', KAKAO_JAVASCRIPT_KEY !== 'YOUR_JAVASCRIPT_KEY');
+    } else {
+        console.log('Kakao SDK not loaded. Check network tab for blocked requests.');
+    }
+    console.log('=======================');
+}
+
 // Export functions for global use
 window.kakaoAuth = {
     initialize: initializeKakao,
     login: loginWithKakao,
     logout: logoutFromKakao,
-    isInitialized: () => Kakao && Kakao.isInitialized()
+    isInitialized: () => typeof Kakao !== 'undefined' && Kakao.isInitialized(),
+    checkStatus: checkKakaoStatus
 };
+
+// Add global shortcut for debugging
+window.checkKakao = checkKakaoStatus;
