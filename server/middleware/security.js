@@ -186,7 +186,7 @@ const securityHeaders = helmet({
             scriptSrcAttr: ["'unsafe-inline'"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https://kauth.kakao.com", "https://developers.kakao.com"],
+            connectSrc: ["'self'", "https://cdn.jsdelivr.net", "https://kauth.kakao.com", "https://kapi.kakao.com", "https://developers.kakao.com"],
             frameSrc: ["'none'"],
             objectSrc: ["'none'"]
         },
