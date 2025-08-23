@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Dashboard v2.0 - Enterprise Management System</title>
+    
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/admin-dashboard.css">
+    
+    <!-- Chart.js for Advanced Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Additional Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1/dist/chartjs-adapter-moment.min.js"></script>
+    
+    <style>
+        /* Enhanced Dashboard Styles */
+        .dashboard-v2 {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 32px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Real-time Notifications */
+        .notification-center {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 400px;
+            z-index: 1000;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .notification-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Statistics Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: #95a5a6;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-change {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .stat-change.positive {
+            background: #e8f8f5;
+            color: #27ae60;
+        }
+
+        .stat-change.negative {
+            background: #ffe5e5;
+            color: #e74c3c;
+        }
+
+        /* Analytics Section */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .analytics-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .analytics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .analytics-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        /* Activity Feed */
+        .activity-feed {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: start;
+            padding: 15px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 18px;
+        }
+
+        .activity-icon.success {
+            background: #e8f8f5;
+            color: #27ae60;
+        }
+
+        .activity-icon.warning {
+            background: #fff5e6;
+            color: #f39c12;
+        }
+
+        .activity-icon.error {
+            background: #ffe5e5;
+            color: #e74c3c;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .activity-time {
+            color: #95a5a6;
+            font-size: 12px;
+        }
+
+        /* System Health Monitor */
+        .health-monitor {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .health-metric {
+            text-align: center;
+        }
+
+        .health-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .health-bar {
+            width: 100%;
+            height: 10px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .health-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .health-fill.good {
+            background: #27ae60;
+        }
+
+        .health-fill.warning {
+            background: #f39c12;
+        }
+
+        .health-fill.critical {
+            background: #e74c3c;
+        }
+
+        .health-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        /* Enhanced Tables */
+        .data-table {
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .table-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            width: 250px;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        /* Floating Action Button */
+        .fab-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 999;
+        }
+
+        .fab {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            font-size: 24px;
+            transition: all 0.3s;
+        }
+
+        .fab:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        .fab-menu {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            display: none;
+            min-width: 200px;
+        }
+
+        .fab-menu.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            .dashboard-v2 {
+                background: linear-gradient(135deg, #2c3e50, #34495e);
+            }
+
+            .stat-card, .analytics-card, .activity-feed, .data-table, .health-monitor {
+                background: #2c3e50;
+                color: #ecf0f1;
+            }
+
+            .stat-value, .analytics-title, .activity-title {
+                color: #ecf0f1;
+            }
+        }
+
+        /* Loading Skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body class="dashboard-v2">
+    <!-- Notification Center -->
+    <div class="notification-center" id="notificationCenter"></div>
+
+    <!-- Main Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>Enterprise Admin Center</h1>
+                <p style="color: #7f8c8d; margin-top: 5px;">Welcome back, Super Admin</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-primary" onclick="refreshDashboard()">
+                    🔄 Refresh
+                </button>
+                <button class="btn-primary" onclick="exportReport()">
+                    📊 Export Report
+                </button>
+                <button class="btn-primary" style="position: relative;" onclick="toggleNotifications()">
+                    🔔 Notifications
+                    <span class="notification-badge" id="notifBadge">3</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health Monitor -->
+    <div class="health-monitor">
+        <div class="health-metric">
+            <div class="health-label">Server Load</div>
+            <div class="health-bar">
+                <div class="health-fill good" style="width: 35%"></div>
+            </div>
+            <div class="health-value">35%</div>
+        </div>
+        <div class="health-metric">
+            <div class="health-label">Memory Usage</div>
+            <div class="health-bar">
+                <div class="health-fill good" style="width: 52%"></div>
+            </div>
+            <div class="health-value">52%</div>
+        </div>
+        <div class="health-metric">
+            <div class="health-label">Database</div>
+            <div class="health-bar">
+                <div class="health-fill good" style="width: 28%"></div>
+            </div>
+            <div class="health-value">28%</div>
+        </div>
+        <div class="health-metric">
+            <div class="health-label">API Response</div>
+            <div class="health-bar">
+                <div class="health-fill good" style="width: 95%"></div>
+            </div>
+            <div class="health-value">125ms</div>
+        </div>
+        <div class="health-metric">
+            <div class="health-label">Active Users</div>
+            <div class="health-bar">
+                <div class="health-fill warning" style="width: 78%"></div>
+            </div>
+            <div class="health-value">782</div>
+        </div>
+    </div>
+
+    <!-- Statistics Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Companies</div>
+            <div class="stat-value" id="totalCompanies">0</div>
+            <span class="stat-change positive">+12% from last month</span>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Active Users</div>
+            <div class="stat-value" id="activeUsers">0</div>
+            <span class="stat-change positive">+23% from last month</span>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Tests Completed</div>
+            <div class="stat-value" id="testsCompleted">0</div>
+            <span class="stat-change positive">+45% from last month</span>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Avg. Score</div>
+            <div class="stat-value" id="avgScore">0</div>
+            <span class="stat-change negative">-2% from last month</span>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Pending Approvals</div>
+            <div class="stat-value" id="pendingApprovals">0</div>
+            <span class="stat-change" style="background: #fff5e6; color: #f39c12;">Requires attention</span>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">System Uptime</div>
+            <div class="stat-value">99.9%</div>
+            <span class="stat-change positive">30 days</span>
+        </div>
+    </div>
+
+    <!-- Analytics Grid -->
+    <div class="analytics-grid">
+        <!-- User Growth Chart -->
+        <div class="analytics-card">
+            <div class="analytics-header">
+                <h3 class="analytics-title">User Growth Trend</h3>
+                <select onchange="updateGrowthChart(this.value)">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+            </div>
+            <canvas id="growthChart"></canvas>
+        </div>
+
+        <!-- Performance Distribution -->
+        <div class="analytics-card">
+            <div class="analytics-header">
+                <h3 class="analytics-title">Performance Distribution</h3>
+                <button onclick="toggleChartType()">Switch View</button>
+            </div>
+            <canvas id="performanceChart"></canvas>
+        </div>
+
+        <!-- Company Activity Heatmap -->
+        <div class="analytics-card">
+            <div class="analytics-header">
+                <h3 class="analytics-title">Company Activity Heatmap</h3>
+            </div>
+            <canvas id="heatmapChart"></canvas>
+        </div>
+
+        <!-- Competency Radar -->
+        <div class="analytics-card">
+            <div class="analytics-header">
+                <h3 class="analytics-title">Average Competency Scores</h3>
+            </div>
+            <canvas id="competencyRadar"></canvas>
+        </div>
+    </div>
+
+    <!-- Activity Feed & Management Tables -->
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px;">
+        <!-- Real-time Activity Feed -->
+        <div class="activity-feed">
+            <h3 style="margin-top: 0;">Recent Activity</h3>
+            <div id="activityFeed">
+                <!-- Activities will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Data Management Table -->
+        <div class="data-table">
+            <div class="table-header">
+                <h3 style="margin: 0;">Company Management</h3>
+                <div class="table-controls">
+                    <input type="text" class="search-box" placeholder="Search companies..." onkeyup="searchTable(this.value)">
+                    <button class="btn-primary" style="padding: 8px 16px; font-size: 14px;">
+                        Export CSV
+                    </button>
+                </div>
+            </div>
+            <div class="bulk-actions" id="bulkActions" style="display: none;">
+                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                <label for="selectAll">Select All</label>
+                <button onclick="bulkApprove()">Approve Selected</button>
+                <button onclick="bulkReject()">Reject Selected</button>
+                <button onclick="bulkDelete()">Delete Selected</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="companiesTable" style="width: 100%;">
+                    <thead>
+                        <tr style="background: #f8f9fa;">
+                            <th style="padding: 15px;"><input type="checkbox" onchange="toggleBulkActions()"></th>
+                            <th style="padding: 15px;">Company</th>
+                            <th style="padding: 15px;">Status</th>
+                            <th style="padding: 15px;">Employees</th>
+                            <th style="padding: 15px;">Avg Score</th>
+                            <th style="padding: 15px;">Last Active</th>
+                            <th style="padding: 15px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="companiesTableBody">
+                        <!-- Companies will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fab-container">
+        <button class="fab" onclick="toggleFabMenu()">+</button>
+        <div class="fab-menu" id="fabMenu">
+            <div style="padding: 10px; cursor: pointer;" onclick="openModal('addCompany')">➕ Add Company</div>
+            <div style="padding: 10px; cursor: pointer;" onclick="openModal('inviteAdmin')">👤 Invite Admin</div>
+            <div style="padding: 10px; cursor: pointer;" onclick="openModal('announcement')">📢 Announcement</div>
+            <div style="padding: 10px; cursor: pointer;" onclick="openModal('settings')">⚙️ Settings</div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Dashboard
+        let ws = null;
+        let charts = {};
+        let notifications = [];
+        let activities = [];
+
+        // Initialize WebSocket for real-time updates
+        function initWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                showNotification('System', 'Real-time updates connected', 'success');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleRealtimeUpdate(data);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                showNotification('System', 'Connection error', 'error');
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected, reconnecting...');
+                setTimeout(initWebSocket, 5000);
+            };
+        }
+
+        // Handle real-time updates
+        function handleRealtimeUpdate(data) {
+            switch(data.type) {
+                case 'stats':
+                    updateStats(data.stats);
+                    break;
+                case 'activity':
+                    addActivity(data.activity);
+                    break;
+                case 'notification':
+                    showNotification(data.title, data.message, data.level);
+                    break;
+                case 'metrics':
+                    updateMetrics(data.metrics);
+                    break;
+            }
+        }
+
+        // Load initial dashboard data
+        async function loadDashboard() {
+            try {
+                // Show loading state
+                showLoadingState();
+
+                // Fetch all data in parallel
+                const [stats, companies, activities, metrics] = await Promise.all([
+                    fetchStats(),
+                    fetchCompanies(),
+                    fetchActivities(),
+                    fetchMetrics()
+                ]);
+
+                // Update UI
+                updateStats(stats);
+                renderCompaniesTable(companies);
+                renderActivityFeed(activities);
+                updateHealthMonitor(metrics);
+
+                // Initialize charts
+                initializeCharts();
+
+                // Remove loading state
+                hideLoadingState();
+
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+                showNotification('Error', 'Failed to load dashboard data', 'error');
+            }
+        }
+
+        // Fetch functions
+        async function fetchStats() {
+            const response = await fetch('/api/admin/stats', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            return response.json();
+        }
+
+        async function fetchCompanies() {
+            const response = await fetch('/api/admin/companies', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            return response.json();
+        }
+
+        async function fetchActivities() {
+            const response = await fetch('/api/admin/activities', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            return response.json();
+        }
+
+        async function fetchMetrics() {
+            const response = await fetch('/api/admin/metrics', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            return response.json();
+        }
+
+        // Update functions
+        function updateStats(stats) {
+            animateValue('totalCompanies', stats.totalCompanies || 0);
+            animateValue('activeUsers', stats.activeUsers || 0);
+            animateValue('testsCompleted', stats.testsCompleted || 0);
+            animateValue('avgScore', stats.avgScore || 0);
+            animateValue('pendingApprovals', stats.pendingApprovals || 0);
+        }
+
+        function animateValue(id, value, duration = 1000) {
+            const element = document.getElementById(id);
+            const start = parseInt(element.textContent) || 0;
+            const increment = (value - start) / (duration / 16);
+            let current = start;
+
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= value) || (increment < 0 && current <= value)) {
+                    element.textContent = Math.round(value);
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.round(current);
+                }
+            }, 16);
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            // User Growth Chart
+            const growthCtx = document.getElementById('growthChart').getContext('2d');
+            charts.growth = new Chart(growthCtx, {
+                type: 'line',
+                data: {
+                    labels: generateDateLabels(30),
+                    datasets: [{
+                        label: 'New Users',
+                        data: generateRandomData(30, 20, 100),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Active Users',
+                        data: generateRandomData(30, 100, 500),
+                        borderColor: '#764ba2',
+                        backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Performance Distribution Chart
+            const perfCtx = document.getElementById('performanceChart').getContext('2d');
+            charts.performance = new Chart(perfCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Excellent (90-100)', 'Good (70-89)', 'Average (50-69)', 'Below Average (<50)'],
+                    datasets: [{
+                        data: [25, 45, 20, 10],
+                        backgroundColor: ['#27ae60', '#3498db', '#f39c12', '#e74c3c']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Competency Radar Chart
+            const radarCtx = document.getElementById('competencyRadar').getContext('2d');
+            charts.radar = new Chart(radarCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Problem Solving', 'Communication', 'Leadership', 'Technical', 'Adaptability'],
+                    datasets: [{
+                        label: 'Company Average',
+                        data: [78, 82, 75, 88, 80],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)'
+                    }, {
+                        label: 'Industry Benchmark',
+                        data: [80, 85, 80, 85, 85],
+                        borderColor: '#95a5a6',
+                        backgroundColor: 'rgba(149, 165, 166, 0.1)',
+                        borderDash: [5, 5]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Activity Heatmap
+            const heatmapCtx = document.getElementById('heatmapChart').getContext('2d');
+            charts.heatmap = new Chart(heatmapCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Morning',
+                        data: [65, 78, 82, 91, 85, 45, 30],
+                        backgroundColor: 'rgba(102, 126, 234, 0.6)'
+                    }, {
+                        label: 'Afternoon',
+                        data: [88, 95, 98, 102, 96, 55, 40],
+                        backgroundColor: 'rgba(118, 75, 162, 0.6)'
+                    }, {
+                        label: 'Evening',
+                        data: [45, 52, 48, 55, 50, 25, 20],
+                        backgroundColor: 'rgba(149, 165, 166, 0.6)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            stacked: true
+                        },
+                        y: {
+                            stacked: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Helper functions
+        function generateDateLabels(days) {
+            const labels = [];
+            for (let i = days - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+            }
+            return labels;
+        }
+
+        function generateRandomData(count, min, max) {
+            return Array.from({ length: count }, () => 
+                Math.floor(Math.random() * (max - min + 1)) + min
+            );
+        }
+
+        // Activity Feed
+        function renderActivityFeed(activities) {
+            const feed = document.getElementById('activityFeed');
+            feed.innerHTML = activities.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-icon ${activity.type}">
+                        ${getActivityIcon(activity.action)}
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">${activity.title}</div>
+                        <div class="activity-time">${formatTime(activity.timestamp)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addActivity(activity) {
+            activities.unshift(activity);
+            if (activities.length > 20) activities.pop();
+            renderActivityFeed(activities);
+        }
+
+        function getActivityIcon(action) {
+            const icons = {
+                'create': '➕',
+                'update': '✏️',
+                'delete': '🗑️',
+                'approve': '✅',
+                'reject': '❌',
+                'login': '🔐'
+            };
+            return icons[action] || '📌';
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return 'Just now';
+            if (diff < 3600000) return `${Math.floor(diff / 60000)} minutes ago`;
+            if (diff < 86400000) return `${Math.floor(diff / 3600000)} hours ago`;
+            return date.toLocaleDateString();
+        }
+
+        // Notification system
+        function showNotification(title, message, type = 'info') {
+            const notifCenter = document.getElementById('notificationCenter');
+            const notif = document.createElement('div');
+            notif.className = 'notification-item';
+            notif.innerHTML = `
+                <strong>${title}</strong>
+                <p style="margin: 5px 0 0 0; color: #7f8c8d;">${message}</p>
+            `;
+            
+            notifCenter.appendChild(notif);
+            
+            setTimeout(() => {
+                notif.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notif.remove(), 300);
+            }, 5000);
+        }
+
+        // Loading states
+        function showLoadingState() {
+            document.querySelectorAll('.stat-value').forEach(el => {
+                el.classList.add('skeleton');
+                el.style.minHeight = '40px';
+            });
+        }
+
+        function hideLoadingState() {
+            document.querySelectorAll('.skeleton').forEach(el => {
+                el.classList.remove('skeleton');
+            });
+        }
+
+        // FAB menu
+        function toggleFabMenu() {
+            const menu = document.getElementById('fabMenu');
+            menu.classList.toggle('show');
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboard();
+            // initWebSocket(); // Enable when WebSocket server is ready
+            
+            // Simulate real-time updates
+            setInterval(() => {
+                const randomActivity = {
+                    type: ['success', 'warning', 'error'][Math.floor(Math.random() * 3)],
+                    action: ['create', 'update', 'delete', 'approve'][Math.floor(Math.random() * 4)],
+                    title: 'Sample activity ' + Date.now(),
+                    timestamp: new Date()
+                };
+                addActivity(randomActivity);
+            }, 10000);
+        });
+
+        // Refresh dashboard
+        function refreshDashboard() {
+            showNotification('System', 'Refreshing dashboard...', 'info');
+            loadDashboard();
+        }
+
+        // Export report
+        function exportReport() {
+            showNotification('Export', 'Generating report...', 'info');
+            // Implement export logic
+        }
+
+        // Search functionality
+        function searchTable(query) {
+            const rows = document.querySelectorAll('#companiesTableBody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
+            });
+        }
+
+        // Bulk operations
+        function toggleBulkActions() {
+            const bulkActions = document.getElementById('bulkActions');
+            const checkboxes = document.querySelectorAll('#companiesTableBody input[type="checkbox"]');
+            const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+            bulkActions.style.display = anyChecked ? 'flex' : 'none';
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('#companiesTableBody input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            toggleBulkActions();
+        }
+    </script>
+</body>
+</html>

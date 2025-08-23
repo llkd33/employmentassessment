@@ -24,6 +24,11 @@ const adminApprovalRouter = require('./routes/admin-approval');
 const corporateSignupRouter = require('./routes/corporate-signup');
 const corporateEmployeeRouter = require('./routes/corporate-employee');
 
+// Enhanced Admin Features
+const adminAnalyticsRouter = require('./routes/admin-analytics');
+const { auditMiddleware, AuditLevel } = require('./middleware/audit');
+const { sessionManager, sessionMiddleware } = require('./middleware/session-manager');
+
 // 보안 미들웨어
 const { 
     securityHeaders, 
@@ -53,6 +58,15 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // 보안 미들웨어
 app.use(preventSQLInjection);
 app.use(sanitizeInput);
+
+// Session management
+app.use(sessionMiddleware(sessionManager));
+
+// Audit trail for admin routes
+app.use('/api/admin', auditMiddleware({
+    level: AuditLevel.HIGH,
+    includeSensitive: false
+}));
 
 // API Rate limiting
 app.use('/api/', apiLimiter);
@@ -1270,6 +1284,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/admin/invitation', adminInvitationRouter);
 app.use('/api/admin/batch', adminBatchUploadRouter);
 app.use('/api/admin/approval', adminApprovalRouter);
+app.use('/api/admin/analytics', adminAnalyticsRouter); // Enhanced analytics endpoints
 
 // 기업 시스템 라우터 등록
 app.use('/api/corporate', corporateSignupRouter);
