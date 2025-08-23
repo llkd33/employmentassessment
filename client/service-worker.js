@@ -1,4 +1,5 @@
 // service-worker.js - 오프라인 지원 및 캐싱
+// Version: 2.0.0 - Kakao SDK support added
 
 const CACHE_NAME = `employee-test-v${Date.now()}`; // 항상 새로운 캐시 버전
 const isProduction = location.hostname !== 'localhost' && !location.hostname.includes('127.0.0.1');
@@ -80,6 +81,31 @@ self.addEventListener('activate', event => {
 // 네트워크 요청 가로채기
 self.addEventListener('fetch', event => {
     const request = event.request;
+    const url = new URL(request.url);
+
+    // 외부 도메인 요청은 Service Worker가 처리하지 않음
+    // Kakao, CDN, 외부 리소스 등
+    const externalDomains = [
+        'kakao.com',
+        'kakaocdn.net',
+        'daum.net',
+        'daumcdn.net',
+        'googleapis.com',
+        'gstatic.com',
+        'jsdelivr.net',
+        'unpkg.com',
+        'cdnjs.cloudflare.com'
+    ];
+
+    // 외부 도메인 체크
+    const isExternalDomain = externalDomains.some(domain => 
+        url.hostname.includes(domain)
+    );
+
+    if (isExternalDomain) {
+        // 외부 도메인은 Service Worker 개입 없이 직접 fetch
+        return;
+    }
 
     // API 요청은 항상 네트워크에서 가져오기 (서비스 워커 개입 없이)
     if (request.url.includes('/api/')) {
