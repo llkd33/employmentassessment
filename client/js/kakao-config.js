@@ -1,6 +1,6 @@
 // Kakao SDK Configuration
-// Replace 'YOUR_JAVASCRIPT_KEY' with your actual Kakao JavaScript key
-const KAKAO_JAVASCRIPT_KEY = 'YOUR_JAVASCRIPT_KEY'; // TODO: Replace with actual key
+// Kakao JavaScript key from Railway environment variables
+const KAKAO_JAVASCRIPT_KEY = '44ee85e7f866e1a3a52f3d5fc8410f81';
 
 // Initialize Kakao SDK
 function initializeKakao() {
@@ -15,7 +15,7 @@ function initializeKakao() {
         }
 
         // Check if key is configured
-        if (KAKAO_JAVASCRIPT_KEY === 'YOUR_JAVASCRIPT_KEY') {
+        if (!KAKAO_JAVASCRIPT_KEY || KAKAO_JAVASCRIPT_KEY === 'YOUR_JAVASCRIPT_KEY') {
             console.warn('⚠️ Kakao JavaScript key not configured.');
             console.warn('Please update KAKAO_JAVASCRIPT_KEY in kakao-config.js');
             return false;
