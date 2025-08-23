@@ -51,11 +51,21 @@ function initializeKakao() {
 
 // Auto-initialize when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeKakao);
+    document.addEventListener('DOMContentLoaded', () => {
+        // Wait a bit for Kakao SDK to fully load
+        setTimeout(initializeKakao, 500);
+    });
 } else {
-    // DOM is already loaded
-    initializeKakao();
+    // DOM is already loaded, but still wait for SDK
+    setTimeout(initializeKakao, 500);
 }
+
+// Also try to initialize when window fully loads
+window.addEventListener('load', () => {
+    if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
+        initializeKakao();
+    }
+});
 
 // Kakao Login function
 function loginWithKakao() {
