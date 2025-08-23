@@ -190,14 +190,20 @@ function kakaoLogin() {
         }
     }
 
-    // API 키 확인
-    if (!APP_CONFIG.KAKAO_API_KEY) {
-        showNotification('카카오 로그인 서비스가 일시적으로 사용할 수 없습니다. 이메일 로그인을 사용해주세요.', 'error');
-        return;
-    }
-
-    if (!window.Kakao || !window.Kakao.isInitialized()) {
-        showNotification('카카오 SDK가 초기화되지 않았습니다. 페이지를 새로고침해주세요.', 'error');
+    // Kakao SDK 초기화 확인 (kakao-config.js 사용)
+    if (typeof kakaoAuth === 'undefined' || !kakaoAuth.isInitialized()) {
+        console.error('Kakao SDK not initialized');
+        showNotification('카카오 로그인 서비스를 준비 중입니다. 잠시 후 다시 시도해주세요.', 'error');
+        
+        // Try to initialize
+        if (typeof kakaoAuth !== 'undefined') {
+            kakaoAuth.initialize();
+            setTimeout(() => {
+                if (kakaoAuth.isInitialized()) {
+                    showNotification('카카오 로그인 준비가 완료되었습니다. 다시 시도해주세요.', 'info');
+                }
+            }, 1000);
+        }
         return;
     }
 
