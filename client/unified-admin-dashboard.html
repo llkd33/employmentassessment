@@ -471,7 +471,7 @@
                 <div class="table-header">
                     <h3 class="table-title">등록된 기업</h3>
                     <div class="table-actions">
-                        <button class="btn btn-primary" onclick="showAddCompanyModal()">새 기업 추가</button>
+                        <button class="btn btn-primary" onclick="addCompany()">새 기업 추가</button>
                     </div>
                 </div>
                 <table class="data-table" id="companiesTable">
@@ -504,7 +504,7 @@
                 <div class="table-header">
                     <h3 class="table-title">직원 목록</h3>
                     <div class="table-actions">
-                        <button class="btn btn-primary" onclick="showInviteModal()">직원 초대</button>
+                        <button class="btn btn-primary" onclick="addUser()">직원 추가</button>
                     </div>
                 </div>
                 <table class="data-table" id="employeesTable">
@@ -969,7 +969,7 @@
             }
             
             try {
-                const endpoint = currentUser.role === 'super_admin' 
+                const endpoint = currentUser.role === 'super_admin' || currentUser.role === 'sys_admin'
                     ? '/api/admin/system-stats' 
                     : '/api/admin/company-stats';
                     
@@ -996,55 +996,82 @@
                     <div class="stat-icon">👥</div>
                     <div class="stat-value">${stats.totalUsers || 0}</div>
                     <div class="stat-label">전체 사용자</div>
-                    <div class="stat-change positive">+12% 지난달 대비</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏢</div>
+                    <div class="stat-value">${stats.totalCompanies || 0}</div>
+                    <div class="stat-label">전체 기업</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">📝</div>
                     <div class="stat-value">${stats.totalTests || 0}</div>
                     <div class="stat-label">완료된 테스트</div>
-                    <div class="stat-change positive">+8% 지난주 대비</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">💬</div>
                     <div class="stat-value">${stats.totalFeedback || 0}</div>
                     <div class="stat-label">피드백 제공</div>
-                    <div class="stat-change positive">+15% 증가</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">📊</div>
-                    <div class="stat-value">${stats.avgScore || 0}%</div>
+                    <div class="stat-value">${stats.avgScore || 0}</div>
                     <div class="stat-label">평균 점수</div>
-                    <div class="stat-change positive">+2.3% 향상</div>
                 </div>
             `;
             
-            statsGrid.innerHTML = statsHTML;
+            if (statsGrid) {
+                statsGrid.innerHTML = statsHTML;
+            }
         }
 
         // 최근 활동 로드
         async function loadRecentActivity() {
-            // 샘플 데이터 (실제로는 API에서 가져옴)
-            const tbody = document.querySelector('#recentActivityTable tbody');
-            tbody.innerHTML = `
-                <tr>
-                    <td>10분 전</td>
-                    <td>김철수</td>
-                    <td>테스트 완료</td>
-                    <td><span style="color: #4CAF50;">완료</span></td>
-                </tr>
-                <tr>
-                    <td>30분 전</td>
-                    <td>이영희</td>
-                    <td>피드백 확인</td>
-                    <td><span style="color: #2196F3;">진행중</span></td>
-                </tr>
-                <tr>
-                    <td>1시간 전</td>
-                    <td>박민수</td>
-                    <td>회원 가입</td>
-                    <td><span style="color: #4CAF50;">완료</span></td>
-                </tr>
-            `;
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            if (!token || !currentUser) return;
+            
+            try {
+                // 최근 테스트 결과 가져오기
+                const response = await fetch('/api/admin/test-results', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) return;
+                
+                const results = await response.json();
+                const tbody = document.querySelector('#recentActivityTable tbody');
+                
+                if (results && results.length > 0) {
+                    // 최근 5개만 표시
+                    const recentResults = results.slice(0, 5);
+                    tbody.innerHTML = recentResults.map(result => {
+                        const timeAgo = getTimeAgo(new Date(result.test_date));
+                        return `
+                            <tr>
+                                <td>${timeAgo}</td>
+                                <td>${result.user_name || '알 수 없음'}</td>
+                                <td>테스트 완료</td>
+                                <td><span style="color: #4CAF50;">완료</span></td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">최근 활동이 없습니다.</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading recent activity:', error);
+            }
+        }
+        
+        // 시간 차이 계산 함수
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000); // 초 단위 차이
+            
+            if (diff < 60) return '방금 전';
+            if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)}일 전`;
+            return date.toLocaleDateString('ko-KR');
         }
 
         // 기업 목록 로드 (Super Admin)
@@ -1426,6 +1453,120 @@
         function sendReminder(userId) {
             if (confirm('이 직원에게 테스트 완료 알림을 보내시겠습니까?')) {
                 alert('알림이 전송되었습니다.');
+            }
+        }
+
+        // 회사 추가
+        async function addCompany() {
+            const name = prompt('회사명을 입력하세요:');
+            if (!name) return;
+            
+            const domain = prompt('도메인을 입력하세요 (예: example.com):');
+            const adminEmail = prompt('관리자 이메일을 입력하세요:');
+            const adminName = prompt('관리자 이름을 입력하세요:');
+            const adminPassword = prompt('관리자 비밀번호를 입력하세요:');
+            
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            
+            try {
+                const response = await fetch('/api/admin/companies', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name,
+                        domain,
+                        admin_email: adminEmail,
+                        admin_name: adminName,
+                        admin_password: adminPassword
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('회사가 성공적으로 추가되었습니다.');
+                    loadCompanies();
+                } else {
+                    const error = await response.json();
+                    alert('회사 추가 실패: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error adding company:', error);
+                alert('회사 추가 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 회사 상태 토글
+        async function toggleCompany(companyId) {
+            if (!confirm('이 회사의 상태를 변경하시겠습니까?')) return;
+            
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            
+            try {
+                const response = await fetch(`/api/admin/companies/${companyId}/toggle`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    alert('회사 상태가 변경되었습니다.');
+                    loadCompanies();
+                } else {
+                    alert('상태 변경 실패');
+                }
+            } catch (error) {
+                console.error('Error toggling company:', error);
+                alert('상태 변경 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 회사 수정
+        function editCompany(companyId) {
+            alert('회사 수정 기능은 준비 중입니다.');
+        }
+
+        // 사용자 추가
+        async function addUser() {
+            const name = prompt('직원 이름을 입력하세요:');
+            if (!name) return;
+            
+            const email = prompt('직원 이메일을 입력하세요:');
+            if (!email) return;
+            
+            const department = prompt('부서를 입력하세요:');
+            const position = prompt('직위를 입력하세요:');
+            
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            
+            try {
+                const response = await fetch('/api/admin/users', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        department,
+                        position,
+                        company_id: currentUser.company_id
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('직원이 성공적으로 추가되었습니다.');
+                    loadEmployees();
+                } else {
+                    const error = await response.json();
+                    alert('직원 추가 실패: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error adding user:', error);
+                alert('직원 추가 중 오류가 발생했습니다.');
             }
         }
 
