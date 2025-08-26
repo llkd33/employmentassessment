@@ -561,7 +561,218 @@
                 </table>
             </div>
         </div>
+
+        <!-- 프로필 페이지 -->
+        <div class="content-page" id="profile-page">
+            <div class="content-header">
+                <h1 class="content-title">내 프로필</h1>
+                <div class="breadcrumb">홈 > 설정 > 내 프로필</div>
+            </div>
+
+            <div class="profile-container">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <span>👤</span>
+                        </div>
+                        <div class="profile-info">
+                            <h2 id="profileName">-</h2>
+                            <p id="profileEmail">-</p>
+                            <span class="profile-role" id="profileRole">-</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-details">
+                        <h3>프로필 정보</h3>
+                        <div class="detail-row">
+                            <label>이름:</label>
+                            <span id="profileDetailName">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>이메일:</label>
+                            <span id="profileDetailEmail">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>역할:</label>
+                            <span id="profileDetailRole">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>회사:</label>
+                            <span id="profileCompany">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <label>가입일:</label>
+                            <span id="profileJoinDate">-</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-stats">
+                        <h3>활동 통계</h3>
+                        <div class="stats-row">
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalManaged">0</div>
+                                <div class="stat-label">관리 직원 수</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalTests">0</div>
+                                <div class="stat-label">완료된 테스트</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="totalFeedback">0</div>
+                                <div class="stat-label">작성한 피드백</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-actions">
+                        <button class="btn btn-primary" onclick="editProfile()">프로필 수정</button>
+                        <button class="btn btn-secondary" onclick="changePassword()">비밀번호 변경</button>
+                    </div>
+                </div>
+
+                <!-- 분석 결과 섹션 -->
+                <div class="analysis-section">
+                    <h3>테스트 분석 결과</h3>
+                    <div class="analysis-content" id="analysisContent">
+                        <p>관리자 계정은 테스트 분석 결과가 표시되지 않습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <style>
+        /* 프로필 페이지 스타일 */
+        .profile-container {
+            display: grid;
+            gap: 24px;
+            padding: 24px;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 32px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: white;
+        }
+
+        .profile-info h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .profile-info p {
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .profile-role {
+            display: inline-block;
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .profile-details, .profile-stats {
+            margin-bottom: 32px;
+        }
+
+        .profile-details h3, .profile-stats h3, .analysis-section h3 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .detail-row {
+            display: flex;
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .detail-row label {
+            font-weight: 600;
+            width: 120px;
+            color: #666;
+        }
+
+        .detail-row span {
+            color: #333;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 24px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .analysis-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 32px;
+        }
+
+        .analysis-content {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 24px;
+            min-height: 200px;
+        }
+
+        .analysis-content p {
+            color: #666;
+            text-align: center;
+            margin-top: 60px;
+        }
+    </style>
 
     <script>
         let currentUser = null;
@@ -740,6 +951,9 @@
                     break;
                 case 'analytics':
                     await loadAnalytics();
+                    break;
+                case 'profile':
+                    await loadProfile();
                     break;
             }
         }
@@ -920,16 +1134,20 @@
         function displayEmployees(employees) {
             const tbody = document.querySelector('#employeesTable tbody');
             tbody.innerHTML = employees.map(emp => `
-                <tr>
+                <tr style="cursor: pointer;" onclick="viewEmployeeTestResults('${emp.user_id}', '${emp.name}')">
                     <td>${emp.name}</td>
                     <td>${emp.email}</td>
                     <td>${emp.department || '-'}</td>
                     <td>${emp.position || '-'}</td>
-                    <td>${emp.test_completed ? '완료' : '미완료'}</td>
+                    <td>${emp.test_completed ? '✅ 완료' : '⏳ 미완료'}</td>
                     <td>${new Date(emp.created_at).toLocaleDateString('ko-KR')}</td>
-                    <td>
-                        <button onclick="viewEmployee('${emp.user_id}')">상세</button>
-                        <button onclick="sendReminder('${emp.user_id}')">알림</button>
+                    <td onclick="event.stopPropagation();">
+                        <button class="btn btn-sm" onclick="viewEmployeeDetail('${emp.user_id}')">상세</button>
+                        ${emp.test_completed ? 
+                            `<button class="btn btn-sm btn-primary" onclick="viewEmployeeTestResults('${emp.user_id}', '${emp.name}')">결과보기</button>` 
+                            : 
+                            `<button class="btn btn-sm" onclick="sendReminder('${emp.user_id}')">알림</button>`
+                        }
                     </td>
                 </tr>
             `).join('');
@@ -999,6 +1217,73 @@
             window.location.href = `/admin-test-detail-modal.html?resultId=${resultId}`;
         }
 
+        // 프로필 페이지 로드
+        async function loadProfile() {
+            if (!currentUser) return;
+
+            // 프로필 정보 표시
+            document.getElementById('profileName').textContent = currentUser.name || '-';
+            document.getElementById('profileEmail').textContent = currentUser.email || '-';
+            document.getElementById('profileRole').textContent = getRoleDisplayName(currentUser.role) || '-';
+            
+            document.getElementById('profileDetailName').textContent = currentUser.name || '-';
+            document.getElementById('profileDetailEmail').textContent = currentUser.email || '-';
+            document.getElementById('profileDetailRole').textContent = getRoleDisplayName(currentUser.role) || '-';
+            document.getElementById('profileCompany').textContent = currentUser.company_name || '시스템';
+            
+            // 가입일 처리
+            const joinDate = currentUser.created_at ? new Date(currentUser.created_at).toLocaleDateString('ko-KR') : '-';
+            document.getElementById('profileJoinDate').textContent = joinDate;
+
+            // 통계 로드
+            await loadProfileStats();
+        }
+
+        // 프로필 통계 로드
+        async function loadProfileStats() {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            
+            if (!token) return;
+
+            try {
+                // 관리 직원 수
+                const employeesResponse = await fetch('/api/admin/employees', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (employeesResponse.ok) {
+                    const employees = await employeesResponse.json();
+                    document.getElementById('totalManaged').textContent = employees.length || 0;
+                }
+
+                // 테스트 결과 수
+                const testsResponse = await fetch('/api/admin/test-results', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (testsResponse.ok) {
+                    const tests = await testsResponse.json();
+                    document.getElementById('totalTests').textContent = tests.length || 0;
+                }
+
+                // 피드백 수 (임시로 0으로 설정)
+                document.getElementById('totalFeedback').textContent = '0';
+                
+            } catch (error) {
+                console.error('Error loading profile stats:', error);
+            }
+        }
+
+        // 프로필 수정
+        function editProfile() {
+            alert('프로필 수정 기능은 준비 중입니다.');
+        }
+
+        // 비밀번호 변경
+        function changePassword() {
+            alert('비밀번호 변경 기능은 준비 중입니다.');
+        }
+
         // 로그아웃
         function logout() {
             localStorage.removeItem('adminToken');
@@ -1016,8 +1301,296 @@
             loadPageContent(currentPage);
         }
 
+        // 더미 함수들 (구현 예정)
+        function loadSystemUsers() {
+            console.log('loadSystemUsers - 구현 예정');
+        }
+
+        function loadAnalytics() {
+            console.log('loadAnalytics - 구현 예정');
+        }
+
+        // 직원 테스트 결과 보기
+        async function viewEmployeeTestResults(userId, userName) {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            
+            try {
+                const response = await fetch(`/api/admin/user/${userId}/test-results`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    alert('테스트 결과를 불러올 수 없습니다.');
+                    return;
+                }
+                
+                const results = await response.json();
+                showTestResultsModal(userId, userName, results);
+                
+            } catch (error) {
+                console.error('Error loading test results:', error);
+                alert('테스트 결과를 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 테스트 결과 모달 표시
+        function showTestResultsModal(userId, userName, results) {
+            // 기존 모달 제거
+            const existingModal = document.getElementById('testResultModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // 모달 HTML 생성
+            const modalHTML = `
+                <div id="testResultModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>${userName}님의 테스트 결과</h2>
+                            <button class="modal-close" onclick="closeTestResultModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            ${results.length > 0 ? `
+                                <div class="test-results-list">
+                                    ${results.map(result => `
+                                        <div class="test-result-card">
+                                            <div class="result-header">
+                                                <h3>테스트 날짜: ${new Date(result.test_date).toLocaleDateString('ko-KR')}</h3>
+                                                <span class="result-score">${result.overall_score}점</span>
+                                            </div>
+                                            <div class="result-details">
+                                                <div class="competency-scores">
+                                                    <div class="score-item">
+                                                        <span class="score-label">문제해결:</span>
+                                                        <span class="score-value">${result.problem_solving_score}</span>
+                                                    </div>
+                                                    <div class="score-item">
+                                                        <span class="score-label">의사소통:</span>
+                                                        <span class="score-value">${result.communication_score}</span>
+                                                    </div>
+                                                    <div class="score-item">
+                                                        <span class="score-label">리더십:</span>
+                                                        <span class="score-value">${result.leadership_score}</span>
+                                                    </div>
+                                                    <div class="score-item">
+                                                        <span class="score-label">창의성:</span>
+                                                        <span class="score-value">${result.creativity_score}</span>
+                                                    </div>
+                                                    <div class="score-item">
+                                                        <span class="score-label">팀워크:</span>
+                                                        <span class="score-value">${result.teamwork_score}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="result-actions">
+                                                    <button class="btn btn-primary" onclick="viewTestDetail('${result.result_id}')">상세보기</button>
+                                                    <button class="btn" onclick="writeFeedback('${result.result_id}')">피드백 작성</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : `
+                                <div class="no-results">
+                                    <p>아직 완료된 테스트가 없습니다.</p>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 모달 추가
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // 모달 표시
+            setTimeout(() => {
+                document.getElementById('testResultModal').classList.add('show');
+            }, 10);
+        }
+
+        // 모달 닫기
+        function closeTestResultModal() {
+            const modal = document.getElementById('testResultModal');
+            if (modal) {
+                modal.classList.remove('show');
+                setTimeout(() => modal.remove(), 300);
+            }
+        }
+
+        // 직원 상세 보기
+        function viewEmployeeDetail(userId) {
+            window.location.href = `/admin-user-detail.html?userId=${userId}`;
+        }
+
+        // 알림 전송
+        function sendReminder(userId) {
+            if (confirm('이 직원에게 테스트 완료 알림을 보내시겠습니까?')) {
+                alert('알림이 전송되었습니다.');
+            }
+        }
+
         // 페이지 로드 시 초기화
         document.addEventListener('DOMContentLoaded', init);
     </script>
+
+    <style>
+        /* 모달 스타일 추가 */
+        .modal {
+            display: flex;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 22px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 30px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .modal-close:hover {
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .test-results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .test-result-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .result-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #495057;
+        }
+
+        .result-score {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .competency-scores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .score-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .score-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        /* 테이블 행 호버 효과 */
+        #employeesTable tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
 </body>
 </html>

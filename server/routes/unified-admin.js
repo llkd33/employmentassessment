@@ -326,4 +326,53 @@ router.put('/companies/:id/toggle', authenticateToken, async (req, res) => {
     }
 });
 
+// 특정 사용자의 테스트 결과 조회
+router.get('/user/:userId/test-results', authenticateToken, requireAdmin, async (req, res) => {
+    const { userId } = req.params;
+    const adminId = req.user.userId;
+    const adminRole = req.user.role;
+    const adminCompanyId = req.user.companyId;
+    
+    try {
+        // 사용자 정보 조회
+        const userQuery = await pool.query(`
+            SELECT company_id, name, email 
+            FROM users 
+            WHERE user_id = $1
+        `, [userId]);
+        
+        if (userQuery.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const user = userQuery.rows[0];
+        
+        // 권한 확인 - super admin이 아니면 같은 회사만 조회 가능
+        if (!['super_admin', 'sys_admin'].includes(adminRole)) {
+            if (user.company_id !== adminCompanyId) {
+                return res.status(403).json({ error: 'Not authorized to view this user\'s results' });
+            }
+        }
+        
+        // 테스트 결과 조회
+        const resultsQuery = await pool.query(`
+            SELECT 
+                tr.*,
+                tf.id as feedback_id,
+                tf.overall_rating as feedback_rating,
+                tf.is_read as feedback_read
+            FROM test_results tr
+            LEFT JOIN test_feedback tf ON tr.result_id = tf.result_id
+            WHERE tr.user_id = $1
+            ORDER BY tr.test_date DESC
+        `, [userId]);
+        
+        res.json(resultsQuery.rows);
+        
+    } catch (error) {
+        console.error('Error fetching user test results:', error);
+        res.status(500).json({ error: 'Failed to fetch test results' });
+    }
+});
+
 module.exports = router;
