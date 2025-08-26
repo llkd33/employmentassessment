@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module Test</title>
+</head>
+<body>
+    <h1>Module Loading Test</h1>
+    <div id="results"></div>
+
+    <!-- Core modules (순서 중요) -->
+    <script src="js/utils/core.js"></script>
+    <script src="js/utils/ui.js"></script>
+    <script src="js/utils/performance.js"></script>
+    <script src="js/utils/user.js"></script>
+    <script src="js/components/header.js"></script>
+
+    <script>
+        const results = document.getElementById('results');
+        
+        // 각 모듈 체크
+        const modules = ['Core', 'UI', 'Performance', 'User', 'Header'];
+        let html = '<h2>Module Status:</h2><ul>';
+        
+        modules.forEach(module => {
+            const exists = typeof window[module] !== 'undefined';
+            const status = exists ? '✅ Loaded' : '❌ Not loaded';
+            html += `<li><strong>${module}:</strong> ${status}</li>`;
+            
+            if (exists && window[module]) {
+                // 각 모듈의 속성들도 확인
+                const props = Object.keys(window[module]);
+                if (props.length > 0) {
+                    html += `<ul>`;
+                    props.forEach(prop => {
+                        html += `<li>${prop}: ${typeof window[module][prop]}</li>`;
+                    });
+                    html += `</ul>`;
+                }
+            }
+        });
+        
+        html += '</ul>';
+        
+        // Core 모듈의 하위 속성 확인
+        if (typeof Core !== 'undefined') {
+            html += '<h3>Core Module Details:</h3><ul>';
+            ['DOM', 'EventManager', 'Storage', 'Http', 'Utils'].forEach(prop => {
+                const exists = Core[prop] !== undefined;
+                html += `<li>Core.${prop}: ${exists ? '✅' : '❌'}</li>`;
+            });
+            html += '</ul>';
+        }
+        
+        results.innerHTML = html;
+        
+        // 콘솔에도 출력
+        console.log('Module check results:');
+        modules.forEach(module => {
+            console.log(`${module}:`, typeof window[module] !== 'undefined' ? 'Loaded' : 'Not loaded');
+        });
+    </script>
+</body>
+</html>

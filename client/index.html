@@ -46,6 +46,7 @@
     </main>
 
     <!-- Core modules (순서 중요) -->
+    <script src="js/utils/common.js"></script>
     <script src="js/utils/core.js"></script>
     <script src="js/utils/ui.js"></script>
     <script src="js/utils/performance.js"></script>
@@ -186,19 +187,47 @@
         // 애플리케이션 시작
         const app = new App();
 
-        // DOM 준비 시 초기화
-        if (typeof Core !== 'undefined' && Core.DOM) {
-            Core.DOM.ready(() => {
-                console.log('DOM ready, initializing app...');
-                app.init();
-            });
-        } else {
-            // Core 모듈이 없으면 기본 방식으로 초기화
-            document.addEventListener('DOMContentLoaded', () => {
-                console.log('DOM ready (fallback), initializing app...');
-                app.init();
-            });
+        // DOM 준비 시 초기화 - 모듈 로드 대기
+        function waitForModulesAndInit() {
+            const requiredModules = ['Core', 'UI', 'User', 'Performance', 'Header'];
+            const checkInterval = setInterval(() => {
+                const allLoaded = requiredModules.every(module => typeof window[module] !== 'undefined');
+                
+                if (allLoaded) {
+                    clearInterval(checkInterval);
+                    console.log('All modules loaded, waiting for DOM...');
+                    
+                    if (typeof Core !== 'undefined' && Core.DOM) {
+                        Core.DOM.ready(() => {
+                            console.log('DOM ready, initializing app...');
+                            app.init();
+                        });
+                    } else {
+                        document.addEventListener('DOMContentLoaded', () => {
+                            console.log('DOM ready (fallback), initializing app...');
+                            app.init();
+                        });
+                    }
+                } else {
+                    const missingModules = requiredModules.filter(module => typeof window[module] === 'undefined');
+                    console.log('Waiting for modules:', missingModules);
+                }
+            }, 100);
+            
+            // 5초 후에도 로드되지 않으면 에러 표시
+            setTimeout(() => {
+                const allLoaded = requiredModules.every(module => typeof window[module] !== 'undefined');
+                if (!allLoaded) {
+                    clearInterval(checkInterval);
+                    const missingModules = requiredModules.filter(module => typeof window[module] === 'undefined');
+                    console.error('Failed to load modules after 5 seconds:', missingModules);
+                    alert('애플리케이션 초기화에 실패했습니다. 페이지를 새로고침해주세요.');
+                }
+            }, 5000);
         }
+        
+        // 모듈 로드 대기 시작
+        waitForModulesAndInit();
 
         // Service Worker 등록
         if ('serviceWorker' in navigator) {
