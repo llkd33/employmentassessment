@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login Test</title>
+</head>
+<body>
+    <h1>Admin Login Test Page</h1>
+    <p>If you can see this message, the file is being served correctly.</p>
+    <p>Current URL: <span id="url"></span></p>
+    <p>Service Worker Status: <span id="sw-status"></span></p>
+    
+    <button onclick="clearServiceWorker()">Clear Service Worker Cache</button>
+    <button onclick="window.location.href='/client/admin-login.html'">Go to Admin Login</button>
+    
+    <script>
+        document.getElementById('url').textContent = window.location.href;
+        
+        // Check service worker status
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                document.getElementById('sw-status').textContent = registrations.length + ' service worker(s) registered';
+            });
+        } else {
+            document.getElementById('sw-status').textContent = 'Service workers not supported';
+        }
+        
+        function clearServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                        registration.unregister();
+                    }
+                    alert('Service workers unregistered. Please refresh the page.');
+                });
+                
+                // Also clear caches
+                caches.keys().then(function(names) {
+                    for (let name of names)
+                        caches.delete(name);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

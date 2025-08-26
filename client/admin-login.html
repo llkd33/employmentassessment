@@ -4,8 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>관리자 로그인 - 신입사원 역량 테스트</title>
-    <link rel="stylesheet" href="/css/admin-design-system.css">
+    <!-- Admin design system CSS removed as file doesn't exist -->
     <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --border-radius-lg: 16px;
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -323,6 +336,23 @@
     </div>
 
     <script>
+        // Service Worker 캐시 문제 해결 - admin 페이지는 서비스 워커 제거
+        if ('serviceWorker' in navigator && window.location.pathname.includes('admin')) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+            // 캐시도 삭제
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    for (let name of names) {
+                        caches.delete(name);
+                    }
+                });
+            }
+        }
+        
         // API URL 설정
         const API_URL = window.location.protocol === 'file:' 
             ? 'http://localhost:3000'
