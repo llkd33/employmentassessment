@@ -1281,7 +1281,8 @@ app.get('/api/health', (req, res) => {
 });
 
 // 관리자 API 라우터 등록
-app.use('/api/admin/auth', adminAuthRouter); // 기업 어드민(Users 기반)
+app.use('/api/admin-auth', adminAuthRouter); // 어드민 로그인/인증
+app.use('/api/admin/auth', adminAuthRouter); // 기업 어드민(Users 기반) - 호환성 유지
 app.use('/api/admin', adminRouter);
 app.use('/api/admin/invitation', adminInvitationRouter);
 app.use('/api/admin/batch', adminBatchUploadRouter);

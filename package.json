@@ -10,7 +10,6 @@
         "migrate": "node migrate-data.js migrate",
         "backup": "node migrate-data.js backup",
         "init-db": "node migrate-data.js both",
-        
         "test-db": "node -e \"const db = require('./database'); db.getTestStats().then(stats => { console.log('DB 연결 성공:', stats); process.exit(0); }).catch(err => { console.error('DB 연결 실패:', err); process.exit(1); });\"",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
@@ -29,6 +28,7 @@
         "pg": "^8.11.3"
     },
     "devDependencies": {
+        "node-fetch": "^2.7.0",
         "nodemon": "^3.0.1"
     },
     "engines": {

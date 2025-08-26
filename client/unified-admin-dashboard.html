@@ -793,7 +793,7 @@
             
             // 토큰이 없을 때만 로그인 페이지로 이동
             if (!token) {
-                window.location.href = '/admin-login.html';
+                window.location.href = '/client/admin-login.html';
                 return;
             }
 
@@ -829,7 +829,7 @@
                 } else if (response.status === 401 || response.status === 403) {
                     // 인증 실패 시에만 로그인 페이지로
                     console.error('Authentication failed');
-                    window.location.href = '/admin-login.html';
+                    window.location.href = '/client/admin-login.html';
                 } else {
                     // 다른 에러는 무시하고 계속 진행
                     console.error('Failed to load profile, but keeping session');
@@ -1123,13 +1123,20 @@
         // 기업 목록 표시
         function displayCompanies(companies) {
             const tbody = document.querySelector('#companiesTable tbody');
+            if (!tbody) return;
+            
+            if (!companies || companies.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">등록된 기업이 없습니다.</td></tr>';
+                return;
+            }
+            
             tbody.innerHTML = companies.map(company => `
                 <tr>
                     <td>${company.id}</td>
                     <td>${company.name}</td>
-                    <td>${company.domain}</td>
+                    <td>${company.domain || '-'}</td>
                     <td>${company.employee_count || 0}</td>
-                    <td>${new Date(company.created_at).toLocaleDateString('ko-KR')}</td>
+                    <td>${company.created_at ? new Date(company.created_at).toLocaleDateString('ko-KR') : '-'}</td>
                     <td>${company.is_active ? '활성' : '비활성'}</td>
                     <td>
                         <button onclick="editCompany(${company.id})">수정</button>
@@ -1179,14 +1186,21 @@
         // 직원 목록 표시
         function displayEmployees(employees) {
             const tbody = document.querySelector('#employeesTable tbody');
+            if (!tbody) return;
+            
+            if (!employees || employees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">등록된 직원이 없습니다.</td></tr>';
+                return;
+            }
+            
             tbody.innerHTML = employees.map(emp => `
                 <tr style="cursor: pointer;" onclick="viewEmployeeTestResults('${emp.user_id}', '${emp.name}')">
-                    <td>${emp.name}</td>
-                    <td>${emp.email}</td>
+                    <td>${emp.name || '-'}</td>
+                    <td>${emp.email || '-'}</td>
                     <td>${emp.department || '-'}</td>
                     <td>${emp.position || '-'}</td>
                     <td>${emp.test_completed ? '✅ 완료' : '⏳ 미완료'}</td>
-                    <td>${new Date(emp.created_at).toLocaleDateString('ko-KR')}</td>
+                    <td>${emp.created_at ? new Date(emp.created_at).toLocaleDateString('ko-KR') : '-'}</td>
                     <td onclick="event.stopPropagation();">
                         <button class="btn btn-sm" onclick="viewEmployeeDetail('${emp.user_id}')">상세</button>
                         ${emp.test_completed ? 
@@ -1234,16 +1248,23 @@
         // 테스트 결과 표시
         function displayTestResults(results) {
             const tbody = document.querySelector('#testResultsTable tbody');
+            if (!tbody) return;
+            
+            if (!results || results.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center;">테스트 결과가 없습니다.</td></tr>';
+                return;
+            }
+            
             tbody.innerHTML = results.map(result => `
                 <tr>
-                    <td>${result.user_name}</td>
-                    <td>${new Date(result.test_date).toLocaleDateString('ko-KR')}</td>
-                    <td>${result.overall_score}</td>
-                    <td>${result.problem_solving_score}</td>
-                    <td>${result.communication_score}</td>
-                    <td>${result.leadership_score}</td>
-                    <td>${result.creativity_score}</td>
-                    <td>${result.teamwork_score}</td>
+                    <td>${result.user_name || '-'}</td>
+                    <td>${result.test_date ? new Date(result.test_date).toLocaleDateString('ko-KR') : '-'}</td>
+                    <td>${result.overall_score || 0}</td>
+                    <td>${result.problem_solving_score || 0}</td>
+                    <td>${result.communication_score || 0}</td>
+                    <td>${result.leadership_score || 0}</td>
+                    <td>${result.creativity_score || 0}</td>
+                    <td>${result.teamwork_score || 0}</td>
                     <td>${result.has_feedback ? '✅' : '-'}</td>
                     <td>
                         <button onclick="viewTestDetail('${result.result_id}')">상세</button>
