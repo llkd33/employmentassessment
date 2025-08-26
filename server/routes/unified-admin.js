@@ -139,8 +139,12 @@ router.get('/company-stats', authenticateToken, async (req, res) => {
 // 기업 목록 (Super Admin)
 router.get('/companies', authenticateToken, async (req, res) => {
     const userRole = req.user.role;
+    const userId = req.user.userId;
+    
+    console.log('Companies API called - User:', userId, 'Role:', userRole);
     
     if (!['super_admin', 'sys_admin'].includes(userRole)) {
+        console.log('Access denied for role:', userRole);
         return res.status(403).json({ error: 'Access denied' });
     }
     
@@ -155,6 +159,7 @@ router.get('/companies', authenticateToken, async (req, res) => {
             ORDER BY c.created_at DESC
         `);
         
+        console.log('Companies found:', result.rows.length);
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching companies:', error);
@@ -167,6 +172,8 @@ router.get('/employees', authenticateToken, requireAdmin, async (req, res) => {
     const userId = req.user.userId;
     const userRole = req.user.role;
     
+    console.log('Employees API called - User:', userId, 'Role:', userRole);
+    
     try {
         // Company Admin의 경우 company_id를 조회
         let companyId = null;
@@ -177,10 +184,12 @@ router.get('/employees', authenticateToken, requireAdmin, async (req, res) => {
             );
             
             if (userResult.rows.length === 0 || !userResult.rows[0].company_id) {
+                console.log('Company ID not found for user:', userId);
                 return res.status(400).json({ error: 'Company ID not found for user' });
             }
             
             companyId = userResult.rows[0].company_id;
+            console.log('Company ID for user:', companyId);
         }
         
         let query;
@@ -214,7 +223,15 @@ router.get('/employees', authenticateToken, requireAdmin, async (req, res) => {
             params = [companyId];
         }
         
+        console.log('Executing query with params:', params);
         const result = await pool.query(query, params);
+        console.log('Employees found:', result.rows.length);
+        
+        // 첫 몇 개의 결과 로그 (디버깅용)
+        if (result.rows.length > 0) {
+            console.log('Sample employee:', result.rows[0]);
+        }
+        
         res.json(result.rows);
         
     } catch (error) {
