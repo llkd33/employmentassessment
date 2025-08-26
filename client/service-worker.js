@@ -1,5 +1,5 @@
 // service-worker.js - 오프라인 지원 및 캐싱
-// Version: 2.0.0 - Kakao SDK support added
+// Version: 2.1.0 - Admin pages excluded from caching
 
 const CACHE_NAME = `employee-test-v${Date.now()}`; // 항상 새로운 캐시 버전
 const isProduction = location.hostname !== 'localhost' && !location.hostname.includes('127.0.0.1');
@@ -104,6 +104,12 @@ self.addEventListener('fetch', event => {
 
     if (isExternalDomain) {
         // 외부 도메인은 Service Worker 개입 없이 직접 fetch
+        return;
+    }
+
+    // Admin 페이지는 서비스 워커가 처리하지 않음 (항상 네트워크에서)
+    if (request.url.includes('/admin') || request.url.includes('admin-') || request.url.includes('unified-admin')) {
+        event.respondWith(fetch(request));
         return;
     }
 
