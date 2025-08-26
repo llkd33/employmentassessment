@@ -20,7 +20,7 @@ const authenticateToken = (req, res, next) => {
 
 // 관리자 권한 확인 미들웨어 (승인된 관리자만)
 const requireAdmin = async (req, res, next) => {
-    if (!req.user || !['super_admin', 'company_admin', 'test_admin'].includes(req.user.role)) {
+    if (!req.user || !['super_admin', 'sys_admin', 'company_admin', 'test_admin', 'hr_manager'].includes(req.user.role)) {
         return res.status(403).json({ error: '관리자 권한이 필요합니다.' });
     }
     

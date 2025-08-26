@@ -972,14 +972,21 @@
                 const endpoint = currentUser.role === 'super_admin' || currentUser.role === 'sys_admin'
                     ? '/api/admin/system-stats' 
                     : '/api/admin/company-stats';
+                
+                console.log('Loading stats from:', endpoint, 'with role:', currentUser.role);
                     
                 const response = await fetch(endpoint, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (!response.ok) throw new Error('Failed to load stats');
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Failed to load stats:', response.status, errorText);
+                    throw new Error('Failed to load stats');
+                }
                 
                 const stats = await response.json();
+                console.log('Stats loaded successfully:', stats);
                 displayStats(stats);
                 
             } catch (error) {
@@ -1078,6 +1085,8 @@
         async function loadCompanies() {
             const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
             
+            console.log('Loading companies list...');
+            
             try {
                 const response = await fetch('/api/admin/companies', {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -1091,14 +1100,17 @@
 
                 if (!response.ok) {
                     if (response.status === 401 || response.status === 403) {
-                        window.location.href = '/admin-login.html';
+                        console.error('Auth failed, redirecting to login');
+                        window.location.href = '/client/admin-login.html';
                         return;
                     }
-                    console.error('Failed to load companies');
+                    const errorText = await response.text();
+                    console.error('Failed to load companies:', response.status, errorText);
                     return;
                 }
                 
                 const companies = await response.json();
+                console.log('Companies loaded:', companies);
                 displayCompanies(companies);
                 
             } catch (error) {
@@ -1129,6 +1141,8 @@
         async function loadEmployees() {
             const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
             
+            console.log('Loading employees list...');
+            
             try {
                 const response = await fetch('/api/admin/employees', {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -1142,14 +1156,17 @@
 
                 if (!response.ok) {
                     if (response.status === 401 || response.status === 403) {
-                        window.location.href = '/admin-login.html';
+                        console.error('Auth failed, redirecting to login');
+                        window.location.href = '/client/admin-login.html';
                         return;
                     }
-                    console.error('Failed to load employees');
+                    const errorText = await response.text();
+                    console.error('Failed to load employees:', response.status, errorText);
                     return;
                 }
                 
                 const employees = await response.json();
+                console.log('Employees loaded:', employees);
                 displayEmployees(employees);
                 
             } catch (error) {
@@ -1341,17 +1358,22 @@
         async function viewEmployeeTestResults(userId, userName) {
             const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
             
+            console.log(`Loading test results for user: ${userName} (${userId})`);
+            
             try {
                 const response = await fetch(`/api/admin/user/${userId}/test-results`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Failed to load test results:', response.status, errorText);
                     alert('테스트 결과를 불러올 수 없습니다.');
                     return;
                 }
                 
                 const results = await response.json();
+                console.log('Test results loaded:', results);
                 showTestResultsModal(userId, userName, results);
                 
             } catch (error) {
