@@ -34,13 +34,22 @@ const requireAdmin = async (req, res, next) => {
         
         try {
             const result = await pool.query(
-                'SELECT is_approved FROM users WHERE user_id = $1',
+                `SELECT u.is_approved, c.status as company_status 
+                 FROM users u 
+                 LEFT JOIN companies c ON u.company_id = c.id 
+                 WHERE u.user_id = $1`,
                 [req.user.userId]
             );
             
             if (!result.rows.length || !result.rows[0].is_approved) {
                 return res.status(403).json({ 
                     error: '관리자 계정이 아직 승인되지 않았습니다. 슈퍼 관리자의 승인을 기다려주세요.' 
+                });
+            }
+
+            if (result.rows[0].company_status === 'deleted') {
+                return res.status(403).json({ 
+                    error: '소속 회사가 비활성화되었습니다(삭제됨). 시스템 어드민에게 문의하세요.' 
                 });
             }
         } catch (error) {

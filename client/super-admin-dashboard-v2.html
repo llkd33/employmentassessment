@@ -582,7 +582,7 @@
             </div>
         </div>
 
-        <!-- Data Management Table -->
+        <!-- Companies Management Table -->
         <div class="data-table">
             <div class="table-header">
                 <h3 style="margin: 0;">Company Management</h3>
@@ -618,6 +618,32 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <!-- Pending Company Admins -->
+    <div class="data-table" style="margin-top:20px;">
+        <div class="table-header">
+            <h3 style="margin: 0;">Pending Company Admins</h3>
+            <div class="table-controls">
+                <button class="btn-primary" style="padding: 8px 16px; font-size: 14px;" onclick="refreshPendingAdmins()">Refresh</button>
+            </div>
+        </div>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%;">
+                <thead>
+                    <tr style="background: #f8f9fa;">
+                        <th style="padding: 15px;">Name</th>
+                        <th style="padding: 15px;">Email</th>
+                        <th style="padding: 15px;">Company</th>
+                        <th style="padding: 15px;">Requested At</th>
+                        <th style="padding: 15px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="pendingAdminsTableBody">
+                    <!-- Pending admins -->
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -690,11 +716,12 @@
                 showLoadingState();
 
                 // Fetch all data in parallel
-                const [stats, companies, activities, metrics] = await Promise.all([
+                const [stats, companies, activities, metrics, pending] = await Promise.all([
                     fetchStats(),
                     fetchCompanies(),
                     fetchActivities(),
-                    fetchMetrics()
+                    fetchMetrics(),
+                    fetchPendingAdmins()
                 ]);
 
                 // Update UI
@@ -702,6 +729,7 @@
                 renderCompaniesTable(companies);
                 renderActivityFeed(activities);
                 updateHealthMonitor(metrics);
+                renderPendingAdminsTable(pending);
 
                 // Initialize charts
                 initializeCharts();
@@ -717,37 +745,42 @@
 
         // Fetch functions
         async function fetchStats() {
-            const response = await fetch('/api/admin/stats', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+            const sysToken = localStorage.getItem('sysAdminToken');
+            if (!sysToken) { location.href = '/client/sys-admin-login.html'; return {}; }
+            const response = await fetch('/api/sys-admin/stats', {
+                headers: { 'Authorization': `Bearer ${sysToken}` }
             });
             return response.json();
         }
 
         async function fetchCompanies() {
-            const response = await fetch('/api/admin/companies', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+            // 우선 시스템 어드민 토큰 사용
+            const sysToken = localStorage.getItem('sysAdminToken');
+            if (!sysToken) {
+                console.warn('No sysAdminToken found. Redirecting to system admin login.');
+                location.href = '/client/sys-admin-login.html';
+                return { companies: [] };
+            }
+            const response = await fetch('/api/sys-admin/companies', {
+                headers: { 'Authorization': `Bearer ${sysToken}` }
             });
             return response.json();
         }
 
         async function fetchActivities() {
-            const response = await fetch('/api/admin/activities', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+            const sysToken = localStorage.getItem('sysAdminToken');
+            if (!sysToken) { location.href = '/client/sys-admin-login.html'; return []; }
+            const response = await fetch('/api/sys-admin/activities?limit=20', {
+                headers: { 'Authorization': `Bearer ${sysToken}` }
             });
             return response.json();
         }
 
         async function fetchMetrics() {
-            const response = await fetch('/api/admin/metrics', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+            const sysToken = localStorage.getItem('sysAdminToken');
+            if (!sysToken) { location.href = '/client/sys-admin-login.html'; return {}; }
+            const response = await fetch('/api/sys-admin/metrics', {
+                headers: { 'Authorization': `Bearer ${sysToken}` }
             });
             return response.json();
         }
@@ -1052,6 +1085,251 @@
             checkboxes.forEach(cb => cb.checked = selectAll.checked);
             toggleBulkActions();
         }
+
+        // ==========================
+        // System Admin: Modals & UI
+        // ==========================
+        function openModal(type, payload = {}) {
+            const sysToken = localStorage.getItem('sysAdminToken');
+            if (!sysToken) { location.href = '/client/sys-admin-login.html'; return; }
+            ensureModalRoot();
+            const root = document.getElementById('modalRoot');
+            root.innerHTML = '';
+            if (type === 'addCompany') {
+                root.appendChild(renderAddCompanyModal());
+            } else if (type === 'editCompany') {
+                root.appendChild(renderEditCompanyModal(payload));
+            } else if (type === 'inviteAdmin') {
+                root.appendChild(renderCreateAdminModal());
+            }
+            root.style.display = 'flex';
+        }
+
+        function closeModal() {
+            const root = document.getElementById('modalRoot');
+            if (root) { root.style.display = 'none'; root.innerHTML = ''; }
+        }
+
+        function ensureModalRoot() {
+            if (!document.getElementById('modalRoot')) {
+                const div = document.createElement('div');
+                div.id = 'modalRoot';
+                div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:9999;';
+                document.body.appendChild(div);
+            }
+        }
+
+        function renderAddCompanyModal() {
+            const wrap = document.createElement('div');
+            wrap.innerHTML = `
+              <div style="background:#fff;border-radius:10px;max-width:420px;width:100%;padding:20px;box-shadow:0 10px 24px rgba(0,0,0,0.1);">
+                <h3 style="margin:0 0 10px 0">Add Company</h3>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <input id="ac_name" class="input" placeholder="Company Name" />
+                  <input id="ac_code" class="input" placeholder="Company Code" />
+                  <input id="ac_domain" class="input" placeholder="Email Domain (optional)" />
+                </div>
+                <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end;">
+                  <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                  <button class="btn-primary" onclick="addCompanySubmit()">Create</button>
+                </div>
+              </div>`;
+            return wrap;
+        }
+
+        async function addCompanySubmit() {
+            const name = document.getElementById('ac_name').value.trim();
+            const code = document.getElementById('ac_code').value.trim();
+            const domain = document.getElementById('ac_domain').value.trim();
+            const token = localStorage.getItem('sysAdminToken');
+            if (!name || !code) { showNotification('Error', '회사명과 코드가 필요합니다.', 'error'); return; }
+            try {
+                const res = await fetch('/api/sys-admin/companies', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ name, code, domain: domain || null })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to create company');
+                closeModal();
+                showNotification('Success', 'Company has been created', 'success');
+                refreshCompaniesTable();
+            } catch (e) {
+                showNotification('Error', e.message, 'error');
+            }
+        }
+
+        function renderEditCompanyModal(company) {
+            const wrap = document.createElement('div');
+            wrap.innerHTML = `
+              <div style="background:#fff;border-radius:10px;max-width:420px;width:100%;padding:20px;box-shadow:0 10px 24px rgba(0,0,0,0.1);">
+                <h3 style="margin:0 0 10px 0">Edit Company</h3>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <input id="ec_name" class="input" placeholder="Company Name" value="${company.name || ''}" />
+                  <input id="ec_domain" class="input" placeholder="Email Domain" value="${company.domain || ''}" />
+                  <select id="ec_status" class="input">
+                    <option value="active" ${company.status==='active'?'selected':''}>active</option>
+                    <option value="inactive" ${company.status==='inactive'?'selected':''}>inactive</option>
+                    <option value="deleted" ${company.status==='deleted'?'selected':''}>deleted</option>
+                  </select>
+                </div>
+                <div style="margin-top:16px;display:flex;gap:10px;justify-content:space-between;align-items:center;">
+                  <button class="btn-danger" onclick="softDeleteCompany(${company.id})">Soft Delete</button>
+                  <div>
+                    <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button class="btn-primary" onclick="editCompanySubmit(${company.id})">Save</button>
+                  </div>
+                </div>
+              </div>`;
+            return wrap;
+        }
+
+        async function editCompanySubmit(id) {
+            const name = document.getElementById('ec_name').value.trim();
+            const domain = document.getElementById('ec_domain').value.trim();
+            const status = document.getElementById('ec_status').value;
+            const token = localStorage.getItem('sysAdminToken');
+            try {
+                const res = await fetch(`/api/sys-admin/companies/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ name, domain: domain || null, status })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to update company');
+                closeModal();
+                showNotification('Success', 'Company updated', 'success');
+                refreshCompaniesTable();
+            } catch (e) { showNotification('Error', e.message, 'error'); }
+        }
+
+        async function softDeleteCompany(id) {
+            const token = localStorage.getItem('sysAdminToken');
+            if (!confirm('해당 회사를 소프트 삭제하시겠습니까?')) return;
+            try {
+                const res = await fetch(`/api/sys-admin/companies/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to delete company');
+                closeModal();
+                showNotification('Success', 'Company soft-deleted', 'success');
+                refreshCompaniesTable();
+            } catch (e) { showNotification('Error', e.message, 'error'); }
+        }
+
+        function renderCreateAdminModal() {
+            const wrap = document.createElement('div');
+            wrap.innerHTML = `
+              <div style="background:#fff;border-radius:10px;max-width:460px;width:100%;padding:20px;box-shadow:0 10px 24px rgba(0,0,0,0.1);">
+                <h3 style="margin:0 0 10px 0">Create Company Admin</h3>
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                  <input id="ca_email" class="input" placeholder="Email" />
+                  <input id="ca_name" class="input" placeholder="Name" />
+                  <input id="ca_password" class="input" type="password" placeholder="Password (optional)" />
+                  <input id="ca_company" class="input" placeholder="Company ID" />
+                  <div class="note">비밀번호 미입력 시 임시 비밀번호가 발급됩니다.</div>
+                </div>
+                <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end;">
+                  <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                  <button class="btn-primary" onclick="createCompanyAdminSubmit()">Create</button>
+                </div>
+              </div>`;
+            return wrap;
+        }
+
+        async function createCompanyAdminSubmit() {
+            const email = document.getElementById('ca_email').value.trim();
+            const name = document.getElementById('ca_name').value.trim();
+            const password = document.getElementById('ca_password').value;
+            const companyId = parseInt(document.getElementById('ca_company').value);
+            const token = localStorage.getItem('sysAdminToken');
+            if (!email || !name || !companyId) { showNotification('Error', '필수 항목을 입력하세요.', 'error'); return; }
+            try {
+                const res = await fetch('/api/sys-admin/company-admins', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ email, name, password, companyId })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to create admin');
+                closeModal();
+                let msg = 'Company admin created';
+                if (data.tempPassword) msg += ` (temp: ${data.tempPassword})`;
+                showNotification('Success', msg, 'success');
+            } catch (e) { showNotification('Error', e.message, 'error'); }
+        }
+
+        async function refreshCompaniesTable() {
+            const res = await fetchCompanies();
+            renderCompaniesTable(res);
+        }
+
+        // Render companies table with actions
+        function renderCompaniesTable(res) {
+            const list = Array.isArray(res) ? res : (res?.companies || []);
+            const tbody = document.getElementById('companiesTableBody');
+            tbody.innerHTML = list.map(c => `
+                <tr>
+                  <td style="padding: 12px;"><input type="checkbox" onchange="toggleBulkActions()"></td>
+                  <td style="padding: 12px; font-weight: 600;">${c.name} <div style="font-size:12px;color:#7f8c8d;">${c.domain || ''}</div></td>
+                  <td style="padding: 12px;">${c.status || 'active'}</td>
+                  <td style="padding: 12px;">${c.user_count ?? '-'}</td>
+                  <td style="padding: 12px;">-</td>
+                  <td style="padding: 12px;">-</td>
+                  <td style="padding: 12px; display:flex; gap:8px;">
+                    <button class="btn-secondary" onclick='openModal("editCompany", ${JSON.stringify({ id: '${c.id}', name: c.name, domain: c.domain || '', status: c.status || 'active' }).replace(/"/g, '&quot;')})'>Edit</button>
+                    <button class="btn-danger" onclick="softDeleteCompany(${c.id})">Delete</button>
+                  </td>
+                </tr>
+            `).join('');
+        }
     </script>
 </body>
 </html>
+        async function fetchPendingAdmins() {
+            const sysToken = localStorage.getItem('sysAdminToken');
+            if (!sysToken) { location.href = '/client/sys-admin-login.html'; return { pendingAdmins: [] }; }
+            const res = await fetch('/api/sys-admin/company-admins/pending', {
+                headers: { 'Authorization': `Bearer ${sysToken}` }
+            });
+            return res.json();
+        }
+
+        function renderPendingAdminsTable(res) {
+            const list = res?.pendingAdmins || [];
+            const tbody = document.getElementById('pendingAdminsTableBody');
+            tbody.innerHTML = list.map(a => `
+                <tr>
+                    <td style="padding: 12px; font-weight: 600;">${a.name}</td>
+                    <td style="padding: 12px;">${a.email}</td>
+                    <td style="padding: 12px;">${a.company_name || '-'}</td>
+                    <td style="padding: 12px;">${a.created_at ? new Date(a.created_at).toLocaleString() : '-'}</td>
+                    <td style="padding: 12px;">
+                        <button class="btn-primary" onclick="approveCompanyAdmin('${a.user_id}')">Approve</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function approveCompanyAdmin(userId) {
+            const sysToken = localStorage.getItem('sysAdminToken');
+            try {
+                const res = await fetch(`/api/sys-admin/company-admins/${userId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${sysToken}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to approve');
+                showNotification('Success', 'Admin approved', 'success');
+                refreshPendingAdmins();
+            } catch(e) { showNotification('Error', e.message, 'error'); }
+        }
+
+        async function refreshPendingAdmins() {
+            const res = await fetchPendingAdmins();
+            renderPendingAdminsTable(res);
+            const stats = await fetchStats();
+            updateStats(stats);
+        }

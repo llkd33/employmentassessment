@@ -310,13 +310,18 @@ router.put('/users/:userId/assign',
             
             // 회사 존재 확인
             const companyCheck = await pool.query(
-                'SELECT id, name FROM companies WHERE id = $1',
+                "SELECT id, name, status FROM companies WHERE id = $1",
                 [targetCompanyId]
             );
             
             if (!companyCheck.rows.length) {
                 return res.status(404).json({ 
                     error: '회사를 찾을 수 없습니다.' 
+                });
+            }
+            if (companyCheck.rows[0].status === 'deleted') {
+                return res.status(400).json({ 
+                    error: '삭제된 회사에는 사용자를 할당할 수 없습니다.' 
                 });
             }
             

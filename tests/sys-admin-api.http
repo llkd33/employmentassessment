@@ -1,0 +1,45 @@
+### Sys Admin API Smoke (use HTTP file in REST Client or VSCode)
+
+@host = http://localhost:3000
+@token = {{sysAdminToken}}
+
+### Login
+POST {{host}}/api/sys-admin/login
+Content-Type: application/json
+
+{
+  "username": "superadmin",
+  "password": "SuperAdmin@2024!"
+}
+
+### Companies list
+GET {{host}}/api/sys-admin/companies
+Authorization: Bearer {{token}}
+
+### Create company
+POST {{host}}/api/sys-admin/companies
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Demo Corp",
+  "code": "DEMO2025",
+  "domain": "@demo.com"
+}
+
+### Pending admins
+GET {{host}}/api/sys-admin/company-admins/pending
+Authorization: Bearer {{token}}
+
+### Stats
+GET {{host}}/api/sys-admin/stats
+Authorization: Bearer {{token}}
+
+### Activities
+GET {{host}}/api/sys-admin/activities?limit=20
+Authorization: Bearer {{token}}
+
+### Metrics
+GET {{host}}/api/sys-admin/metrics
+Authorization: Bearer {{token}}
+

@@ -13,12 +13,14 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 // 데이터베이스 연결
 const db = require('../database/database');
 
-// 관리자 라우터
+// 관리자 라우터 (기업 어드민: users 토큰)
 const adminAuthRouter = require('./routes/admin-auth');
 const adminRouter = require('./routes/admin');
 const adminInvitationRouter = require('./routes/admin-invitation');
 const adminBatchUploadRouter = require('./routes/admin-batch-upload');
 const adminApprovalRouter = require('./routes/admin-approval');
+// 시스템 어드민 라우터 (플랫폼 어드민: admin 테이블)
+const sysAdminRouter = require('./routes/adminAuth');
 
 // 기업 시스템 라우터
 const corporateSignupRouter = require('./routes/corporate-signup');
@@ -1279,12 +1281,20 @@ app.get('/api/health', (req, res) => {
 });
 
 // 관리자 API 라우터 등록
-app.use('/api/admin/auth', adminAuthRouter);
+app.use('/api/admin/auth', adminAuthRouter); // 기업 어드민(Users 기반)
 app.use('/api/admin', adminRouter);
 app.use('/api/admin/invitation', adminInvitationRouter);
 app.use('/api/admin/batch', adminBatchUploadRouter);
 app.use('/api/admin/approval', adminApprovalRouter);
 app.use('/api/admin/analytics', adminAnalyticsRouter); // Enhanced analytics endpoints
+// 피드백 시스템
+const adminFeedbackRouter = require('./routes/admin-feedback');
+app.use('/api/admin', adminFeedbackRouter);
+// 통합 관리자 시스템
+const unifiedAdminRouter = require('./routes/unified-admin');
+app.use('/api/admin', unifiedAdminRouter);
+// 시스템 어드민 엔드포인트 (분리된 계정/권한)
+app.use('/api/sys-admin', sysAdminRouter);
 
 // 기업 시스템 라우터 등록
 app.use('/api/corporate', corporateSignupRouter);
@@ -1380,6 +1390,13 @@ async function startServer() {
         } catch (adminFeatureError) {
             console.log('⚠️ 관리자 기능 마이그레이션 스킵:', adminFeatureError.message);
         }
+        // 기업 소프트삭제 필드 마이그레이션
+        try {
+            const migrateCompanySoftDelete = require('../database/migrate-company-soft-delete');
+            await migrateCompanySoftDelete();
+        } catch (companySoftErr) {
+            console.log('⚠️ 기업 소프트삭제 마이그레이션 스킵:', companySoftErr.message);
+        }
         
         // 승인 시스템 추가
         try {
@@ -1395,9 +1412,29 @@ async function startServer() {
         console.log('✅ 데이터베이스 연결 성공!');
         console.log(`📊 현재 통계: 사용자 ${stats.totalUsers}명, 테스트 ${stats.totalTests}개`);
 
-        // Ensure super admin exists
-        const ensureSuperAdmin = require('../database/ensure_super_admin');
-        await ensureSuperAdmin();
+        // 시스템 어드민 테이블 시드(선택) - admin 테이블 보장
+        try {
+            const seedAdmins = require('../database/add-admin-role');
+            await seedAdmins();
+        } catch (seedErr) {
+            console.log('⚠️ 시스템 어드민 초기화 스킵:', seedErr.message);
+        }
+        
+        // Admin types migration (super_admin vs sys_admin)
+        try {
+            const migrateAdminTypes = require('../database/migrate-admin-types');
+            await migrateAdminTypes();
+        } catch (adminTypeErr) {
+            console.log('⚠️ Admin types migration 스킵:', adminTypeErr.message);
+        }
+        
+        // Create feedback system tables
+        try {
+            const createFeedbackSystem = require('../database/create-feedback-system');
+            await createFeedbackSystem();
+        } catch (feedbackErr) {
+            console.log('⚠️ Feedback system creation 스킵:', feedbackErr.message);
+        }
     } catch (error) {
         console.error('❌ 데이터베이스 초기화 실패:', error.message);
         console.log('⚠️  DATABASE_URL 환경 변수를 확인해주세요.');

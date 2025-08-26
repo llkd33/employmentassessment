@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>통합 관리자 대시보드</title>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary-color: #667eea;
+            --primary-dark: #764ba2;
+            --sidebar-width: 280px;
+            --header-height: 60px;
+            --safe-area-inset-top: env(safe-area-inset-top);
+            --safe-area-inset-bottom: env(safe-area-inset-bottom);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            min-height: 100vh;
+            padding-top: var(--safe-area-inset-top);
+            padding-bottom: var(--safe-area-inset-bottom);
+            overflow-x: hidden;
+        }
+
+        /* 모바일 헤더 */
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: var(--safe-area-inset-top);
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1001;
+            padding: 0 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .menu-toggle {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            transition: background 0.3s ease;
+        }
+
+        .menu-toggle:active {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .hamburger {
+            width: 24px;
+            height: 20px;
+            position: relative;
+        }
+
+        .hamburger span {
+            display: block;
+            position: absolute;
+            height: 3px;
+            width: 100%;
+            background: #333;
+            border-radius: 3px;
+            opacity: 1;
+            left: 0;
+            transform: rotate(0deg);
+            transition: .25s ease-in-out;
+        }
+
+        .hamburger span:nth-child(1) {
+            top: 0px;
+        }
+
+        .hamburger span:nth-child(2) {
+            top: 8px;
+        }
+
+        .hamburger span:nth-child(3) {
+            top: 16px;
+        }
+
+        .menu-toggle.active .hamburger span:nth-child(1) {
+            top: 8px;
+            transform: rotate(135deg);
+        }
+
+        .menu-toggle.active .hamburger span:nth-child(2) {
+            opacity: 0;
+            left: -60px;
+        }
+
+        .menu-toggle.active .hamburger span:nth-child(3) {
+            top: 8px;
+            transform: rotate(-135deg);
+        }
+
+        .mobile-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .mobile-user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* 오버레이 */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* 사이드바 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: white;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .sidebar-header {
+            padding: 30px 20px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .sidebar-header h2 {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        .user-info {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .user-role {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            margin-top: 8px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* 네비게이션 메뉴 */
+        .nav-menu {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 25px;
+        }
+
+        .nav-section-title {
+            padding: 0 20px;
+            font-size: 11px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            gap: 15px;
+            font-size: 15px;
+            position: relative;
+        }
+
+        .nav-item:active {
+            background: #f0f0f0;
+            transform: scale(0.98);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(102,126,234,0.1) 0%, transparent 100%);
+            color: var(--primary-color);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--primary-color);
+        }
+
+        .nav-item i {
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* 메인 컨텐츠 */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        /* 컨텐츠 페이지 */
+        .content-page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .content-page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0);
+            }
+        }
+
+        /* 카드 스타일 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .stat-card:active {
+            transform: scale(0.98);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 13px;
+        }
+
+        /* 테이블 컨테이너 */
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .table-title {
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        /* 버튼 스타일 */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            touch-action: manipulation;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+
+        /* 모바일 테이블 */
+        .mobile-table {
+            display: none;
+        }
+
+        .table-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+        }
+
+        .table-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .table-item-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .table-item-badge {
+            padding: 4px 10px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .table-item-details {
+            display: grid;
+            gap: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .table-item-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .table-item-label {
+            font-weight: 500;
+        }
+
+        /* 바텀 탭바 (모바일) */
+        .bottom-tabs {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 -2px 15px rgba(0,0,0,0.1);
+            padding-bottom: var(--safe-area-inset-bottom);
+            z-index: 998;
+        }
+
+        .tabs-container {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+        }
+
+        .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            color: #999;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .tab-item.active {
+            color: var(--primary-color);
+        }
+
+        .tab-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .tab-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* 반응형 미디어 쿼리 */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+                padding-top: calc(var(--header-height) + 20px + var(--safe-area-inset-top));
+                padding-bottom: 80px;
+            }
+
+            .mobile-header {
+                display: flex;
+            }
+
+            .overlay.active {
+                display: block;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .bottom-tabs {
+                display: block;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .main-content {
+                padding: 15px;
+                padding-top: calc(var(--header-height) + 15px + var(--safe-area-inset-top));
+            }
+
+            .stat-card {
+                padding: 18px;
+            }
+
+            .data-table {
+                display: none;
+            }
+
+            .mobile-table {
+                display: block;
+            }
+
+            .table-actions {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .sidebar {
+                width: 85%;
+            }
+
+            .mobile-title {
+                font-size: 16px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+        }
+
+        /* 터치 최적화 */
+        @media (hover: none) and (pointer: coarse) {
+            .nav-item {
+                padding: 16px 20px;
+            }
+
+            .btn {
+                padding: 14px 24px;
+                font-size: 15px;
+            }
+
+            .stat-card {
+                cursor: default;
+            }
+
+            .stat-card:hover {
+                transform: none;
+            }
+        }
+
+        /* 다크모드 지원 */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #1a1a1a;
+            }
+
+            .sidebar {
+                background: #2a2a2a;
+            }
+
+            .mobile-header {
+                background: #2a2a2a;
+            }
+
+            .hamburger span {
+                background: #fff;
+            }
+
+            .mobile-title {
+                color: #fff;
+            }
+
+            .nav-item {
+                color: #e0e0e0;
+            }
+
+            .stat-card,
+            .table-container {
+                background: #2a2a2a;
+                color: #e0e0e0;
+            }
+
+            .stat-value {
+                color: #fff;
+            }
+
+            .table-item {
+                background: #333;
+            }
+
+            .table-item-title {
+                color: #fff;
+            }
+        }
+
+        /* 테이블 스타일 */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #666;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .data-table tbody tr:active {
+            background: #f8f9fa;
+        }
+
+        /* 로딩 스피너 */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid var(--primary-color);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Pull to Refresh */
+        .pull-to-refresh {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            right: 0;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-size: 14px;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            z-index: 997;
+        }
+
+        .pull-to-refresh.active {
+            transform: translateY(0);
+        }
+
+        /* 권한별 숨김 처리 */
+        .super-admin-only,
+        .company-admin-only,
+        .hr-manager-only {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 모바일 헤더 -->
+    <header class="mobile-header">
+        <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </button>
+        <h1 class="mobile-title">관리자 대시보드</h1>
+        <div class="mobile-user-avatar" id="mobileAvatar">A</div>
+    </header>
+
+    <!-- Pull to Refresh 인디케이터 -->
+    <div class="pull-to-refresh" id="pullToRefresh">
+        <span>↓ 새로고침 중...</span>
+    </div>
+
+    <!-- 오버레이 -->
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+    <!-- 사이드바 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>관리자 시스템</h2>
+            <div class="user-info">
+                <div id="adminName">로딩중...</div>
+                <div id="adminEmail">-</div>
+                <span class="user-role" id="userRole">-</span>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <!-- 기본 메뉴 -->
+            <div class="nav-section">
+                <div class="nav-section-title">대시보드</div>
+                <a class="nav-item active" data-page="overview" onclick="navigateToPage('overview')">
+                    <i>📊</i> <span>전체 현황</span>
+                </a>
+            </div>
+
+            <!-- Super Admin 전용 메뉴 -->
+            <div class="nav-section super-admin-only">
+                <div class="nav-section-title">시스템 관리</div>
+                <a class="nav-item" data-page="companies" onclick="navigateToPage('companies')">
+                    <i>🏢</i> <span>기업 관리</span>
+                </a>
+                <a class="nav-item" data-page="system-users" onclick="navigateToPage('system-users')">
+                    <i>👥</i> <span>전체 사용자</span>
+                </a>
+                <a class="nav-item" data-page="system-stats" onclick="navigateToPage('system-stats')">
+                    <i>📈</i> <span>시스템 통계</span>
+                </a>
+            </div>
+
+            <!-- Company Admin 메뉴 -->
+            <div class="nav-section company-admin-only">
+                <div class="nav-section-title">직원 관리</div>
+                <a class="nav-item" data-page="employees" onclick="navigateToPage('employees')">
+                    <i>👤</i> <span>직원 목록</span>
+                </a>
+                <a class="nav-item" data-page="test-results" onclick="navigateToPage('test-results')">
+                    <i>📝</i> <span>테스트 결과</span>
+                </a>
+                <a class="nav-item" data-page="feedback" onclick="navigateToPage('feedback')">
+                    <i>💬</i> <span>피드백 관리</span>
+                </a>
+            </div>
+
+            <!-- 설정 메뉴 -->
+            <div class="nav-section">
+                <div class="nav-section-title">설정</div>
+                <a class="nav-item" data-page="profile" onclick="navigateToPage('profile')">
+                    <i>⚙️</i> <span>설정</span>
+                </a>
+                <a class="nav-item" onclick="logout()">
+                    <i>🚪</i> <span>로그아웃</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main-content">
+        <!-- 전체 현황 페이지 -->
+        <div class="content-page active" id="overview-page">
+            <div class="stats-grid" id="statsGrid">
+                <!-- 통계 카드가 동적으로 로드됨 -->
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">전체 사용자</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">완료된 테스트</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💬</div>
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">피드백</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value">0%</div>
+                    <div class="stat-label">평균 점수</div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title">최근 활동</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-primary" onclick="refreshData()">새로고침</button>
+                    </div>
+                </div>
+                
+                <!-- 데스크톱 테이블 -->
+                <table class="data-table" id="recentActivityTable">
+                    <thead>
+                        <tr>
+                            <th>시간</th>
+                            <th>사용자</th>
+                            <th>활동</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>10분 전</td>
+                            <td>김철수</td>
+                            <td>테스트 완료</td>
+                            <td>✅ 완료</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- 모바일 테이블 -->
+                <div class="mobile-table">
+                    <div class="table-item">
+                        <div class="table-item-header">
+                            <span class="table-item-title">김철수</span>
+                            <span class="table-item-badge">완료</span>
+                        </div>
+                        <div class="table-item-details">
+                            <div class="table-item-row">
+                                <span class="table-item-label">활동:</span>
+                                <span>테스트 완료</span>
+                            </div>
+                            <div class="table-item-row">
+                                <span class="table-item-label">시간:</span>
+                                <span>10분 전</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 기업 관리 페이지 -->
+        <div class="content-page" id="companies-page">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title">기업 관리</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-primary" onclick="showAddCompanyModal()">새 기업 추가</button>
+                    </div>
+                </div>
+                <div id="companiesContent">
+                    <!-- 기업 목록이 동적으로 로드됨 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 직원 관리 페이지 -->
+        <div class="content-page" id="employees-page">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title">직원 목록</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-primary" onclick="showInviteModal()">직원 초대</button>
+                    </div>
+                </div>
+                <div id="employeesContent">
+                    <!-- 직원 목록이 동적으로 로드됨 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 테스트 결과 페이지 -->
+        <div class="content-page" id="test-results-page">
+            <div class="table-container">
+                <div class="table-header">
+                    <h3 class="table-title">테스트 결과</h3>
+                </div>
+                <div id="testResultsContent">
+                    <!-- 테스트 결과가 동적으로 로드됨 -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 바텀 탭바 (모바일) -->
+    <nav class="bottom-tabs">
+        <div class="tabs-container">
+            <a href="#" class="tab-item active" onclick="navigateToPage('overview'); return false;">
+                <span class="tab-icon">🏠</span>
+                <span class="tab-label">홈</span>
+            </a>
+            <a href="#" class="tab-item company-admin-only" onclick="navigateToPage('employees'); return false;">
+                <span class="tab-icon">👥</span>
+                <span class="tab-label">직원</span>
+            </a>
+            <a href="#" class="tab-item super-admin-only" onclick="navigateToPage('companies'); return false;">
+                <span class="tab-icon">🏢</span>
+                <span class="tab-label">기업</span>
+            </a>
+            <a href="#" class="tab-item" onclick="navigateToPage('test-results'); return false;">
+                <span class="tab-icon">📊</span>
+                <span class="tab-label">결과</span>
+            </a>
+            <a href="#" class="tab-item" onclick="navigateToPage('profile'); return false;">
+                <span class="tab-icon">⚙️</span>
+                <span class="tab-label">설정</span>
+            </a>
+        </div>
+    </nav>
+
+    <script>
+        let currentUser = null;
+        let currentPage = 'overview';
+        let startY = 0;
+        let isPulling = false;
+
+        // 초기화
+        async function init() {
+            await loadUserInfo();
+            setupPullToRefresh();
+            loadPageContent(currentPage);
+            
+            // 모바일 뒤로가기 처리
+            window.addEventListener('popstate', handleBackButton);
+        }
+
+        // 사용자 정보 로드
+        async function loadUserInfo() {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/admin-login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user info');
+                }
+
+                currentUser = await response.json();
+                
+                // 사용자 정보 표시
+                document.getElementById('adminName').textContent = currentUser.name;
+                document.getElementById('adminEmail').textContent = currentUser.email;
+                document.getElementById('userRole').textContent = getRoleDisplayName(currentUser.role);
+                
+                // 모바일 아바타 설정
+                const initials = currentUser.name.charAt(0).toUpperCase();
+                document.getElementById('mobileAvatar').textContent = initials;
+                
+                // 권한별 메뉴 표시
+                showMenusByRole(currentUser.role);
+                
+            } catch (error) {
+                console.error('Error loading user info:', error);
+                window.location.href = '/admin-login.html';
+            }
+        }
+
+        // 역할명 한글 표시
+        function getRoleDisplayName(role) {
+            const roleNames = {
+                'super_admin': '최고 관리자',
+                'sys_admin': '시스템 관리자',
+                'company_admin': '기업 관리자',
+                'hr_manager': 'HR 매니저',
+                'admin': '관리자'
+            };
+            return roleNames[role] || role;
+        }
+
+        // 권한별 메뉴 표시
+        function showMenusByRole(role) {
+            const superAdminElements = document.querySelectorAll('.super-admin-only');
+            const companyAdminElements = document.querySelectorAll('.company-admin-only');
+            const hrManagerElements = document.querySelectorAll('.hr-manager-only');
+
+            // 모든 메뉴 숨김
+            superAdminElements.forEach(el => el.style.display = 'none');
+            companyAdminElements.forEach(el => el.style.display = 'none');
+            hrManagerElements.forEach(el => el.style.display = 'none');
+
+            // 역할별 메뉴 표시
+            switch(role) {
+                case 'super_admin':
+                case 'sys_admin':
+                    superAdminElements.forEach(el => el.style.display = 'block');
+                    companyAdminElements.forEach(el => el.style.display = 'block');
+                    hrManagerElements.forEach(el => el.style.display = 'block');
+                    // 모바일 탭 표시
+                    document.querySelectorAll('.super-admin-only.tab-item').forEach(el => {
+                        el.style.display = 'flex';
+                    });
+                    break;
+                case 'company_admin':
+                    companyAdminElements.forEach(el => el.style.display = 'block');
+                    hrManagerElements.forEach(el => el.style.display = 'block');
+                    document.querySelectorAll('.company-admin-only.tab-item').forEach(el => {
+                        el.style.display = 'flex';
+                    });
+                    break;
+                case 'hr_manager':
+                    hrManagerElements.forEach(el => el.style.display = 'block');
+                    break;
+            }
+        }
+
+        // 사이드바 토글
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const menuToggle = document.getElementById('menuToggle');
+            
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            menuToggle.classList.toggle('active');
+        }
+
+        // 사이드바 닫기
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const menuToggle = document.getElementById('menuToggle');
+            
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            menuToggle.classList.remove('active');
+        }
+
+        // 페이지 네비게이션
+        function navigateToPage(page) {
+            // 모든 페이지 숨김
+            document.querySelectorAll('.content-page').forEach(p => {
+                p.classList.remove('active');
+            });
+
+            // 모든 네비게이션 아이템 비활성화
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // 모바일 탭 비활성화
+            document.querySelectorAll('.tab-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // 선택된 페이지 표시
+            const pageElement = document.getElementById(`${page}-page`);
+            if (pageElement) {
+                pageElement.classList.add('active');
+            }
+
+            // 선택된 네비게이션 아이템 활성화
+            document.querySelectorAll(`.nav-item[data-page="${page}"]`).forEach(item => {
+                item.classList.add('active');
+            });
+
+            // 선택된 탭 활성화
+            const tabMap = {
+                'overview': 0,
+                'employees': 1,
+                'companies': 2,
+                'test-results': 3,
+                'profile': 4
+            };
+            
+            const tabIndex = tabMap[page];
+            if (tabIndex !== undefined) {
+                const tabs = document.querySelectorAll('.tab-item');
+                if (tabs[tabIndex]) {
+                    tabs[tabIndex].classList.add('active');
+                }
+            }
+
+            currentPage = page;
+            loadPageContent(page);
+            
+            // 모바일에서 사이드바 닫기
+            if (window.innerWidth <= 1024) {
+                closeSidebar();
+            }
+
+            // URL 히스토리 업데이트
+            window.history.pushState({page}, '', `#${page}`);
+        }
+
+        // 페이지별 컨텐츠 로드
+        async function loadPageContent(page) {
+            switch(page) {
+                case 'overview':
+                    await loadDashboardStats();
+                    break;
+                case 'companies':
+                    await loadCompanies();
+                    break;
+                case 'employees':
+                    await loadEmployees();
+                    break;
+                case 'test-results':
+                    await loadTestResults();
+                    break;
+            }
+        }
+
+        // 대시보드 통계 로드
+        async function loadDashboardStats() {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            
+            try {
+                const endpoint = currentUser.role === 'super_admin' 
+                    ? '/api/admin/system-stats' 
+                    : '/api/admin/company-stats';
+                    
+                const response = await fetch(endpoint, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load stats');
+                
+                const stats = await response.json();
+                displayStats(stats);
+                
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // 통계 표시
+        function displayStats(stats) {
+            const statsGrid = document.getElementById('statsGrid');
+            
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value">${stats.totalUsers || 0}</div>
+                    <div class="stat-label">전체 사용자</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-value">${stats.totalTests || 0}</div>
+                    <div class="stat-label">완료된 테스트</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💬</div>
+                    <div class="stat-value">${stats.totalFeedback || 0}</div>
+                    <div class="stat-label">피드백</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value">${stats.avgScore || 0}%</div>
+                    <div class="stat-label">평균 점수</div>
+                </div>
+            `;
+        }
+
+        // Pull to Refresh 설정
+        function setupPullToRefresh() {
+            const mainContent = document.querySelector('.main-content');
+            const pullIndicator = document.getElementById('pullToRefresh');
+            
+            let touchStartY = 0;
+            let touchEndY = 0;
+            
+            mainContent.addEventListener('touchstart', (e) => {
+                touchStartY = e.touches[0].clientY;
+            });
+            
+            mainContent.addEventListener('touchmove', (e) => {
+                touchEndY = e.touches[0].clientY;
+                
+                if (window.scrollY === 0 && touchEndY > touchStartY) {
+                    const pullDistance = touchEndY - touchStartY;
+                    
+                    if (pullDistance > 50) {
+                        pullIndicator.classList.add('active');
+                    }
+                }
+            });
+            
+            mainContent.addEventListener('touchend', () => {
+                if (pullIndicator.classList.contains('active')) {
+                    pullIndicator.classList.remove('active');
+                    refreshData();
+                }
+                
+                touchStartY = 0;
+                touchEndY = 0;
+            });
+        }
+
+        // 데이터 새로고침
+        function refreshData() {
+            loadPageContent(currentPage);
+        }
+
+        // 뒤로가기 처리
+        function handleBackButton(e) {
+            if (e.state && e.state.page) {
+                navigateToPage(e.state.page);
+            }
+        }
+
+        // 로그아웃
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('adminToken');
+                localStorage.removeItem('authToken');
+                window.location.href = '/admin-login.html';
+            }
+        }
+
+        // 기업 목록 로드
+        async function loadCompanies() {
+            // 구현 예정
+            document.getElementById('companiesContent').innerHTML = '<div class="loader"></div>';
+        }
+
+        // 직원 목록 로드
+        async function loadEmployees() {
+            // 구현 예정
+            document.getElementById('employeesContent').innerHTML = '<div class="loader"></div>';
+        }
+
+        // 테스트 결과 로드
+        async function loadTestResults() {
+            // 구현 예정
+            document.getElementById('testResultsContent').innerHTML = '<div class="loader"></div>';
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', init);
+
+        // 화면 회전 처리
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                window.scrollTo(0, 1);
+            }, 100);
+        });
+
+        // iOS 바운스 효과 방지
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.sidebar') || e.target.closest('.main-content')) {
+                return;
+            }
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+</html>

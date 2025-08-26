@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>시스템 어드민 로그인</title>
+  <link rel="stylesheet" href="/client/css/login.css" />
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f5f7fb; }
+    .card { background:#fff; padding:28px; border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,0.08); width: 360px; }
+    .title { font-size:18px; font-weight:700; margin-bottom:8px; }
+    .subtitle { font-size:12px; color:#666; margin-bottom:16px; }
+    .input { width:100%; padding:12px; border:1px solid #e0e0e6; border-radius:8px; margin-bottom:10px; }
+    .btn { width:100%; padding:12px; border:none; border-radius:8px; background:#4f46e5; color:#fff; font-weight:600; cursor:pointer; }
+    .note { font-size:12px; color:#777; margin-top:10px; }
+    .error { color:#d32f2f; font-size:12px; margin-bottom:8px; }
+  </style>
+  <script>
+    async function login(event){
+      event.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const error = document.getElementById('error');
+      error.textContent = '';
+      if(!username || !password){ error.textContent = '아이디와 비밀번호를 입력해주세요.'; return; }
+      try {
+        const res = await fetch('/api/sys-admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if(!res.ok){ error.textContent = data.error || '로그인에 실패했습니다.'; return; }
+        
+        // Store token and admin info
+        localStorage.setItem('adminToken', data.token);
+        localStorage.setItem('adminUsername', data.admin?.username || username);
+        
+        // Store admin role (super_admin or sys_admin)
+        const adminRole = data.admin?.admin_type || 'sys_admin';
+        localStorage.setItem('adminRole', adminRole);
+        
+        // Redirect based on admin type
+        if (adminRole === 'super_admin') {
+          location.href = '/super-admin-dashboard.html';
+        } else {
+          location.href = '/sys-admin-dashboard.html';
+        }
+      } catch(e){ error.textContent = '네트워크 오류가 발생했습니다.'; }
+    }
+  </script>
+  </head>
+<body>
+  <div class="card">
+    <div class="title">시스템 어드민 로그인</div>
+    <div class="subtitle">플랫폼 관리 전용 계정으로 로그인하세요.</div>
+    <form onsubmit="login(event)">
+      <input id="username" class="input" placeholder="아이디" />
+      <input id="password" class="input" type="password" placeholder="비밀번호" />
+      <div id="error" class="error"></div>
+      <button class="btn" type="submit">로그인</button>
+    </form>
+    <div class="note">기업 관리자 계정은 일반 관리자 로그인 페이지를 이용하세요.</div>
+  </div>
+</body>
+</html>
+

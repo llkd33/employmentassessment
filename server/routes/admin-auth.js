@@ -143,7 +143,7 @@ router.post('/login', async (req, res) => {
         console.log('2. Querying database for admin user...');
         // --- DEBUG LOGGING END ---
         const result = await pool.query(
-            `SELECT u.*, c.name as company_name 
+            `SELECT u.*, c.name as company_name, c.status as company_status 
             FROM users u
             LEFT JOIN companies c ON u.company_id = c.id
             WHERE u.email = $1 AND u.role IN ('super_admin', 'company_admin')`,
@@ -187,6 +187,13 @@ router.post('/login', async (req, res) => {
         console.log('6. Proceeding with token generation and login success.');
         console.log('--- END OF ATTEMPT ---');
         // --- DEBUG LOGGING END ---
+
+        // 회사 소프트삭제 여부 확인 (기업 관리자만)
+        if (user.role === 'company_admin' && user.company_status === 'deleted') {
+            return res.status(403).json({ 
+                error: '소속 회사가 삭제되었습니다. 시스템 어드민에게 문의하세요.' 
+            });
+        }
 
         // 로그인 시간 업데이트
         await pool.query(

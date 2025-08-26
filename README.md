@@ -43,3 +43,21 @@
 - 부드러운 애니메이션 효과
 - 이미지 로드 실패 시 대체 컨텐츠 표시
 - 알림 메시지 기능 
+
+## 관리자 대시보드 / 계정 분리(고급 기능)
+
+본 레포는 관리자 시스템을 포함합니다. 두 종류의 관리자 계정이 분리되어 있습니다.
+
+- 기업 관리자(Users 테이블): `client/admin-login.html` → `client/admin-dashboard-new.html`
+- 시스템 어드민(Admin 테이블): `client/sys-admin-login.html` → `client/super-admin-dashboard-v2.html`
+
+시스템 어드민은 기업 생성/수정/소프트삭제, 기업관리자 승인/직권생성 등 플랫폼 전역 기능을 `/api/sys-admin/*` 경로로 제공합니다.
+
+자세한 내용은 `ADMIN_SYS_ADMIN_GUIDE.md`를 참고하세요.
+
+### 데이터베이스 마이그레이션
+
+- 초기 스키마: `database/init-schema.js`
+- 제약조건/옵션 업데이트: `database/migrate-schema.js`
+- 관리자 기능 스키마: `database/migrate-admin-feature.js`
+- 기업 소프트삭제 스키마: `database/migrate-company-soft-delete.js`

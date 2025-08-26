@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Admin Dashboard - Technical Management</title>
+    
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/admin-dashboard.css">
+    
+    <!-- Chart.js for System Metrics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* System Admin Specific Styles */
+        .sys-admin-dashboard {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        .dashboard-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Terminal-style Sidebar */
+        .sidebar {
+            width: 280px;
+            background: rgba(15, 32, 39, 0.95);
+            border-right: 2px solid #00ff00;
+            padding: 20px;
+            overflow-y: auto;
+            color: #00ff00;
+        }
+
+        .sidebar-header {
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #00ff00;
+        }
+
+        .sidebar-header h2 {
+            color: #00ff00;
+            font-size: 20px;
+            margin: 0 0 10px 0;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .admin-role {
+            background: #00ff00;
+            color: #0f2027;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            color: #00ff00;
+            text-decoration: none;
+            border: 1px solid transparent;
+            transition: all 0.3s;
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
+        }
+
+        .sidebar-menu a:hover {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+        }
+
+        .sidebar-menu a.active {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #00ff00;
+        }
+
+        .sidebar-menu .icon {
+            width: 20px;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: rgba(32, 58, 67, 0.5);
+        }
+
+        .content-header {
+            background: rgba(15, 32, 39, 0.9);
+            border: 1px solid #00ff00;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: #00ff00;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 24px;
+            color: #00ff00;
+            margin: 0;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* System Metrics Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: rgba(15, 32, 39, 0.9);
+            border: 1px solid #00ff00;
+            padding: 15px;
+            position: relative;
+        }
+
+        .metric-label {
+            color: #00ff00;
+            font-size: 11px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #00ff00;
+            margin-bottom: 5px;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .metric-status {
+            font-size: 11px;
+            color: #00ff00;
+            opacity: 0.7;
+        }
+
+        .metric-status.warning {
+            color: #ffff00;
+        }
+
+        .metric-status.critical {
+            color: #ff0000;
+        }
+
+        /* System Logs Section */
+        .logs-container {
+            background: rgba(15, 32, 39, 0.9);
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .logs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #00ff00;
+        }
+
+        .logs-title {
+            color: #00ff00;
+            font-size: 14px;
+            font-weight: bold;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .log-entry {
+            font-family: 'SF Mono', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            margin-bottom: 5px;
+            padding: 5px;
+            background: rgba(0, 255, 0, 0.05);
+        }
+
+        .log-timestamp {
+            color: #00ff00;
+            opacity: 0.6;
+        }
+
+        .log-level {
+            padding: 2px 6px;
+            margin: 0 5px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .log-level.info {
+            background: #00ff00;
+            color: #0f2027;
+        }
+
+        .log-level.warning {
+            background: #ffff00;
+            color: #0f2027;
+        }
+
+        .log-level.error {
+            background: #ff0000;
+            color: white;
+        }
+
+        .log-message {
+            color: #00ff00;
+        }
+
+        /* Service Status Grid */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .service-card {
+            background: rgba(15, 32, 39, 0.9);
+            border: 1px solid #00ff00;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+
+        .service-card:hover {
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .service-name {
+            color: #00ff00;
+            font-size: 14px;
+            font-weight: bold;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .service-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .service-status.online {
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        .service-status.offline {
+            background: #ff0000;
+            box-shadow: 0 0 10px #ff0000;
+        }
+
+        .service-status.maintenance {
+            background: #ffff00;
+            box-shadow: 0 0 10px #ffff00;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .service-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 11px;
+            color: #00ff00;
+            opacity: 0.8;
+            font-family: 'SF Mono', monospace;
+        }
+
+        .service-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0, 255, 0, 0.3);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 6px 12px;
+            border: 1px solid #00ff00;
+            background: transparent;
+            color: #00ff00;
+            font-size: 11px;
+            font-family: 'SF Mono', monospace;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn:hover {
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .btn-danger {
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+
+        .btn-danger:hover {
+            background: rgba(255, 0, 0, 0.2);
+        }
+
+        .btn-warning {
+            border-color: #ffff00;
+            color: #ffff00;
+        }
+
+        .btn-warning:hover {
+            background: rgba(255, 255, 0, 0.2);
+        }
+
+        /* Terminal Command Input */
+        .terminal-input {
+            background: rgba(15, 32, 39, 0.9);
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .terminal-prompt {
+            display: flex;
+            align-items: center;
+            color: #00ff00;
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
+        }
+
+        .prompt-symbol {
+            margin-right: 10px;
+        }
+
+        .command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
+            outline: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 2px solid #00ff00;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="sys-admin-dashboard">
+    <div class="dashboard-container">
+        <!-- Terminal-style Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>&gt; SYSTEM_ADMIN</h2>
+                <span class="admin-role">ROOT ACCESS</span>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="#" class="active" data-section="dashboard">
+                        <span class="icon">$</span>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-section="services">
+                        <span class="icon">⚙</span>
+                        <span>Services</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-section="database">
+                        <span class="icon">⊞</span>
+                        <span>Database</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-section="logs">
+                        <span class="icon">◉</span>
+                        <span>System Logs</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-section="security">
+                        <span class="icon">◆</span>
+                        <span>Security</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-section="performance">
+                        <span class="icon">▲</span>
+                        <span>Performance</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-section="backup">
+                        <span class="icon">◈</span>
+                        <span>Backup</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-section="config">
+                        <span class="icon">☰</span>
+                        <span>Configuration</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-section="terminal">
+                        <span class="icon">&gt;</span>
+                        <span>Terminal</span>
+                    </a>
+                </li>
+                <li style="margin-top: 30px;">
+                    <a href="#" id="logoutBtn">
+                        <span class="icon">✕</span>
+                        <span>EXIT</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Content Header -->
+            <div class="content-header">
+                <div class="header-row">
+                    <h1 class="page-title">&gt; SYSTEM_STATUS</h1>
+                    <div class="header-actions">
+                        <button class="btn" id="refreshBtn">REFRESH</button>
+                        <button class="btn btn-warning" id="maintenanceBtn">MAINTENANCE</button>
+                        <button class="btn btn-danger" id="emergencyBtn">EMERGENCY</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">CPU Usage</div>
+                    <div class="metric-value" id="cpuUsage">0%</div>
+                    <div class="metric-status">Normal</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Memory</div>
+                    <div class="metric-value" id="memoryUsage">0GB</div>
+                    <div class="metric-status">4.2/16 GB</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Disk Space</div>
+                    <div class="metric-value" id="diskUsage">0%</div>
+                    <div class="metric-status">120/500 GB</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Network</div>
+                    <div class="metric-value" id="networkStatus">OK</div>
+                    <div class="metric-status">12.4 Mbps</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Uptime</div>
+                    <div class="metric-value" id="uptime">0d</div>
+                    <div class="metric-status">Since restart</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Requests/min</div>
+                    <div class="metric-value" id="requestRate">0</div>
+                    <div class="metric-status">Average</div>
+                </div>
+            </div>
+
+            <!-- Terminal Command Input -->
+            <div class="terminal-input">
+                <div class="terminal-prompt">
+                    <span class="prompt-symbol">root@system:~$</span>
+                    <input type="text" class="command-input" id="commandInput" placeholder="Enter command..." />
+                </div>
+            </div>
+
+            <!-- Service Status -->
+            <div class="services-grid" id="servicesGrid">
+                <!-- Service cards will be loaded dynamically -->
+            </div>
+
+            <!-- System Logs -->
+            <div class="logs-container">
+                <div class="logs-header">
+                    <span class="logs-title">[SYSTEM LOGS]</span>
+                    <div>
+                        <button class="btn" onclick="clearLogs()">CLEAR</button>
+                        <button class="btn" onclick="exportLogs()">EXPORT</button>
+                    </div>
+                </div>
+                <div id="logsContent">
+                    <!-- Logs will be loaded dynamically -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // System Admin Dashboard JavaScript
+        let services = [];
+        let logs = [];
+        let metricsInterval = null;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            initializeDashboard();
+            setupEventListeners();
+            startMetricsUpdate();
+        });
+
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('adminToken');
+            const adminRole = localStorage.getItem('adminRole');
+            
+            if (!token || adminRole !== 'sys_admin') {
+                alert('ACCESS DENIED: System Administrator privileges required');
+                window.location.href = '/sys-admin-login.html';
+                return;
+            }
+        }
+
+        // Initialize dashboard
+        function initializeDashboard() {
+            loadServices();
+            loadSystemLogs();
+            updateMetrics();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Sidebar navigation
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (this.id === 'logoutBtn') {
+                        logout();
+                        return;
+                    }
+                    e.preventDefault();
+                    document.querySelectorAll('.sidebar-menu a').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    loadSection(this.dataset.section);
+                });
+            });
+
+            // Refresh button
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                updateMetrics();
+                loadServices();
+                loadSystemLogs();
+            });
+
+            // Maintenance mode button
+            document.getElementById('maintenanceBtn').addEventListener('click', function() {
+                toggleMaintenanceMode();
+            });
+
+            // Emergency button
+            document.getElementById('emergencyBtn').addEventListener('click', function() {
+                handleEmergency();
+            });
+
+            // Command input
+            document.getElementById('commandInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    executeCommand(this.value);
+                    this.value = '';
+                }
+            });
+        }
+
+        // Load services
+        function loadServices() {
+            // Simulated service data
+            services = [
+                { name: 'WEB_SERVER', status: 'online', cpu: '12%', memory: '256MB', uptime: '14d' },
+                { name: 'DATABASE', status: 'online', cpu: '8%', memory: '1.2GB', uptime: '14d' },
+                { name: 'CACHE_REDIS', status: 'online', cpu: '2%', memory: '128MB', uptime: '7d' },
+                { name: 'AUTH_SERVICE', status: 'online', cpu: '4%', memory: '64MB', uptime: '14d' },
+                { name: 'API_GATEWAY', status: 'online', cpu: '6%', memory: '128MB', uptime: '14d' },
+                { name: 'BACKUP_SERVICE', status: 'maintenance', cpu: '0%', memory: '0MB', uptime: '0d' }
+            ];
+
+            renderServices();
+        }
+
+        // Render services
+        function renderServices() {
+            const grid = document.getElementById('servicesGrid');
+            
+            grid.innerHTML = services.map(service => `
+                <div class="service-card">
+                    <div class="service-header">
+                        <span class="service-name">${service.name}</span>
+                        <span class="service-status ${service.status}"></span>
+                    </div>
+                    <div class="service-details">
+                        <span>CPU: ${service.cpu}</span>
+                        <span>MEM: ${service.memory}</span>
+                        <span>UPTIME: ${service.uptime}</span>
+                        <span>STATUS: ${service.status.toUpperCase()}</span>
+                    </div>
+                    <div class="service-actions">
+                        ${service.status === 'online' 
+                            ? `<button class="btn btn-warning" onclick="restartService('${service.name}')">RESTART</button>
+                               <button class="btn btn-danger" onclick="stopService('${service.name}')">STOP</button>`
+                            : `<button class="btn btn-primary" onclick="startService('${service.name}')">START</button>`
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load system logs
+        function loadSystemLogs() {
+            // Simulated log data
+            const now = new Date();
+            logs = [
+                { timestamp: formatTime(now), level: 'info', message: 'System dashboard accessed by sys_admin' },
+                { timestamp: formatTime(new Date(now - 60000)), level: 'info', message: 'Database connection pool refreshed' },
+                { timestamp: formatTime(new Date(now - 120000)), level: 'warning', message: 'High memory usage detected (>80%)' },
+                { timestamp: formatTime(new Date(now - 180000)), level: 'info', message: 'Backup service entering maintenance mode' },
+                { timestamp: formatTime(new Date(now - 240000)), level: 'error', message: 'Failed login attempt from IP 192.168.1.100' },
+                { timestamp: formatTime(new Date(now - 300000)), level: 'info', message: 'SSL certificate renewed successfully' }
+            ];
+
+            renderLogs();
+        }
+
+        // Render logs
+        function renderLogs() {
+            const logsContent = document.getElementById('logsContent');
+            
+            logsContent.innerHTML = logs.map(log => `
+                <div class="log-entry">
+                    <span class="log-timestamp">[${log.timestamp}]</span>
+                    <span class="log-level ${log.level}">${log.level.toUpperCase()}</span>
+                    <span class="log-message">${log.message}</span>
+                </div>
+            `).join('');
+        }
+
+        // Update metrics
+        function updateMetrics() {
+            // Simulated metrics
+            document.getElementById('cpuUsage').textContent = Math.floor(Math.random() * 30 + 10) + '%';
+            document.getElementById('memoryUsage').textContent = (Math.random() * 4 + 2).toFixed(1) + 'GB';
+            document.getElementById('diskUsage').textContent = Math.floor(Math.random() * 20 + 20) + '%';
+            document.getElementById('networkStatus').textContent = 'OK';
+            document.getElementById('uptime').textContent = '14d 7h';
+            document.getElementById('requestRate').textContent = Math.floor(Math.random() * 500 + 100);
+        }
+
+        // Start metrics auto-update
+        function startMetricsUpdate() {
+            metricsInterval = setInterval(updateMetrics, 5000);
+        }
+
+        // Execute command
+        function executeCommand(command) {
+            if (!command) return;
+
+            const timestamp = formatTime(new Date());
+            logs.unshift({
+                timestamp: timestamp,
+                level: 'info',
+                message: `Command executed: ${command}`
+            });
+
+            // Simulate command execution
+            switch(command.toLowerCase()) {
+                case 'status':
+                    logs.unshift({
+                        timestamp: timestamp,
+                        level: 'info',
+                        message: 'All systems operational'
+                    });
+                    break;
+                case 'restart all':
+                    logs.unshift({
+                        timestamp: timestamp,
+                        level: 'warning',
+                        message: 'Restarting all services...'
+                    });
+                    break;
+                case 'clear':
+                    clearLogs();
+                    break;
+                default:
+                    logs.unshift({
+                        timestamp: timestamp,
+                        level: 'error',
+                        message: `Unknown command: ${command}`
+                    });
+            }
+
+            renderLogs();
+        }
+
+        // Service control functions
+        function restartService(serviceName) {
+            if (confirm(`Restart service ${serviceName}?`)) {
+                addLog('warning', `Restarting service: ${serviceName}`);
+                setTimeout(() => {
+                    addLog('info', `Service ${serviceName} restarted successfully`);
+                }, 2000);
+            }
+        }
+
+        function stopService(serviceName) {
+            if (confirm(`Stop service ${serviceName}? This may affect system availability.`)) {
+                addLog('warning', `Stopping service: ${serviceName}`);
+                const service = services.find(s => s.name === serviceName);
+                if (service) {
+                    service.status = 'offline';
+                    renderServices();
+                }
+            }
+        }
+
+        function startService(serviceName) {
+            addLog('info', `Starting service: ${serviceName}`);
+            const service = services.find(s => s.name === serviceName);
+            if (service) {
+                service.status = 'online';
+                renderServices();
+            }
+        }
+
+        // Toggle maintenance mode
+        function toggleMaintenanceMode() {
+            if (confirm('Toggle maintenance mode? This will affect all users.')) {
+                addLog('warning', 'Maintenance mode activated');
+                alert('MAINTENANCE MODE ACTIVATED\nAll user access restricted');
+            }
+        }
+
+        // Handle emergency
+        function handleEmergency() {
+            if (confirm('ACTIVATE EMERGENCY PROTOCOL?\n\nThis will:\n- Block all user access\n- Create system backup\n- Alert all administrators')) {
+                addLog('error', 'EMERGENCY PROTOCOL ACTIVATED');
+                alert('EMERGENCY PROTOCOL ACTIVATED\nAll systems locked down');
+            }
+        }
+
+        // Add log entry
+        function addLog(level, message) {
+            logs.unshift({
+                timestamp: formatTime(new Date()),
+                level: level,
+                message: message
+            });
+            renderLogs();
+        }
+
+        // Clear logs
+        function clearLogs() {
+            logs = [];
+            renderLogs();
+            addLog('info', 'Logs cleared');
+        }
+
+        // Export logs
+        function exportLogs() {
+            const logText = logs.map(log => 
+                `[${log.timestamp}] ${log.level.toUpperCase()}: ${log.message}`
+            ).join('\n');
+            
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `system_logs_${Date.now()}.txt`;
+            a.click();
+            
+            addLog('info', 'Logs exported');
+        }
+
+        // Load section
+        function loadSection(section) {
+            console.log('Loading section:', section);
+            // Implement section loading logic
+        }
+
+        // Format time
+        function formatTime(date) {
+            return date.toISOString().replace('T', ' ').substr(0, 19);
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Exit system administration session?')) {
+                clearInterval(metricsInterval);
+                localStorage.removeItem('adminToken');
+                localStorage.removeItem('adminRole');
+                window.location.href = '/sys-admin-login.html';
+            }
+        }
+    </script>
+</body>
+</html>

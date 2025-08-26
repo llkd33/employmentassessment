@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>통합 관리자 대시보드</title>
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/admin-dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.1/dist/chartjs-adapter-moment.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* 사이드바 스타일 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .sidebar-header h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .user-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .user-role {
+            display: inline-block;
+            padding: 3px 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            margin-top: 5px;
+            font-size: 12px;
+        }
+
+        /* 네비게이션 메뉴 */
+        .nav-menu {
+            padding: 20px 0;
+        }
+
+        .nav-section {
+            margin-bottom: 30px;
+        }
+
+        .nav-section-title {
+            padding: 0 20px;
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item:hover {
+            background: #f5f5f5;
+            color: #667eea;
+            padding-left: 25px;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(102,126,234,0.1) 0%, transparent 100%);
+            color: #667eea;
+            border-left: 3px solid #667eea;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* 메인 컨텐츠 영역 */
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        .content-header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .content-title {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .breadcrumb {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 컨텐츠 페이지 */
+        .content-page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .content-page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 카드 스타일 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stat-change {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .stat-change.positive {
+            color: #4CAF50;
+        }
+
+        .stat-change.negative {
+            color: #F44336;
+        }
+
+        /* 테이블 스타일 */
+        .data-table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-title {
+            font-size: 20px;
+            color: #333;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .data-table td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* 권한별 숨김 처리 */
+        .super-admin-only,
+        .company-admin-only,
+        .hr-manager-only {
+            display: none;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 1001;
+                background: white;
+                border: none;
+                padding: 10px;
+                border-radius: 8px;
+                cursor: pointer;
+            }
+        }
+
+        .mobile-menu-btn {
+            display: none;
+        }
+
+        /* 로딩 스피너 */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #667eea;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 모바일 메뉴 버튼 -->
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+
+    <!-- 사이드바 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>관리자 시스템</h2>
+            <div class="user-info">
+                <div id="adminName">로딩중...</div>
+                <div id="adminEmail">-</div>
+                <span class="user-role" id="userRole">-</span>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <!-- 기본 메뉴 -->
+            <div class="nav-section">
+                <div class="nav-section-title">대시보드</div>
+                <a class="nav-item active" data-page="overview">
+                    <i>📊</i> 전체 현황
+                </a>
+            </div>
+
+            <!-- Super Admin 전용 메뉴 -->
+            <div class="nav-section super-admin-only">
+                <div class="nav-section-title">시스템 관리</div>
+                <a class="nav-item" data-page="companies">
+                    <i>🏢</i> 기업 관리
+                </a>
+                <a class="nav-item" data-page="system-users">
+                    <i>👥</i> 전체 사용자
+                </a>
+                <a class="nav-item" data-page="system-stats">
+                    <i>📈</i> 시스템 통계
+                </a>
+                <a class="nav-item" data-page="system-settings">
+                    <i>⚙️</i> 시스템 설정
+                </a>
+            </div>
+
+            <!-- Company Admin / HR Manager 메뉴 -->
+            <div class="nav-section company-admin-only">
+                <div class="nav-section-title">직원 관리</div>
+                <a class="nav-item" data-page="employees">
+                    <i>👤</i> 직원 목록
+                </a>
+                <a class="nav-item" data-page="invitations">
+                    <i>📧</i> 초대 관리
+                </a>
+                <a class="nav-item" data-page="test-results">
+                    <i>📝</i> 테스트 결과
+                </a>
+                <a class="nav-item" data-page="feedback">
+                    <i>💬</i> 피드백 관리
+                </a>
+            </div>
+
+            <!-- 분석 메뉴 -->
+            <div class="nav-section">
+                <div class="nav-section-title">분석</div>
+                <a class="nav-item" data-page="analytics">
+                    <i>📊</i> 분석 리포트
+                </a>
+                <a class="nav-item" data-page="trends">
+                    <i>📈</i> 트렌드 분석
+                </a>
+            </div>
+
+            <!-- 설정 메뉴 -->
+            <div class="nav-section">
+                <div class="nav-section-title">설정</div>
+                <a class="nav-item" data-page="profile">
+                    <i>👤</i> 내 프로필
+                </a>
+                <a class="nav-item company-admin-only" data-page="company-settings">
+                    <i>🏢</i> 회사 설정
+                </a>
+                <a class="nav-item" onclick="logout()">
+                    <i>🚪</i> 로그아웃
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="main-content">
+        <!-- 전체 현황 페이지 -->
+        <div class="content-page active" id="overview-page">
+            <div class="content-header">
+                <h1 class="content-title">대시보드</h1>
+                <div class="breadcrumb">홈 > 대시보드</div>
+            </div>
+
+            <!-- 통계 카드 -->
+            <div class="stats-grid" id="statsGrid">
+                <!-- 동적으로 로드됨 -->
+            </div>
+
+            <!-- 최근 활동 -->
+            <div class="data-table-container">
+                <div class="table-header">
+                    <h3 class="table-title">최근 활동</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-primary" onclick="refreshData()">새로고침</button>
+                    </div>
+                </div>
+                <table class="data-table" id="recentActivityTable">
+                    <thead>
+                        <tr>
+                            <th>시간</th>
+                            <th>사용자</th>
+                            <th>활동</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 동적으로 로드됨 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 기업 관리 페이지 (Super Admin) -->
+        <div class="content-page" id="companies-page">
+            <div class="content-header">
+                <h1 class="content-title">기업 관리</h1>
+                <div class="breadcrumb">홈 > 시스템 관리 > 기업 관리</div>
+            </div>
+
+            <div class="data-table-container">
+                <div class="table-header">
+                    <h3 class="table-title">등록된 기업</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-primary" onclick="showAddCompanyModal()">새 기업 추가</button>
+                    </div>
+                </div>
+                <table class="data-table" id="companiesTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>기업명</th>
+                            <th>도메인</th>
+                            <th>직원수</th>
+                            <th>가입일</th>
+                            <th>상태</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 동적으로 로드됨 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 직원 관리 페이지 (Company Admin) -->
+        <div class="content-page" id="employees-page">
+            <div class="content-header">
+                <h1 class="content-title">직원 관리</h1>
+                <div class="breadcrumb">홈 > 직원 관리 > 직원 목록</div>
+            </div>
+
+            <div class="data-table-container">
+                <div class="table-header">
+                    <h3 class="table-title">직원 목록</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-primary" onclick="showInviteModal()">직원 초대</button>
+                    </div>
+                </div>
+                <table class="data-table" id="employeesTable">
+                    <thead>
+                        <tr>
+                            <th>이름</th>
+                            <th>이메일</th>
+                            <th>부서</th>
+                            <th>직급</th>
+                            <th>테스트 상태</th>
+                            <th>가입일</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 동적으로 로드됨 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 테스트 결과 페이지 -->
+        <div class="content-page" id="test-results-page">
+            <div class="content-header">
+                <h1 class="content-title">테스트 결과</h1>
+                <div class="breadcrumb">홈 > 직원 관리 > 테스트 결과</div>
+            </div>
+
+            <div class="data-table-container">
+                <div class="table-header">
+                    <h3 class="table-title">테스트 결과 목록</h3>
+                    <div class="table-actions">
+                        <button class="btn btn-primary" onclick="exportResults()">결과 내보내기</button>
+                    </div>
+                </div>
+                <table class="data-table" id="testResultsTable">
+                    <thead>
+                        <tr>
+                            <th>직원명</th>
+                            <th>테스트 날짜</th>
+                            <th>총점</th>
+                            <th>문제해결</th>
+                            <th>의사소통</th>
+                            <th>리더십</th>
+                            <th>창의성</th>
+                            <th>팀워크</th>
+                            <th>피드백</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 동적으로 로드됨 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentUser = null;
+        let currentPage = 'overview';
+
+        // 페이지 초기화
+        async function init() {
+            await loadUserInfo();
+            setupNavigation();
+            loadPageContent(currentPage);
+        }
+
+        // 사용자 정보 로드 및 권한별 UI 표시
+        async function loadUserInfo() {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/admin-login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user info');
+                }
+
+                currentUser = await response.json();
+                
+                // 사용자 정보 표시
+                document.getElementById('adminName').textContent = currentUser.name;
+                document.getElementById('adminEmail').textContent = currentUser.email;
+                document.getElementById('userRole').textContent = getRoleDisplayName(currentUser.role);
+
+                // 권한별 메뉴 표시
+                showMenusByRole(currentUser.role);
+                
+            } catch (error) {
+                console.error('Error loading user info:', error);
+                window.location.href = '/admin-login.html';
+            }
+        }
+
+        // 역할명 한글 표시
+        function getRoleDisplayName(role) {
+            const roleNames = {
+                'super_admin': '최고 관리자',
+                'sys_admin': '시스템 관리자',
+                'company_admin': '기업 관리자',
+                'hr_manager': 'HR 매니저',
+                'admin': '관리자'
+            };
+            return roleNames[role] || role;
+        }
+
+        // 권한별 메뉴 표시
+        function showMenusByRole(role) {
+            const superAdminElements = document.querySelectorAll('.super-admin-only');
+            const companyAdminElements = document.querySelectorAll('.company-admin-only');
+            const hrManagerElements = document.querySelectorAll('.hr-manager-only');
+
+            // 모든 메뉴 숨김
+            superAdminElements.forEach(el => el.style.display = 'none');
+            companyAdminElements.forEach(el => el.style.display = 'none');
+            hrManagerElements.forEach(el => el.style.display = 'none');
+
+            // 역할별 메뉴 표시
+            switch(role) {
+                case 'super_admin':
+                case 'sys_admin':
+                    superAdminElements.forEach(el => el.style.display = 'block');
+                    companyAdminElements.forEach(el => el.style.display = 'block');
+                    hrManagerElements.forEach(el => el.style.display = 'block');
+                    break;
+                case 'company_admin':
+                    companyAdminElements.forEach(el => el.style.display = 'block');
+                    hrManagerElements.forEach(el => el.style.display = 'block');
+                    break;
+                case 'hr_manager':
+                    hrManagerElements.forEach(el => el.style.display = 'block');
+                    break;
+            }
+        }
+
+        // 네비게이션 설정
+        function setupNavigation() {
+            const navItems = document.querySelectorAll('.nav-item[data-page]');
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = item.dataset.page;
+                    navigateToPage(page);
+                });
+            });
+        }
+
+        // 페이지 네비게이션
+        function navigateToPage(page) {
+            // 모든 페이지 숨김
+            document.querySelectorAll('.content-page').forEach(p => {
+                p.classList.remove('active');
+            });
+
+            // 모든 네비게이션 아이템 비활성화
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // 선택된 페이지 표시
+            const pageElement = document.getElementById(`${page}-page`);
+            if (pageElement) {
+                pageElement.classList.add('active');
+            }
+
+            // 선택된 네비게이션 아이템 활성화
+            const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
+            if (navItem) {
+                navItem.classList.add('active');
+            }
+
+            currentPage = page;
+            loadPageContent(page);
+        }
+
+        // 페이지별 컨텐츠 로드
+        async function loadPageContent(page) {
+            switch(page) {
+                case 'overview':
+                    await loadDashboardStats();
+                    await loadRecentActivity();
+                    break;
+                case 'companies':
+                    await loadCompanies();
+                    break;
+                case 'employees':
+                    await loadEmployees();
+                    break;
+                case 'test-results':
+                    await loadTestResults();
+                    break;
+                case 'system-users':
+                    await loadSystemUsers();
+                    break;
+                case 'analytics':
+                    await loadAnalytics();
+                    break;
+            }
+        }
+
+        // 대시보드 통계 로드
+        async function loadDashboardStats() {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            
+            try {
+                const endpoint = currentUser.role === 'super_admin' 
+                    ? '/api/admin/system-stats' 
+                    : '/api/admin/company-stats';
+                    
+                const response = await fetch(endpoint, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load stats');
+                
+                const stats = await response.json();
+                displayStats(stats);
+                
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // 통계 표시
+        function displayStats(stats) {
+            const statsGrid = document.getElementById('statsGrid');
+            
+            const statsHTML = `
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value">${stats.totalUsers || 0}</div>
+                    <div class="stat-label">전체 사용자</div>
+                    <div class="stat-change positive">+12% 지난달 대비</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-value">${stats.totalTests || 0}</div>
+                    <div class="stat-label">완료된 테스트</div>
+                    <div class="stat-change positive">+8% 지난주 대비</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💬</div>
+                    <div class="stat-value">${stats.totalFeedback || 0}</div>
+                    <div class="stat-label">피드백 제공</div>
+                    <div class="stat-change positive">+15% 증가</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value">${stats.avgScore || 0}%</div>
+                    <div class="stat-label">평균 점수</div>
+                    <div class="stat-change positive">+2.3% 향상</div>
+                </div>
+            `;
+            
+            statsGrid.innerHTML = statsHTML;
+        }
+
+        // 최근 활동 로드
+        async function loadRecentActivity() {
+            // 샘플 데이터 (실제로는 API에서 가져옴)
+            const tbody = document.querySelector('#recentActivityTable tbody');
+            tbody.innerHTML = `
+                <tr>
+                    <td>10분 전</td>
+                    <td>김철수</td>
+                    <td>테스트 완료</td>
+                    <td><span style="color: #4CAF50;">완료</span></td>
+                </tr>
+                <tr>
+                    <td>30분 전</td>
+                    <td>이영희</td>
+                    <td>피드백 확인</td>
+                    <td><span style="color: #2196F3;">진행중</span></td>
+                </tr>
+                <tr>
+                    <td>1시간 전</td>
+                    <td>박민수</td>
+                    <td>회원 가입</td>
+                    <td><span style="color: #4CAF50;">완료</span></td>
+                </tr>
+            `;
+        }
+
+        // 기업 목록 로드 (Super Admin)
+        async function loadCompanies() {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            
+            try {
+                const response = await fetch('/api/admin/companies', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load companies');
+                
+                const companies = await response.json();
+                displayCompanies(companies);
+                
+            } catch (error) {
+                console.error('Error loading companies:', error);
+            }
+        }
+
+        // 기업 목록 표시
+        function displayCompanies(companies) {
+            const tbody = document.querySelector('#companiesTable tbody');
+            tbody.innerHTML = companies.map(company => `
+                <tr>
+                    <td>${company.id}</td>
+                    <td>${company.name}</td>
+                    <td>${company.domain}</td>
+                    <td>${company.employee_count || 0}</td>
+                    <td>${new Date(company.created_at).toLocaleDateString('ko-KR')}</td>
+                    <td>${company.is_active ? '활성' : '비활성'}</td>
+                    <td>
+                        <button onclick="editCompany(${company.id})">수정</button>
+                        <button onclick="toggleCompany(${company.id})">상태변경</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 직원 목록 로드
+        async function loadEmployees() {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            
+            try {
+                const response = await fetch('/api/admin/employees', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load employees');
+                
+                const employees = await response.json();
+                displayEmployees(employees);
+                
+            } catch (error) {
+                console.error('Error loading employees:', error);
+            }
+        }
+
+        // 직원 목록 표시
+        function displayEmployees(employees) {
+            const tbody = document.querySelector('#employeesTable tbody');
+            tbody.innerHTML = employees.map(emp => `
+                <tr>
+                    <td>${emp.name}</td>
+                    <td>${emp.email}</td>
+                    <td>${emp.department || '-'}</td>
+                    <td>${emp.position || '-'}</td>
+                    <td>${emp.test_completed ? '완료' : '미완료'}</td>
+                    <td>${new Date(emp.created_at).toLocaleDateString('ko-KR')}</td>
+                    <td>
+                        <button onclick="viewEmployee('${emp.user_id}')">상세</button>
+                        <button onclick="sendReminder('${emp.user_id}')">알림</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 테스트 결과 로드
+        async function loadTestResults() {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            
+            try {
+                const response = await fetch('/api/admin/test-results', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load test results');
+                
+                const results = await response.json();
+                displayTestResults(results);
+                
+            } catch (error) {
+                console.error('Error loading test results:', error);
+            }
+        }
+
+        // 테스트 결과 표시
+        function displayTestResults(results) {
+            const tbody = document.querySelector('#testResultsTable tbody');
+            tbody.innerHTML = results.map(result => `
+                <tr>
+                    <td>${result.user_name}</td>
+                    <td>${new Date(result.test_date).toLocaleDateString('ko-KR')}</td>
+                    <td>${result.overall_score}</td>
+                    <td>${result.problem_solving_score}</td>
+                    <td>${result.communication_score}</td>
+                    <td>${result.leadership_score}</td>
+                    <td>${result.creativity_score}</td>
+                    <td>${result.teamwork_score}</td>
+                    <td>${result.has_feedback ? '✅' : '-'}</td>
+                    <td>
+                        <button onclick="viewTestDetail('${result.result_id}')">상세</button>
+                        <button onclick="writeFeedback('${result.result_id}')">피드백</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 피드백 작성 페이지로 이동
+        function writeFeedback(resultId) {
+            window.location.href = `/admin-feedback.html?resultId=${resultId}`;
+        }
+
+        // 테스트 상세 보기
+        function viewTestDetail(resultId) {
+            window.location.href = `/admin-test-detail-modal.html?resultId=${resultId}`;
+        }
+
+        // 로그아웃
+        function logout() {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('authToken');
+            window.location.href = '/admin-login.html';
+        }
+
+        // 모바일 사이드바 토글
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        // 데이터 새로고침
+        function refreshData() {
+            loadPageContent(currentPage);
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
