@@ -23,6 +23,29 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        body.authenticated {
+            opacity: 1;
+        }
+        
+        /* 로딩 중 메시지 */
+        body::before {
+            content: "인증 확인 중...";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            color: white;
+            z-index: 9999;
+            display: block;
+        }
+        
+        body.authenticated::before {
+            display: none;
         }
 
         /* 사이드바 스타일 */
@@ -777,6 +800,15 @@
     </style>
 
     <script>
+        // 즉시 인증 확인 - 토큰이 없으면 바로 리다이렉트
+        (function() {
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            if (!token) {
+                window.location.replace('/client/admin-login.html');
+                return;
+            }
+        })();
+
         let currentUser = null;
         let currentPage = 'overview';
 
@@ -791,9 +823,9 @@
         async function loadUserInfo() {
             const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
             
-            // 토큰이 없을 때만 로그인 페이지로 이동
+            // 토큰이 없으면 로그인 페이지로 이동
             if (!token) {
-                window.location.href = '/client/admin-login.html';
+                window.location.replace('/client/admin-login.html');
                 return;
             }
 
@@ -813,6 +845,9 @@
                 if (response.ok) {
                     currentUser = await response.json();
                     
+                    // 인증 성공 - 페이지 표시
+                    document.body.classList.add('authenticated');
+                    
                     // 사용자 정보 표시
                     if (document.getElementById('adminName')) {
                         document.getElementById('adminName').textContent = currentUser.name || '';
@@ -827,9 +862,11 @@
                     // 권한별 메뉴 표시
                     showMenusByRole(currentUser.role);
                 } else if (response.status === 401 || response.status === 403) {
-                    // 인증 실패 시에만 로그인 페이지로
+                    // 인증 실패 시 로그인 페이지로
                     console.error('Authentication failed');
-                    window.location.href = '/client/admin-login.html';
+                    localStorage.removeItem('adminToken');
+                    localStorage.removeItem('authToken');
+                    window.location.replace('/client/admin-login.html');
                 } else {
                     // 다른 에러는 무시하고 계속 진행
                     console.error('Failed to load profile, but keeping session');
@@ -1103,7 +1140,9 @@
                 if (!response.ok) {
                     if (response.status === 401 || response.status === 403) {
                         console.error('Auth failed, redirecting to login');
-                        window.location.href = '/client/admin-login.html';
+                        localStorage.removeItem('adminToken');
+                        localStorage.removeItem('authToken');
+                        window.location.replace('/client/admin-login.html');
                         return;
                     }
                     const errorText = await response.text();
@@ -1166,7 +1205,9 @@
                 if (!response.ok) {
                     if (response.status === 401 || response.status === 403) {
                         console.error('Auth failed, redirecting to login');
-                        window.location.href = '/client/admin-login.html';
+                        localStorage.removeItem('adminToken');
+                        localStorage.removeItem('authToken');
+                        window.location.replace('/client/admin-login.html');
                         return;
                     }
                     const errorText = await response.text();
@@ -1230,7 +1271,7 @@
 
                 if (!response.ok) {
                     if (response.status === 401 || response.status === 403) {
-                        window.location.href = '/admin-login.html';
+                        window.location.replace('/client/admin-login.html');
                         return;
                     }
                     console.error('Failed to load test results');
@@ -1355,7 +1396,7 @@
         function logout() {
             localStorage.removeItem('adminToken');
             localStorage.removeItem('authToken');
-            window.location.href = '/admin-login.html';
+            window.location.replace('/client/admin-login.html');
         }
 
         // 모바일 사이드바 토글
