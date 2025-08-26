@@ -577,6 +577,8 @@
         // 사용자 정보 로드 및 권한별 UI 표시
         async function loadUserInfo() {
             const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            
+            // 토큰이 없을 때만 로그인 페이지로 이동
             if (!token) {
                 window.location.href = '/admin-login.html';
                 return;
@@ -589,23 +591,40 @@
                     }
                 });
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch user info');
+                // 토큰 갱신 확인
+                const newToken = response.headers.get('X-New-Token');
+                if (newToken) {
+                    localStorage.setItem('adminToken', newToken);
                 }
 
-                currentUser = await response.json();
-                
-                // 사용자 정보 표시
-                document.getElementById('adminName').textContent = currentUser.name;
-                document.getElementById('adminEmail').textContent = currentUser.email;
-                document.getElementById('userRole').textContent = getRoleDisplayName(currentUser.role);
+                if (response.ok) {
+                    currentUser = await response.json();
+                    
+                    // 사용자 정보 표시
+                    if (document.getElementById('adminName')) {
+                        document.getElementById('adminName').textContent = currentUser.name || '';
+                    }
+                    if (document.getElementById('adminEmail')) {
+                        document.getElementById('adminEmail').textContent = currentUser.email || '';
+                    }
+                    if (document.getElementById('userRole')) {
+                        document.getElementById('userRole').textContent = getRoleDisplayName(currentUser.role) || '';
+                    }
 
-                // 권한별 메뉴 표시
-                showMenusByRole(currentUser.role);
+                    // 권한별 메뉴 표시
+                    showMenusByRole(currentUser.role);
+                } else if (response.status === 401 || response.status === 403) {
+                    // 인증 실패 시에만 로그인 페이지로
+                    console.error('Authentication failed');
+                    window.location.href = '/admin-login.html';
+                } else {
+                    // 다른 에러는 무시하고 계속 진행
+                    console.error('Failed to load profile, but keeping session');
+                }
                 
             } catch (error) {
                 console.error('Error loading user info:', error);
-                window.location.href = '/admin-login.html';
+                // 네트워크 에러 등은 무시하고 계속 진행
             }
         }
 
@@ -657,6 +676,13 @@
                 item.addEventListener('click', (e) => {
                     e.preventDefault();
                     const page = item.dataset.page;
+                    
+                    // 로그아웃은 별도 처리
+                    if (page === 'logout') {
+                        logout();
+                        return;
+                    }
+                    
                     navigateToPage(page);
                 });
             });
@@ -664,6 +690,9 @@
 
         // 페이지 네비게이션
         function navigateToPage(page) {
+            // 로그아웃이 아닌 경우 토큰 확인하지 않음 (페이지 이동 시 토큰 체크 제거)
+            // 토큰 검증은 API 호출 시에만 수행
+            
             // 모든 페이지 숨김
             document.querySelectorAll('.content-page').forEach(p => {
                 p.classList.remove('active');
@@ -718,6 +747,12 @@
         // 대시보드 통계 로드
         async function loadDashboardStats() {
             const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+            
+            // 토큰이 없으면 실행하지 않음
+            if (!token || !currentUser) {
+                console.log('No token or user info, skipping stats load');
+                return;
+            }
             
             try {
                 const endpoint = currentUser.role === 'super_admin' 
@@ -807,7 +842,20 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (!response.ok) throw new Error('Failed to load companies');
+                // 토큰 갱신 확인
+                const newToken = response.headers.get('X-New-Token');
+                if (newToken) {
+                    localStorage.setItem('adminToken', newToken);
+                }
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        window.location.href = '/admin-login.html';
+                        return;
+                    }
+                    console.error('Failed to load companies');
+                    return;
+                }
                 
                 const companies = await response.json();
                 displayCompanies(companies);
@@ -845,7 +893,20 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (!response.ok) throw new Error('Failed to load employees');
+                // 토큰 갱신 확인
+                const newToken = response.headers.get('X-New-Token');
+                if (newToken) {
+                    localStorage.setItem('adminToken', newToken);
+                }
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        window.location.href = '/admin-login.html';
+                        return;
+                    }
+                    console.error('Failed to load employees');
+                    return;
+                }
                 
                 const employees = await response.json();
                 displayEmployees(employees);
@@ -883,7 +944,20 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (!response.ok) throw new Error('Failed to load test results');
+                // 토큰 갱신 확인
+                const newToken = response.headers.get('X-New-Token');
+                if (newToken) {
+                    localStorage.setItem('adminToken', newToken);
+                }
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        window.location.href = '/admin-login.html';
+                        return;
+                    }
+                    console.error('Failed to load test results');
+                    return;
+                }
                 
                 const results = await response.json();
                 displayTestResults(results);
