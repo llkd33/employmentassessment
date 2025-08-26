@@ -14,9 +14,19 @@ router.get('/profile', authenticateToken, async (req, res) => {
     
     try {
         const result = await pool.query(`
-            SELECT user_id, name, email, role, company_id, department, position
-            FROM users 
-            WHERE user_id = $1
+            SELECT 
+                u.user_id, 
+                u.name, 
+                u.email, 
+                u.role, 
+                u.company_id, 
+                u.department, 
+                u.position,
+                u.created_at,
+                c.name as company_name
+            FROM users u
+            LEFT JOIN companies c ON u.company_id = c.id
+            WHERE u.user_id = $1
         `, [userId]);
         
         if (result.rows.length === 0) {
@@ -70,13 +80,20 @@ router.get('/system-stats', authenticateToken, async (req, res) => {
 
 // 회사 통계 (Company Admin)
 router.get('/company-stats', authenticateToken, async (req, res) => {
-    const companyId = req.user.companyId;
-    
-    if (!companyId) {
-        return res.status(400).json({ error: 'Company ID not found' });
-    }
+    const userId = req.user.userId;
     
     try {
+        // 먼저 사용자의 company_id를 조회
+        const userResult = await pool.query(
+            'SELECT company_id FROM users WHERE user_id = $1',
+            [userId]
+        );
+        
+        if (userResult.rows.length === 0 || !userResult.rows[0].company_id) {
+            return res.status(400).json({ error: 'Company ID not found for user' });
+        }
+        
+        const companyId = userResult.rows[0].company_id;
         const stats = {};
         
         // 회사 사용자 수
@@ -147,10 +164,25 @@ router.get('/companies', authenticateToken, async (req, res) => {
 
 // 직원 목록 (Company Admin)
 router.get('/employees', authenticateToken, requireAdmin, async (req, res) => {
-    const companyId = req.user.companyId;
+    const userId = req.user.userId;
     const userRole = req.user.role;
     
     try {
+        // Company Admin의 경우 company_id를 조회
+        let companyId = null;
+        if (!['super_admin', 'sys_admin'].includes(userRole)) {
+            const userResult = await pool.query(
+                'SELECT company_id FROM users WHERE user_id = $1',
+                [userId]
+            );
+            
+            if (userResult.rows.length === 0 || !userResult.rows[0].company_id) {
+                return res.status(400).json({ error: 'Company ID not found for user' });
+            }
+            
+            companyId = userResult.rows[0].company_id;
+        }
+        
         let query;
         let params = [];
         
@@ -193,10 +225,25 @@ router.get('/employees', authenticateToken, requireAdmin, async (req, res) => {
 
 // 테스트 결과 목록
 router.get('/test-results', authenticateToken, requireAdmin, async (req, res) => {
-    const companyId = req.user.companyId;
+    const userId = req.user.userId;
     const userRole = req.user.role;
     
     try {
+        // Company Admin의 경우 company_id를 조회
+        let companyId = null;
+        if (!['super_admin', 'sys_admin'].includes(userRole)) {
+            const userResult = await pool.query(
+                'SELECT company_id FROM users WHERE user_id = $1',
+                [userId]
+            );
+            
+            if (userResult.rows.length === 0 || !userResult.rows[0].company_id) {
+                return res.status(400).json({ error: 'Company ID not found for user' });
+            }
+            
+            companyId = userResult.rows[0].company_id;
+        }
+        
         let query;
         let params = [];
         
@@ -331,7 +378,6 @@ router.get('/user/:userId/test-results', authenticateToken, requireAdmin, async 
     const { userId } = req.params;
     const adminId = req.user.userId;
     const adminRole = req.user.role;
-    const adminCompanyId = req.user.companyId;
     
     try {
         // 사용자 정보 조회
@@ -349,6 +395,18 @@ router.get('/user/:userId/test-results', authenticateToken, requireAdmin, async 
         
         // 권한 확인 - super admin이 아니면 같은 회사만 조회 가능
         if (!['super_admin', 'sys_admin'].includes(adminRole)) {
+            // 관리자의 company_id 조회
+            const adminResult = await pool.query(
+                'SELECT company_id FROM users WHERE user_id = $1',
+                [adminId]
+            );
+            
+            if (adminResult.rows.length === 0) {
+                return res.status(403).json({ error: 'Admin user not found' });
+            }
+            
+            const adminCompanyId = adminResult.rows[0].company_id;
+            
             if (user.company_id !== adminCompanyId) {
                 return res.status(403).json({ error: 'Not authorized to view this user\'s results' });
             }
