@@ -9,7 +9,7 @@ const pool = new Pool({
 });
 
 // 관리자 프로필 정보
-router.get('/profile', authenticateToken, async (req, res) => {
+router.get('/profile', authenticateToken, requireAdmin, async (req, res) => {
     const userId = req.user.userId;
     
     try {
