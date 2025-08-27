@@ -108,7 +108,13 @@ self.addEventListener('fetch', event => {
     }
 
     // Admin 페이지는 서비스 워커가 처리하지 않음 (항상 네트워크에서)
-    if (request.url.includes('/admin') || request.url.includes('admin-') || request.url.includes('unified-admin')) {
+    if (
+        request.url.includes('/admin') ||
+        request.url.includes('admin-') ||
+        request.url.includes('unified-admin') ||
+        request.url.includes('sys-admin') ||
+        request.url.includes('super-admin')
+    ) {
         event.respondWith(fetch(request));
         return;
     }

@@ -1441,55 +1441,71 @@ async function startServer() {
         console.log('⚠️  DATABASE_URL 환경 변수를 확인해주세요.');
     }
 
-    app.listen(PORT, '0.0.0.0', () => {
-        // Railway 환경 감지 (여러 방법으로 확인)
-        const isRailway = process.env.RAILWAY_ENVIRONMENT ||
-            process.env.RAILWAY_PROJECT_ID ||
-            process.env.RAILWAY_SERVICE_ID ||
-            process.env.NODE_ENV === 'production';
+    // Graceful port selection with fallback if EADDRINUSE
+    const maxRetries = 10;
+    let basePort = parseInt(PORT, 10) || 3000;
+    let attempts = 0;
 
-        // 로컬 IP 주소 가져오기
-        const networkInterfaces = os.networkInterfaces();
-        let localIP = 'localhost';
+    const startListening = (portToTry) => {
+        const server = app.listen(portToTry, '0.0.0.0', () => {
+            // Railway 환경 감지 (여러 방법으로 확인)
+            const isRailway = process.env.RAILWAY_ENVIRONMENT ||
+                process.env.RAILWAY_PROJECT_ID ||
+                process.env.RAILWAY_SERVICE_ID ||
+                process.env.NODE_ENV === 'production';
 
-        // WiFi나 이더넷 인터페이스에서 로컬 IP 찾기
-        for (const interfaceName in networkInterfaces) {
-            const addresses = networkInterfaces[interfaceName];
-            for (const address of addresses) {
-                // IPv4이고 내부 IP가 아닌 주소 찾기
-                if (address.family === 'IPv4' && !address.internal) {
-                    localIP = address.address;
-                    break;
+            // 로컬 IP 주소 가져오기
+            const networkInterfaces = os.networkInterfaces();
+            let localIP = 'localhost';
+            for (const interfaceName in networkInterfaces) {
+                const addresses = networkInterfaces[interfaceName];
+                for (const address of addresses) {
+                    if (address.family === 'IPv4' && !address.internal) {
+                        localIP = address.address;
+                        break;
+                    }
                 }
+                if (localIP !== 'localhost') break;
             }
-            if (localIP !== 'localhost') break;
-        }
 
-        console.log(`===========================================`);
-        console.log(`🚀 서버가 포트 ${PORT}에서 실행중입니다.`);
-        console.log(`🗄️  PostgreSQL 데이터베이스 사용 중`);
+            console.log(`===========================================`);
+            console.log(`🚀 서버가 포트 ${portToTry}에서 실행중입니다.`);
+            console.log(`🗄️  PostgreSQL 데이터베이스 사용 중`);
+            console.log(`🔍 환경 변수 확인:`);
+            console.log(`   - PORT: ${process.env.PORT || 'undefined'}`);
+            console.log(`   - DATABASE_URL: ${process.env.DATABASE_URL ? '설정됨' : 'undefined'}`);
+            console.log(`   - RAILWAY_ENVIRONMENT: ${process.env.RAILWAY_ENVIRONMENT || 'undefined'}`);
+            console.log(`   - NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`);
+            console.log(`   - KAKAO_JAVASCRIPT_KEY: ${process.env.KAKAO_JAVASCRIPT_KEY ? process.env.KAKAO_JAVASCRIPT_KEY.substring(0, 8) + '... (길이:' + process.env.KAKAO_JAVASCRIPT_KEY.length + ')' : 'undefined'}`);
 
-        // 환경 변수 디버깅 정보 출력
-        console.log(`🔍 환경 변수 확인:`);
-        console.log(`   - PORT: ${process.env.PORT || 'undefined'}`);
-        console.log(`   - DATABASE_URL: ${process.env.DATABASE_URL ? '설정됨' : 'undefined'}`);
-        console.log(`   - RAILWAY_ENVIRONMENT: ${process.env.RAILWAY_ENVIRONMENT || 'undefined'}`);
-        console.log(`   - NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`);
-        console.log(`   - KAKAO_JAVASCRIPT_KEY: ${process.env.KAKAO_JAVASCRIPT_KEY ? process.env.KAKAO_JAVASCRIPT_KEY.substring(0, 8) + '... (길이:' + process.env.KAKAO_JAVASCRIPT_KEY.length + ')' : 'undefined'}`);
+            if (isRailway) {
+                console.log(`🚂 Railway 환경에서 실행 중`);
+                console.log(`⚠️  도메인 URL은 Railway 대시보드에서 확인하세요!`);
+                console.log(`📋 Health Check: [Railway_Domain]/api/health`);
+            } else {
+                console.log(`📋 API 테스트: http://localhost:${portToTry}/api/health`);
+                console.log(`🌐 로컬 접속: http://localhost:${portToTry}`);
+                console.log(`🌍 외부 접속: http://${localIP}:${portToTry}`);
+                console.log(`💻 로컬 개발 환경에서 실행 중`);
+                console.log(`📱 다른 기기에서 접속하려면: http://${localIP}:${PORT} 사용`);
+            }
+            console.log(`===========================================`);
+        });
 
-        if (isRailway) {
-            console.log(`🚂 Railway 환경에서 실행 중`);
-            console.log(`⚠️  도메인 URL은 Railway 대시보드에서 확인하세요!`);
-            console.log(`📋 Health Check: [Railway_Domain]/api/health`);
-        } else {
-            console.log(`📋 API 테스트: http://localhost:${PORT}/api/health`);
-            console.log(`🌐 로컬 접속: http://localhost:${PORT}`);
-            console.log(`🌍 외부 접속: http://${localIP}:${PORT}`);
-            console.log(`💻 로컬 개발 환경에서 실행 중`);
-            console.log(`📱 다른 기기에서 접속하려면: http://${localIP}:${PORT} 사용`);
-        }
-        console.log(`===========================================`);
-    });
+        server.on('error', (err) => {
+            if (err && err.code === 'EADDRINUSE' && attempts < maxRetries) {
+                const nextPort = portToTry + 1;
+                attempts += 1;
+                console.warn(`⚠️  포트 ${portToTry} 사용 중. 포트 ${nextPort}로 재시도 (${attempts}/${maxRetries})`);
+                startListening(nextPort);
+            } else {
+                console.error('❌ 서버 시작 실패:', err);
+                process.exit(1);
+            }
+        });
+    };
+
+    startListening(basePort);
 }
 
 // 404 핸들러 (모든 라우트 뒤에 위치)

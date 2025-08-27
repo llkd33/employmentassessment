@@ -353,12 +353,10 @@
             }
         }
         
-        // API URL 설정
+        // API URL 설정: 현재 오리진 사용(포트 자동 반영). 파일 스킴일 때만 3000 사용
         const API_URL = window.location.protocol === 'file:' 
             ? 'http://localhost:3000'
-            : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'http://localhost:3000' 
-                : window.location.origin);
+            : window.location.origin;
 
         // 비밀번호 표시/숨기기
         function togglePassword() {
